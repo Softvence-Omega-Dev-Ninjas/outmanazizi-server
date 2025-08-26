@@ -10,11 +10,12 @@ This guide explains how to use the authentication module in your Outmanazizi Ser
 ✅ Password Hashing (bcrypt)  
 ✅ User Profile Endpoint  
 ✅ Protected Routes  
-✅ Swagger Documentation  
+✅ Swagger Documentation
 
 ## API Endpoints
 
 ### 1. Register User
+
 **POST** `/auth/register`
 
 ```json
@@ -27,6 +28,7 @@ This guide explains how to use the authentication module in your Outmanazizi Ser
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -42,6 +44,7 @@ This guide explains how to use the authentication module in your Outmanazizi Ser
 ```
 
 ### 2. Login User
+
 **POST** `/auth/login`
 
 ```json
@@ -52,6 +55,7 @@ This guide explains how to use the authentication module in your Outmanazizi Ser
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -67,14 +71,17 @@ This guide explains how to use the authentication module in your Outmanazizi Ser
 ```
 
 ### 3. Get User Profile
+
 **GET** `/auth/profile`
 
 Headers:
+
 ```
 Authorization: Bearer <your-jwt-token>
 ```
 
 **Response:**
+
 ```json
 {
   "id": "ckd2hs2r20000q8vz9v8v9v8v",
@@ -89,6 +96,7 @@ Authorization: Bearer <your-jwt-token>
 ## Setup Instructions
 
 ### 1. Environment Variables
+
 Make sure your `.env` file contains:
 
 ```env
@@ -105,6 +113,7 @@ NODE_ENV="development"
 ```
 
 ### 2. Database Setup
+
 ```bash
 # Generate Prisma client
 npx prisma generate
@@ -117,6 +126,7 @@ npx prisma studio
 ```
 
 ### 3. Run the Server
+
 ```bash
 # Development mode
 npm run start:dev
@@ -137,7 +147,6 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('protected')
 export class ProtectedController {
-  
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
@@ -145,7 +154,7 @@ export class ProtectedController {
     // req.user contains the authenticated user data
     return {
       message: 'This is protected data',
-      user: req.user
+      user: req.user,
     };
   }
 }
@@ -154,6 +163,7 @@ export class ProtectedController {
 ## User Model Schema
 
 The User model includes:
+
 - `id`: Unique identifier (cuid)
 - `email`: User email (unique)
 - `password`: Hashed password
@@ -174,6 +184,7 @@ The User model includes:
 ## Error Responses
 
 ### 409 Conflict (Registration)
+
 ```json
 {
   "statusCode": 409,
@@ -183,6 +194,7 @@ The User model includes:
 ```
 
 ### 401 Unauthorized (Login/Protected Routes)
+
 ```json
 {
   "statusCode": 401,
@@ -192,6 +204,7 @@ The User model includes:
 ```
 
 ### 400 Bad Request (Validation Error)
+
 ```json
 {
   "statusCode": 400,
@@ -214,6 +227,7 @@ The User model includes:
 ## Next Steps
 
 You can extend this auth module by:
+
 - Adding password reset functionality
 - Implementing refresh tokens
 - Adding role-based authorization
