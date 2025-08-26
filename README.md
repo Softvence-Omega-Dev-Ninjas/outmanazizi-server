@@ -23,70 +23,79 @@ Before running this project, make sure you have the following installed:
 ## Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository-url>
    cd outmanazizi-server
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables:**
    Create a `.env` file in the root directory and configure the following variables:
+
    ```env
    # Database Configuration
    DATABASE_URL="database_url"
-   
+
    # Server Configuration
    PORT=3000
-   
+
    # JWT Configuration
    JWT_SECRET="your-super-secret-jwt-key"
    JWT_EXPIRES_IN="7d"
-   
+
    # Node Environment
    NODE_ENV="development"
    ```
 
 4. **Set up the database:**
+
    ```bash
    # Generate Prisma client
    npx prisma generate
-   
+
    # Run database migrations (when you have migrations)
    npx prisma migrate dev
-   
+
    # Or push schema to database (for development)
    npx prisma db push
    ```
 
 ## Environment Variables
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
-| `PORT` | Port number for the server | No | 3000 |
-| `JWT_SECRET` | Secret key for JWT token signing | Yes | - |
-| `JWT_EXPIRES_IN` | JWT token expiration time | No | 7d |
-| `NODE_ENV` | Node.js environment | No | development |
+| Variable         | Description                      | Required | Default     |
+| ---------------- | -------------------------------- | -------- | ----------- |
+| `DATABASE_URL`   | PostgreSQL connection string     | Yes      | -           |
+| `PORT`           | Port number for the server       | No       | 3000        |
+| `JWT_SECRET`     | Secret key for JWT token signing | Yes      | -           |
+| `JWT_EXPIRES_IN` | JWT token expiration time        | No       | 7d          |
+| `NODE_ENV`       | Node.js environment              | No       | development |
 
 ## Running the Application
 
 ### Development Mode
+
 ```bash
 npm run start:dev
 ```
+
 The server will start on `http://localhost:3000` with hot-reload enabled.
 
 ### Debug Mode
+
 ```bash
 npm run start:debug
 ```
+
 Starts the server in debug mode with debugging enabled.
 
 ### Production Mode
+
 ```bash
 # Build the application
 npm run build
@@ -98,11 +107,13 @@ npm run start:prod
 ## API Documentation
 
 Once the server is running, you can access the Swagger API documentation at:
+
 ```
 http://localhost:3000/docs
 ```
 
 The API documentation includes:
+
 - All available endpoints
 - Request/response schemas
 - Authentication requirements
@@ -183,24 +194,28 @@ test/
 
 ## Authentication
 
-This project uses JWT (JSON Web Tokens) for authentication. The API endpoints are protected with Bearer token authentication. 
+This project uses JWT (JSON Web Tokens) for authentication. The API endpoints are protected with Bearer token authentication.
 
 To authenticate:
+
 1. Obtain a JWT token from the login endpoint
 2. Include the token in the Authorization header: `Bearer <your-token>`
 
 ## Troubleshooting
 
 ### Database Connection Issues
+
 - Ensure PostgreSQL is running
 - Verify `DATABASE_URL` in your `.env` file
 - Check that the database exists and is accessible
 
 ### Port Already in Use
+
 - Change the `PORT` in your `.env` file
 - Or kill the process using the port: `netstat -ano | findstr :3000` (Windows)
 
 ### Prisma Issues
+
 - Run `npx prisma generate` after schema changes
 - Clear Prisma cache: `npx prisma generate --force`
 
