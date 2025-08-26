@@ -1,98 +1,219 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Outmanazizi Server
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS-based backend server with PostgreSQL database integration, JWT authentication, and Swagger API documentation.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- **NestJS Framework**: Modern Node.js framework for building efficient server-side applications
+- **PostgreSQL Database**: Robust relational database with Prisma ORM
+- **JWT Authentication**: Secure token-based authentication with Passport
+- **API Documentation**: Auto-generated Swagger/OpenAPI documentation
+- **TypeScript**: Full TypeScript support for type safety
+- **Testing**: Comprehensive test setup with Jest
+- **Code Quality**: ESLint and Prettier for code formatting and linting
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Prerequisites
 
-## Project setup
+Before running this project, make sure you have the following installed:
 
+- **Node.js** (version 18 or higher)
+- **npm** or **yarn**
+- **PostgreSQL** database
+
+## Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd outmanazizi-server
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables:**
+   Create a `.env` file in the root directory and configure the following variables:
+   ```env
+   # Database Configuration
+   DATABASE_URL="database_url"
+   
+   # Server Configuration
+   PORT=3000
+   
+   # JWT Configuration
+   JWT_SECRET="your-super-secret-jwt-key"
+   JWT_EXPIRES_IN="7d"
+   
+   # Node Environment
+   NODE_ENV="development"
+   ```
+
+4. **Set up the database:**
+   ```bash
+   # Generate Prisma client
+   npx prisma generate
+   
+   # Run database migrations (when you have migrations)
+   npx prisma migrate dev
+   
+   # Or push schema to database (for development)
+   npx prisma db push
+   ```
+
+## Environment Variables
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
+| `PORT` | Port number for the server | No | 3000 |
+| `JWT_SECRET` | Secret key for JWT token signing | Yes | - |
+| `JWT_EXPIRES_IN` | JWT token expiration time | No | 7d |
+| `NODE_ENV` | Node.js environment | No | development |
+
+## Running the Application
+
+### Development Mode
 ```bash
-$ npm install
+npm run start:dev
+```
+The server will start on `http://localhost:3000` with hot-reload enabled.
+
+### Debug Mode
+```bash
+npm run start:debug
+```
+Starts the server in debug mode with debugging enabled.
+
+### Production Mode
+```bash
+# Build the application
+npm run build
+
+# Start in production mode
+npm run start:prod
 ```
 
-## Compile and run the project
+## API Documentation
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+Once the server is running, you can access the Swagger API documentation at:
+```
+http://localhost:3000/docs
 ```
 
-## Run tests
+The API documentation includes:
+- All available endpoints
+- Request/response schemas
+- Authentication requirements
+- Interactive API testing interface
+
+## Database Management
+
+### Prisma Commands
 
 ```bash
-# unit tests
-$ npm run test
+# Generate Prisma client after schema changes
+npx prisma generate
 
-# e2e tests
-$ npm run test:e2e
+# View your database in Prisma Studio
+npx prisma studio
 
-# test coverage
-$ npm run test:cov
+# Reset database (caution: this will delete all data)
+npx prisma migrate reset
+
+# Deploy migrations to production
+npx prisma migrate deploy
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Testing
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Unit tests
+npm run test
+
+# Unit tests in watch mode
+npm run test:watch
+
+# Test coverage
+npm run test:cov
+
+# End-to-end tests
+npm run test:e2e
+
+# Debug tests
+npm run test:debug
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Code Quality
 
-## Resources
+```bash
+# Lint code
+npm run lint
 
-Check out a few resources that may come in handy when working with NestJS:
+# Format code with Prettier
+npm run format
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Project Structure
 
-## Support
+```
+src/
+├── app.controller.ts     # Main application controller
+├── app.module.ts         # Root application module
+├── app.service.ts        # Main application service
+└── main.ts              # Application entry point
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+prisma/
+└── schema.prisma        # Database schema definition
 
-## Stay in touch
+test/
+├── app.e2e-spec.ts      # End-to-end tests
+└── jest-e2e.json        # E2E test configuration
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Development Workflow
+
+1. **Make changes** to your code
+2. **Run tests** to ensure everything works: `npm run test`
+3. **Lint and format** your code: `npm run lint && npm run format`
+4. **Update database schema** if needed in `prisma/schema.prisma`
+5. **Generate Prisma client**: `npx prisma generate`
+6. **Run migrations** or push schema: `npx prisma db push`
+
+## Authentication
+
+This project uses JWT (JSON Web Tokens) for authentication. The API endpoints are protected with Bearer token authentication. 
+
+To authenticate:
+1. Obtain a JWT token from the login endpoint
+2. Include the token in the Authorization header: `Bearer <your-token>`
+
+## Troubleshooting
+
+### Database Connection Issues
+- Ensure PostgreSQL is running
+- Verify `DATABASE_URL` in your `.env` file
+- Check that the database exists and is accessible
+
+### Port Already in Use
+- Change the `PORT` in your `.env` file
+- Or kill the process using the port: `netstat -ano | findstr :3000` (Windows)
+
+### Prisma Issues
+- Run `npx prisma generate` after schema changes
+- Clear Prisma cache: `npx prisma generate --force`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Make your changes
+4. Run tests and linting
+5. Commit your changes: `git commit -m 'Add some feature'`
+6. Push to the branch: `git push origin feature/your-feature-name`
+7. Submit a pull request
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the UNLICENSED License.
