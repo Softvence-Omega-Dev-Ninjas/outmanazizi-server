@@ -1,0 +1,20 @@
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  name          String
+  phone         String
+  role          Role     @default(CONSUMER)
+  isActive      Boolean  @default(true)
+  isOtpVerified Boolean  @default(false)
+  otp           String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  ratings       Rating[]
+}
+
+enum Role {
+  ADMIN
+  CONSUMER
+  SERVICE_PROVIDER
+}

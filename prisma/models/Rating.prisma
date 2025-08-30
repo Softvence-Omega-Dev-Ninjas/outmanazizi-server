@@ -1,0 +1,14 @@
+model Rating {
+  id        String @id @default(uuid())
+  userId    String
+  serviceId String
+
+  user            User     @relation(fields: [userId], references: [id])
+  score           Int
+  comments        String?
+  replyToComments String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("ratings")
+}
