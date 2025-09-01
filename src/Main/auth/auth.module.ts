@@ -9,9 +9,12 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { HelperModule } from 'src/utils/helper/helper.module';
 import { GoogleStrategy } from './strategy/goggle.strategy';
 import { FacebookStrategy } from './strategy/facebook.strategy';
+import { MailModule } from 'src/utils/mail/mail.module';
 
 @Module({
   imports: [
+    ConfigModule,
+    MailModule,
     PassportModule.register({ session: false }),
     HelperModule,
     PrismaModule,

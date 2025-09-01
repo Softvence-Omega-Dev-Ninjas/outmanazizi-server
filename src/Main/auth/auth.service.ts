@@ -10,6 +10,9 @@ import { RegisterDto, LoginDto, } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { HelperService } from 'src/utils/helper/helper.service';
+import { getLocalDateTime } from 'src/utils/common/localtimeAndDate/localtime';
+import { MailService } from 'src/utils/mail/mail.service';
+import { ResetPasswordDto } from './dto/resetPassword';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +20,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly helperService: HelperService,
+    private readonly mailService: MailService,
   ) { }
 
   async register(registerDto: RegisterDto) {
@@ -118,5 +122,70 @@ export class AuthService {
     }
   }
 
+  // forget password
+  async forgotPassword(email: string) {
+    console.log('Forgot password requested for email:', email);
+    try {
+      const userExists = await this.helperService.userExistsByEmail(email);
 
+      if (!userExists) {
+        throw new NotFoundException('User not found');
+      }
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiresAt = getLocalDateTime(10);
+
+      await this.prisma.user.update({
+        where: { email },
+        data: { otp, otpExpiresAt },
+      });
+      await this.mailService.sendMail(
+        email,
+        'Password Reset OTP',
+        `<p>Your OTP code is: <strong>${otp}</strong></p>`
+      );
+      return ApiResponse.success(null, 'Reset password email sent');
+    } catch (error) {
+      throw new UnauthorizedException('Forgot password failed', error);
+    }
+  }
+  // verify reset password
+  async verifyResetPassword(resetPasswordDto: ResetPasswordDto) {
+    try {
+      const { email, otp, newPassword } = resetPasswordDto;
+      const userExists = await this.helperService.userExistsByEmail(email);
+
+      if (!userExists) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (userExists.otp !== otp) {
+        throw new UnauthorizedException('Invalid OTP');
+      }
+
+      const currentTime = new Date(getLocalDateTime(0));
+      if (
+        !userExists.otpExpiresAt ||
+        !(
+          typeof userExists.otpExpiresAt === 'string' ||
+          typeof userExists.otpExpiresAt === 'number' ||
+          ((userExists.otpExpiresAt as any) instanceof Date)
+        ) ||
+        new Date(userExists.otpExpiresAt as string | number | Date) < currentTime
+      ) {
+        throw new UnauthorizedException('OTP expired');
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      await this.prisma.user.update({
+        where: { email },
+        data: { password: hashedPassword, otp: null, otpExpiresAt: null },
+      });
+
+      return ApiResponse.success(null, 'Password reset successfully');
+    } catch (error) {
+      console.error('Error verifying reset password:', error);
+      throw new UnauthorizedException('Reset password verification failed');
+    }
+  }
 }

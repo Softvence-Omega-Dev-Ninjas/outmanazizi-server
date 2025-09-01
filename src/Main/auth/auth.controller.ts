@@ -6,6 +6,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Public } from 'src/guards/public.decorator';
 import { GoogleUser } from './strategy/goggle.strategy';
 import type { Request } from 'express';
+import { ResetPasswordDto, ResetPasswordEmailDto } from './dto/resetPassword';
 
 
 
@@ -17,12 +18,14 @@ export class AuthController {
   ) { }
 
   @Post('register')
+  @Public()
   @ApiBody({ type: RegisterDto })
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
   @Post('login')
+  @Public()
   @ApiBody({ type: LoginDto })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -56,7 +59,20 @@ export class AuthController {
     return this.authService.saveFacebookUser(req.user);
   }
 
+  // reset password send otp to user
+  @Post('reset-password')
+  @Public()
+  @ApiBody({ type: ResetPasswordEmailDto })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordEmailDto) {
+    return this.authService.forgotPassword(resetPasswordDto.email);
+  }
 
-
-
+  // reset password verify otp
+  @Post('reset-password/verify')
+  @Public()
+  @ApiBody({ type: ResetPasswordDto })
+  async verifyResetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    console.log(resetPasswordDto);
+    return this.authService.verifyResetPassword(resetPasswordDto);
+  }
 }
