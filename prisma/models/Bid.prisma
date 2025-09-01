@@ -1,0 +1,20 @@
+model Bid {
+  id                      String          @id @default(uuid())
+  serviceId               String
+  service                 Service         @relation(fields: [serviceId], references: [id])
+  serviceProviderId       String
+  serviceProvider         ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  price                   String
+  serviceProviderProposal String
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+}
+ 
+
+// id varchar pk
+//   serviceId varchar [ref: > Service.id]
+//   serviceProviderId varchar [ref: > ServiceProvider.id]
+//   price varchar
+//   serviceProviderProposal varchar
+//   created_at timestamp
+//   updated_at timestamp
