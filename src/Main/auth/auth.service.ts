@@ -31,12 +31,14 @@ export class AuthService {
           name: registerDto.name,
           phone: registerDto.phone,
           password: hashedPassword,
+          picture: '', // Add default value for picture
         },
         create: {
           email: registerDto.email,
           name: registerDto.name,
           phone: registerDto.phone,
           password: hashedPassword,
+          picture: '', // Add default value for picture
         },
       });
 
@@ -76,4 +78,45 @@ export class AuthService {
       return ApiResponse.error('Login failed', errorMessage);
     }
   }
+
+  // Google OAuth Save information 
+  async saveGoogleUser(user: any) {
+    try {
+      const { email, firstName, picture, provider } = user;
+
+      const newUser = await this.prisma.user.upsert({
+        where: { email },
+        update: { name: firstName, picture, provider },
+        create: { email, name: firstName, picture, provider, phone: '' },
+      });
+      const payload = { sub: newUser.id, email: newUser.email, role: 'CONSUMER' };
+      const token = await this.jwtService.signAsync(payload);
+      return ApiResponse.success(token, 'User created successfully');
+    } catch (error) {
+      console.error('Error saving Google user:', error);
+      throw new UnauthorizedException('Google user registration failed');
+    }
+  }
+
+
+  // facebook OAuth Save information
+  async saveFacebookUser(user: any) {
+    try {
+      const { email, firstName, picture, provider } = user;
+
+      const newUser = await this.prisma.user.upsert({
+        where: { email },
+        update: { name: firstName, picture, provider },
+        create: { email, name: firstName, picture, provider, phone: '' },
+      });
+      const payload = { sub: newUser.id, email: newUser.email, role: 'CONSUMER' };
+      const token = await this.jwtService.signAsync(payload);
+      return ApiResponse.success(token, 'User created successfully');
+    } catch (error) {
+      console.error('Error saving Facebook user:', error);
+      throw new UnauthorizedException('Facebook user registration failed');
+    }
+  }
+
+
 }

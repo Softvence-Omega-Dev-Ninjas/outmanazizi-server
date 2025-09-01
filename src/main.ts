@@ -7,6 +7,11 @@ import { AllExceptionsFilter } from './utils/common/all-exception/all-exception-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new AllExceptionsFilter());
+  app.enableCors({
+    origin: ['*'],
+    credentials: true,
+
+  });
   const config = new DocumentBuilder()
     .setTitle('Outmanazizi Server')
     .setDescription('Project API docs')

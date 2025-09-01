@@ -7,9 +7,12 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { HelperModule } from 'src/utils/helper/helper.module';
+import { GoogleStrategy } from './strategy/goggle.strategy';
+import { FacebookStrategy } from './strategy/facebook.strategy';
 
 @Module({
   imports: [
+    PassportModule.register({ session: false }),
     HelperModule,
     PrismaModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -25,7 +28,7 @@ import { HelperModule } from 'src/utils/helper/helper.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, GoogleStrategy, FacebookStrategy],
   exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule { }

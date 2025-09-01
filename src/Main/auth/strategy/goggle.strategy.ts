@@ -5,9 +5,9 @@ import { PassportStrategy } from '@nestjs/passport';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor() {
+    console.log('passport initialized');
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID as string, // from .env
-
+      clientID: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       callbackURL: `${process.env.GOOGLE_CLIENT_CALLBACK_URL}`,
       scope: ['email', 'profile'],
@@ -34,10 +34,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const user = {
       email: emails[0].value,
       firstName: name.givenName,
-      lastName: name.familyName,
       picture: photos[0].value,
+      provider: 'GOOGLE',
     };
     done(null, user);
   }
 }
 
+export type GoogleUser = {
+  email: string;
+  firstName: string;
+  picture: string;
+  provider: 'GOOGLE';
+};
