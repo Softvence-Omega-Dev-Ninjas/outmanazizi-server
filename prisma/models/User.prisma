@@ -1,17 +1,16 @@
 model User {
-  id              String            @id @default(uuid())
-  email           String            @unique
-  password        String
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String?
   name            String
   phone           String
-  role            Role              @default(CONSUMER)
-  isActive        Boolean           @default(true)
-  isOtpVerified   Boolean           @default(false)
-  otp             String
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  role            Role             @default(CONSUMER)
+  isActive        Boolean          @default(true)
+  provider        String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   ratings         Rating[]
-  serviceProvider SERVICE_PROVIDER?
+  serviceProvider ServiceProvider?
   services        Service[]
 }
 

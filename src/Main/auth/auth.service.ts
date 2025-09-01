@@ -1,108 +1,79 @@
 import {
   Injectable,
-  ConflictException,
+  NotFoundException,
   UnauthorizedException,
+
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto, LoginDto, AuthResponseDto, UserResponseDto } from './dto';
-import { User } from '@prisma/client';
+import { RegisterDto, LoginDto, } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
+import { HelperService } from 'src/utils/helper/helper.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly helperService: HelperService,
   ) { }
 
   async register(registerDto: RegisterDto) {
-    const { email, password, name, phone } = registerDto;
+    try {
+      const saltRounds = 12;
+      const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
 
-    // Check if user already exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email },
-    });
+      // Create the user
+      const user = await this.prisma.user.upsert({
+        where: { email: registerDto.email },
+        update: {
+          name: registerDto.name,
+          phone: registerDto.phone,
+          password: hashedPassword,
+        },
+        create: {
+          email: registerDto.email,
+          name: registerDto.name,
+          phone: registerDto.phone,
+          password: hashedPassword,
+        },
+      });
 
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+
+      return ApiResponse.success(user, 'User registered successfully',)
+    } catch (error) {
+      console.error('Error registering user:', error);
+      throw new UnauthorizedException('User registration failed');
     }
-
-    // Hash the password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // Create the user
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        name,
-        phone,
-        password: hashedPassword,
-      },
-    });
-
-    // Generate JWT token
-    const payload = { sub: user.id, email: user.email };
-    const access_token = this.jwtService.sign(payload);
-
-    return {
-      access_token,
-      user: this.formatUserResponse(user),
-    };
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const { email, password } = loginDto;
+  async login(loginDto: LoginDto) {
+    try {
+      const userExists = await this.helperService.userExistsByEmail(loginDto.email);
 
-    // Find user by email
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
+      if (!userExists) {
+        throw new NotFoundException('User not found');
+      }
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      if (!userExists.password) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const passwordMatch = await bcrypt.compare(
+        loginDto.password,
+        userExists.password,
+      );
+
+      if (!passwordMatch) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+      const payload = { sub: userExists.id, email: userExists.email, role: userExists.role };
+      const token = await this.jwtService.signAsync(payload)
+      return ApiResponse.success(token, 'User logged in successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return ApiResponse.error('Login failed', errorMessage);
     }
-
-    // Check if user is active
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
-    }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Generate JWT token
-    const payload = { sub: user.id, email: user.email };
-    const access_token = this.jwtService.sign(payload);
-
-    return {
-      access_token,
-      user: this.formatUserResponse(user),
-    };
-  }
-
-  async validateUser(id: string): Promise<UserResponseDto | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!user || !user.isActive) {
-      return null;
-    }
-
-    return this.formatUserResponse(user);
-  }
-
-  private formatUserResponse(user: User): UserResponseDto {
-    return {
-      id: user.id,
-      email: user.email,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-    };
   }
 }
