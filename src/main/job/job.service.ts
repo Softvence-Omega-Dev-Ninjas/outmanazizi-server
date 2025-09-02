@@ -7,6 +7,7 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 @Injectable()
 export class JobService {
   constructor(private readonly prisma: PrismaService) {}
+  // Create a job
   async create(userId: string, createJobDto: CreateJobDto) {
     try {
       const savedJob = await this.prisma.service.create({
@@ -22,6 +23,7 @@ export class JobService {
     }
   }
 
+  // find all job
   async findAll() {
     const result = ApiResponse.success(
       await this.prisma.service.findMany(),
@@ -30,11 +32,13 @@ export class JobService {
     return result;
   }
 
+  // find one job in details
   async findOne(id: string) {
     const result = await this.prisma.service.findUnique({ where: { id } });
     return ApiResponse.success(result, 'Job retrieved successfully');
   }
 
+  // update a job
   async update(id: string, updateJobDto: UpdateJobDto) {
     try {
       const updatedJob = await this.prisma.service.update({
@@ -47,10 +51,17 @@ export class JobService {
     }
   }
 
+  // Send Delete Request to admin
   async remove(id: string) {
     try {
-      await this.prisma.service.delete({ where: { id } });
-      return ApiResponse.success(null, 'Job removed successfully');
+      const deletedJob = await this.prisma.service.update({
+        where: { id },
+        data: { isDeleteRequestToAdmin: true },
+      });
+      return ApiResponse.success(
+        deletedJob,
+        'Job removal requested to admin successfully',
+      );
     } catch (error) {
       console.error('Error removing job:', error);
       throw new Error('Error removing job');
