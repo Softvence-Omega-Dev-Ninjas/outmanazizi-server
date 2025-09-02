@@ -1,14 +1,14 @@
 import { Controller, Post, Body, Get, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBody } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, } from './dto';
 import { Public } from 'src/guards/public.decorator';
 import { GoogleUser } from './strategy/goggle.strategy';
 import type { Request } from 'express';
-import { ResetPasswordDto, ResetPasswordEmailDto } from './dto/resetPassword';
 import { ChangePasswordDto } from './dto/changePassword.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
+import { AuthService } from './auth.service';
+import { ResetPasswordDto, ResetPasswordEmailDto } from './dto/resetPassword';
 
 
 
