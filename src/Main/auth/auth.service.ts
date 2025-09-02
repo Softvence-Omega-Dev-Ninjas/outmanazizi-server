@@ -102,7 +102,6 @@ export class AuthService {
     }
   }
 
-
   // facebook OAuth Save information
   async saveFacebookUser(user: any) {
     try {
@@ -186,6 +185,37 @@ export class AuthService {
     } catch (error) {
       console.error('Error verifying reset password:', error);
       throw new UnauthorizedException('Reset password verification failed');
+    }
+  }
+
+  // Change password
+  async changePassword(email: string, oldPassword: string, newPassword: string) {
+    try {
+      const user = await this.helperService.userExistsByEmail(email);
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (!user.password) {
+        throw new UnauthorizedException('Old password is incorrect');
+      }
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) {
+        throw new UnauthorizedException('Old password is incorrect');
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      await this.prisma.user.update({
+        where: { email },
+        data: { password: hashedPassword },
+      });
+
+      return ApiResponse.success(null, 'Password changed successfully');
+    } catch (error) {
+      console.error('Error changing password:', error);
+      throw new UnauthorizedException('Change password failed');
     }
   }
 }

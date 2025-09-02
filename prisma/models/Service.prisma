@@ -10,7 +10,7 @@ model Service {
   toolsNeed                      Boolean
   file                           String?
   appliedServiceProvider         String[]
-  confirmServiceProvider         String[]
+  confirmServiceProvider         String
   isCompletedFromServiceProvider Boolean  @default(false)
   isCompleteFromConsumer         Boolean  @default(false)
   isDeleteRequestToAdmin         Boolean  @default(false)

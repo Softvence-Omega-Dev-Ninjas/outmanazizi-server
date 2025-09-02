@@ -9,12 +9,3 @@ model Bid {
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
 }
- 
-
-// id varchar pk
-//   serviceId varchar [ref: > Service.id]
-//   serviceProviderId varchar [ref: > ServiceProvider.id]
-//   price varchar
-//   serviceProviderProposal varchar
-//   created_at timestamp
-//   updated_at timestamp
