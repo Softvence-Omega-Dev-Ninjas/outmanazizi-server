@@ -1,7 +1,8 @@
 model Service {
-  id                             String   @id @default(uuid())
-  userId                         String
-  user                           User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
   title                          String
   description                    String
   location                       String
@@ -9,13 +10,14 @@ model Service {
   startTime                      String
   toolsNeed                      Boolean
   file                           String?
-  appliedServiceProvider         String[]
-  confirmServiceProvider         String
-  isCompletedFromServiceProvider Boolean  @default(false)
-  isCompleteFromConsumer         Boolean  @default(false)
-  isDeleteRequestToAdmin         Boolean  @default(false)
-  isDeleted                      Boolean  @default(false)
-  createdAt                      DateTime @default(now())
-  updatedAt                      DateTime @updatedAt
+  isCompletedFromServiceProvider Boolean          @default(false)
+  isCompleteFromConsumer         Boolean          @default(false)
+  isDeleteRequestToAdmin         Boolean          @default(false)
+  isDeleted                      Boolean          @default(false)
+  createdAt                      DateTime         @default(now())
+  updatedAt                      DateTime         @updatedAt
   bids                           Bid[]
+  jobApplications                JobApplication[]
+  ServiceProvider                ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
+  serviceProviderId              String?
 }

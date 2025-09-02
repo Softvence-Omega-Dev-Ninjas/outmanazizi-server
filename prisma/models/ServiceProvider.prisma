@@ -10,4 +10,5 @@ model ServiceProvider {
   updatedAt           DateTime      @updatedAt
   bids                Bid[]
   noteServices        NoteService[]
+  services            Service[]
 }

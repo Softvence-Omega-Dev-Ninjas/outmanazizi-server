@@ -32,8 +32,7 @@ export class AuthenticationGuard implements CanActivate {
         secret: process.env.JWT_SECRET,
       });
       if (!payload) return false;
-      // Attach user info to request
-      request['userid'] = payload.id;
+      request['userid'] = payload.sub;
       request['email'] = payload.email;
       request['role'] = payload.role;
     } catch (err) {
@@ -45,7 +44,7 @@ export class AuthenticationGuard implements CanActivate {
   }
 }
 export class UserInfoJwt {
-  id: string;
+  sub: string;
   email: string;
   role: string;
 }

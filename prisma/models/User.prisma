@@ -15,6 +15,7 @@ model User {
   ratings         Rating[]
   serviceProvider ServiceProvider?
   services        Service[]
+  jobApplications JobApplication[] @relation("provider")
 }
 
 enum Role {
