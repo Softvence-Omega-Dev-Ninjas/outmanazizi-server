@@ -7,10 +7,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthenticationGuard } from './guards/auth.guard';
 import { JobModule } from './main/job/job.module';
+import { ServiceProviderModule } from './main/service-provider/service-provider.module';
 
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, JwtModule.register({}), JobModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, JwtModule.register({}), JobModule, ServiceProviderModule],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
 })

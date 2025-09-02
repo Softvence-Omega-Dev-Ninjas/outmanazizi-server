@@ -17,7 +17,6 @@ model Service {
   createdAt                      DateTime         @default(now())
   updatedAt                      DateTime         @updatedAt
   bids                           Bid[]
-  jobApplications                JobApplication[]
   ServiceProvider                ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
   serviceProviderId              String?
 }
