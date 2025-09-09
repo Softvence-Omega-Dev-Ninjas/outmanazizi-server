@@ -10,10 +10,10 @@ async function bootstrap() {
   app.enableCors({
     origin: ['*'],
     credentials: true,
-
   });
+
   const config = new DocumentBuilder()
-    .setTitle('Outmanazizi Server')
+    .setTitle('OutmanAzizi Server')
     .setDescription('Project API docs')
     .setVersion('1.0')
     .addBearerAuth(
@@ -45,7 +45,9 @@ async function bootstrap() {
     ]),
   );
 
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('docs', app, document);
+
+  app.setGlobalPrefix('/api/v1');
 
   await app.listen(process.env.PORT ?? 3000);
 }

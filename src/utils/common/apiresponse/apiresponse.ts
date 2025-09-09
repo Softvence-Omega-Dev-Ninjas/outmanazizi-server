@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 export class ApiResponse {
   static success<T>(data: T, message = 'Success') {
     return {
