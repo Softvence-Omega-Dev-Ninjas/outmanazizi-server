@@ -2,17 +2,18 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
-
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto, LoginDto, } from './dto';
+import { RegisterDto, LoginDto } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { HelperService } from 'src/utils/helper/helper.service';
 import { getLocalDateTime } from 'src/utils/common/localtimeAndDate/localtime';
 import { MailService } from 'src/utils/mail/mail.service';
 import { ResetPasswordDto } from './dto/resetPassword';
+import { UpdateJobDto } from '../job/dto/update-job.dto';
+import { UpdateUserDto } from './dto/updateUser.dto';
 
 @Injectable()
 export class AuthService {
@@ -21,13 +22,17 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly helperService: HelperService,
     private readonly mailService: MailService,
-  ) { }
+  ) {}
 
   async register(registerDto: RegisterDto) {
     try {
       const saltRounds = 12;
-      const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
-
+      const hashedPassword = await bcrypt.hash(
+        registerDto.password,
+        saltRounds,
+      );
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiresAt = getLocalDateTime(10);
       // Create the user
       const user = await this.prisma.user.upsert({
         where: { email: registerDto.email },
@@ -36,6 +41,8 @@ export class AuthService {
           phone: registerDto.phone,
           password: hashedPassword,
           picture: '', // Add default value for picture
+          otp,
+          otpExpiresAt,
         },
         create: {
           email: registerDto.email,
@@ -43,20 +50,60 @@ export class AuthService {
           phone: registerDto.phone,
           password: hashedPassword,
           picture: '', // Add default value for picture
+          otp,
+          otpExpiresAt,
         },
       });
+      // send otp to user email
+      await this.mailService.sendMail(
+        registerDto.email,
+        'Account Verification OTP',
+        `<p>Your OTP code is: <strong>${otp}</strong></p>`,
+      );
 
-
-      return ApiResponse.success(user, 'User registered successfully',)
+      return ApiResponse.success(
+        user,
+        'User registered successfully. Please verify OTP sent to your email.',
+      );
     } catch (error) {
       console.error('Error registering user:', error);
       throw new UnauthorizedException('User registration failed');
     }
   }
 
+  // verify otp and create user
+  async verifyOtp(email: string, otp: string) {
+    try {
+      console.log('Email:', email, 'OTP:', otp); // Debugging line
+      const user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      if (user.otp !== otp) {
+        throw new UnauthorizedException('Invalid OTP');
+      }
+      const currentTime = new Date(getLocalDateTime(0));
+      if (currentTime > new Date(user.otpExpiresAt as string | number | Date)) {
+        throw new UnauthorizedException('OTP expired');
+      }
+      const data = await this.prisma.user.update({
+        where: { email },
+        data: { otp: null, otpExpiresAt: null },
+      });
+      return ApiResponse.success(
+        data,
+        'OTP verified successfully and user created',
+      );
+    } catch (error) {}
+  }
+
   async login(loginDto: LoginDto) {
     try {
-      const userExists = await this.helperService.userExistsByEmail(loginDto.email);
+      const userExists = await this.helperService.userExistsByEmail(
+        loginDto.email,
+      );
 
       if (!userExists) {
         throw new NotFoundException('User not found');
@@ -74,15 +121,19 @@ export class AuthService {
       if (!passwordMatch) {
         throw new UnauthorizedException('Invalid credentials');
       }
-      const payload = { sub: userExists.id, email: userExists.email, role: userExists.role };
-      const token = await this.jwtService.signAsync(payload)
+      const payload = {
+        sub: userExists.id,
+        email: userExists.email,
+        role: userExists.role,
+      };
+      const token = await this.jwtService.signAsync(payload);
       return ApiResponse.success(token, 'User logged in successfully');
-    } catch (error) { 
+    } catch (error) {
       return ApiResponse.error('Login failed', error.message);
     }
   }
 
-  // Google OAuth Save information 
+  // Google OAuth Save information
   async saveGoogleUser(user: any) {
     try {
       const { email, firstName, picture, provider } = user;
@@ -92,7 +143,11 @@ export class AuthService {
         update: { name: firstName, picture, provider },
         create: { email, name: firstName, picture, provider, phone: '' },
       });
-      const payload = { sub: newUser.id, email: newUser.email, role: 'CONSUMER' };
+      const payload = {
+        sub: newUser.id,
+        email: newUser.email,
+        role: 'CONSUMER',
+      };
       const token = await this.jwtService.signAsync(payload);
       return ApiResponse.success(token, 'User created successfully');
     } catch (error) {
@@ -100,7 +155,6 @@ export class AuthService {
       throw new UnauthorizedException('Google user registration failed');
     }
   }
-
 
   // facebook OAuth Save information
   async saveFacebookUser(user: any) {
@@ -112,7 +166,11 @@ export class AuthService {
         update: { name: firstName, picture, provider },
         create: { email, name: firstName, picture, provider, phone: '' },
       });
-      const payload = { sub: newUser.id, email: newUser.email, role: 'CONSUMER' };
+      const payload = {
+        sub: newUser.id,
+        email: newUser.email,
+        role: 'CONSUMER',
+      };
       const token = await this.jwtService.signAsync(payload);
       return ApiResponse.success(token, 'User created successfully');
     } catch (error) {
@@ -123,7 +181,6 @@ export class AuthService {
 
   // forget password
   async forgotPassword(email: string) {
-    console.log('Forgot password requested for email:', email);
     try {
       const userExists = await this.helperService.userExistsByEmail(email);
 
@@ -140,14 +197,14 @@ export class AuthService {
       await this.mailService.sendMail(
         email,
         'Password Reset OTP',
-        `<p>Your OTP code is: <strong>${otp}</strong></p>`
+        `<p>Your OTP code is: <strong>${otp}</strong></p>`,
       );
-      return ApiResponse.success(null, 'Reset password email sent');
+      return ApiResponse.success(null, 'OTP sent to email for password reset');
     } catch (error) {
       throw new UnauthorizedException('Forgot password failed', error);
     }
   }
-  
+
   // verify reset password
   async verifyResetPassword(resetPasswordDto: ResetPasswordDto) {
     try {
@@ -168,9 +225,10 @@ export class AuthService {
         !(
           typeof userExists.otpExpiresAt === 'string' ||
           typeof userExists.otpExpiresAt === 'number' ||
-          ((userExists.otpExpiresAt as any) instanceof Date)
+          (userExists.otpExpiresAt as any) instanceof Date
         ) ||
-        new Date(userExists.otpExpiresAt as string | number | Date) < currentTime
+        new Date(userExists.otpExpiresAt as string | number | Date) <
+          currentTime
       ) {
         throw new UnauthorizedException('OTP expired');
       }
@@ -190,7 +248,11 @@ export class AuthService {
   }
 
   // Change password
-  async changePassword(email: string, oldPassword: string, newPassword: string) {
+  async changePassword(
+    email: string,
+    oldPassword: string,
+    newPassword: string,
+  ) {
     try {
       const user = await this.helperService.userExistsByEmail(email);
 
@@ -217,6 +279,21 @@ export class AuthService {
     } catch (error) {
       console.error('Error changing password:', error);
       throw new UnauthorizedException('Change password failed');
+    }
+  }
+  // user update
+  async updateUser(id: string, data: UpdateUserDto) {
+    console.log(id, data);
+    try {
+      const user = await this.prisma.user.update({
+        where: { id },
+        data,
+      });
+      return ApiResponse.success(user, 'User updated successfully');
+      // return ApiResponse.success(user, 'User updated successfully');
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw new UnauthorizedException('Update user failed');
     }
   }
 }

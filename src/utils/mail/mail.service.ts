@@ -35,7 +35,7 @@ export class MailService {
 
       this.logger.log(`Email sent successfully to ${to}`);
     } catch (error) {
-      ApiResponse.error(`Failed to send email to ${to}: ${error.message}`, 500);
+      ApiResponse.error(`Failed to send email to ${to}: ${error.message}`);
     }
   }
 }

@@ -9,11 +9,11 @@ export class ApiResponse {
     };
   }
 
-  static error(message = 'Something went wrong', error: any = null) {
+  static error(error: any = null, message = 'Something went wrong') {
     return {
       success: false,
       message,
-      error,
+      error, // You can include error details if needed for debugging
     };
   }
 }

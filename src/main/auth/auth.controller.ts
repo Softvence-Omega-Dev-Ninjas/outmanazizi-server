@@ -1,6 +1,14 @@
-import { Controller, Post, Body, Get, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Req,
+  UseGuards,
+  Patch,
+} from '@nestjs/common';
 import { ApiTags, ApiBody } from '@nestjs/swagger';
-import { LoginDto, RegisterDto, } from './dto';
+import { LoginDto, RegisterDto } from './dto';
 import { Public } from 'src/guards/public.decorator';
 import { GoogleUser } from './strategy/goggle.strategy';
 import type { Request } from 'express';
@@ -9,15 +17,13 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { AuthService } from './auth.service';
 import { ResetPasswordDto, ResetPasswordEmailDto } from './dto/resetPassword';
-
-
+import { EmailAndOtpDto } from './dto/emailAndOtp.dto';
+import { UpdateUserDto } from './dto/updateUser.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService
-
-  ) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   @Public()
@@ -25,7 +31,16 @@ export class AuthController {
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
-
+  // otp verification and create user
+  @Post('verify-otp')
+  @Public()
+  @ApiBody({ type: EmailAndOtpDto })
+  async verifyOtp(@Body() emailAndOtpDto: EmailAndOtpDto) {
+    return await this.authService.verifyOtp(
+      emailAndOtpDto.email,
+      emailAndOtpDto.otp,
+    );
+  }
   @Post('login')
   @Public()
   @ApiBody({ type: LoginDto })
@@ -47,12 +62,11 @@ export class AuthController {
     return this.authService.saveGoogleUser(req.user as GoogleUser);
   }
 
-
   // ---- Facebook Login ----
   @Get('facebook')
   @Public()
   @UseGuards(AuthGuard('facebook'))
-  async facebookLogin() { }
+  async facebookLogin() {}
 
   @Get('facebook/redirect')
   @UseGuards(AuthGuard('facebook'))
@@ -82,14 +96,24 @@ export class AuthController {
   @Post('change-password')
   @UseGuards(AuthenticationGuard)
   @ApiBody({ type: ChangePasswordDto })
-  async changePassword(@Body() changePasswordDto: ChangePasswordDto, @Req() req: Request) {
-
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @Req() req: Request,
+  ) {
     return this.authService.changePassword(
       req['email'] as string,
       changePasswordDto.oldPassword,
       changePasswordDto.newPassword,
     );
   }
-
-
+  // user update
+  @Patch('update-user')
+  @UseGuards(AuthenticationGuard)
+  @ApiBody({ type: UpdateUserDto })
+  async updateUser(@Body() updateUserDto: UpdateUserDto, @Req() req: Request) {
+    return await this.authService.updateUser(
+      req['userid'] as string,
+      updateUserDto,
+    );
+  }
 }
