@@ -21,17 +21,20 @@ export class AdminController {
   @Public()
   @ApiOperation({ summary: 'Make Service Provider verified' })
   async create(@Param('userid') userid: string) {
-    console.log(userid);
     return await this.adminService.serviceProviderVerification(userid);
   }
 
   @Get()
-  findAll() {
-    return this.adminService.findAll();
+  @Public()
+  @ApiOperation({ summary: 'All User Proper Details' })
+  async findAll() {
+    return await this.adminService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.adminService.findOne(+id);
+  @Patch('blocked/:userid')
+  @Public()
+  @ApiOperation({ summary: 'Make Service Provider verified' })
+  async blockedUser(@Param('userid') userid: string) {
+    return await this.adminService.blockedUser(userid);
   }
 }

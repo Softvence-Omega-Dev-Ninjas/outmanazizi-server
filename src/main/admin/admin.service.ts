@@ -23,7 +23,7 @@ export class AdminService {
       throw new UnauthorizedException('User account is already blocked');
     }
     if (userExits.isActive === false) {
-      throw new UnauthorizedException('User account is already not active');
+      throw new UnauthorizedException('User account is  not active');
     }
     if (userExits.serviceProvider?.isVerifiedFromAdmin === true) {
       throw new UnauthorizedException('User is already verified');
@@ -39,15 +39,34 @@ export class AdminService {
     return ApiResponse.success(verifiedUser, 'User is verified successfully');
   }
 
-  findAll() {
-    return `This action returns all admin`;
+  // Get all users with proper details
+  async findAll() {
+    const allUser = await this.prisma.user.findMany({
+      include: { serviceProvider: true },
+    });
+    return ApiResponse.success(allUser, 'All users fetched successfully');
   }
 
   findOne(id: number) {
     return `This action returns a #${id} admin`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} admin`;
+  async blockedUser(id: string) {
+    const userExits = await this.prisma.user.findUnique({
+      where: { id: id },
+    });
+    if (!userExits) {
+      throw new UnauthorizedException('User does not exists');
+    }
+    if (userExits.isDeleted) {
+      throw new UnauthorizedException('User account is already deleted');
+    }
+    const blockedUser = await this.prisma.user.update({
+      where: { id: id },
+      data: {
+        isBlocked: !userExits.isBlocked,
+      },
+    });
+    return ApiResponse.success(blockedUser, 'User is blocked successfully');
   }
 }
