@@ -88,4 +88,26 @@ export class AdminService {
       'User account is deleted successfully',
     );
   }
+
+  // Delete a service, which is created by service provider
+  async deleteService(serviceid: string) {
+    const serviceExits = await this.prisma.service.findUnique({
+      where: { id: serviceid },
+    });
+    if (!serviceExits) {
+      throw new UnauthorizedException('Service does not exists');
+    }
+    if (serviceExits.isDeleteRequestToAdmin === false) {
+      throw new UnauthorizedException(
+        'Service deletion request is not sent to admin',
+      );
+    }
+    const deletedService = await this.prisma.service.delete({
+      where: { id: serviceid },
+    });
+    return ApiResponse.success(
+      deletedService,
+      'Service is deleted successfully',
+    );
+  }
 }

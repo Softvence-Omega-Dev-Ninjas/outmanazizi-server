@@ -44,4 +44,14 @@ export class AdminController {
   async deleteUser(@Param('userid') userid: string) {
     return await this.adminService.deleteUser(userid);
   }
+
+  // Delete a service, which is created by service provider
+  @Delete('service/:serviceid')
+  @Public()
+  @ApiOperation({
+    summary: 'Delete a service, which is created by service provider',
+  })
+  async deleteService(@Param('serviceid') serviceid: string) {
+    return await this.adminService.deleteService(serviceid);
+  }
 }
