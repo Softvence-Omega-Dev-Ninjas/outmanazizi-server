@@ -69,4 +69,23 @@ export class AdminService {
     });
     return ApiResponse.success(blockedUser, 'User is blocked successfully');
   }
+  // account deletion by admin
+  async deleteUser(id: string) {
+    const userExits = await this.prisma.user.findUnique({
+      where: { id: id },
+    });
+    if (!userExits) {
+      throw new UnauthorizedException('User does not exists');
+    }
+    const deletedUser = await this.prisma.user.update({
+      where: { id: id },
+      data: {
+        isDeleted: true,
+      },
+    });
+    return ApiResponse.success(
+      deletedUser,
+      'User account is deleted successfully',
+    );
+  }
 }

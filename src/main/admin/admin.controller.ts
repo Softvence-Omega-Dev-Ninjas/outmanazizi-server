@@ -33,8 +33,15 @@ export class AdminController {
 
   @Patch('blocked/:userid')
   @Public()
-  @ApiOperation({ summary: 'Make Service Provider verified' })
+  @ApiOperation({ summary: 'Blocked a User ' })
   async blockedUser(@Param('userid') userid: string) {
     return await this.adminService.blockedUser(userid);
+  }
+
+  @Patch('delete/:userid')
+  @Public()
+  @ApiOperation({ summary: 'Delete  a User ' })
+  async deleteUser(@Param('userid') userid: string) {
+    return await this.adminService.deleteUser(userid);
   }
 }
