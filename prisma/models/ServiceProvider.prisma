@@ -5,7 +5,7 @@ model ServiceProvider {
   address             String
   serviceArea         String[]
   serviceCategories   String[]
-  isVerifiedFromAdmin Boolean
+  isVerifiedFromAdmin Boolean       @default(false)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
   bids                Bid[]

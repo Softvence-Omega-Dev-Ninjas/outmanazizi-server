@@ -8,6 +8,7 @@ model Service {
   location                       String
   budget                         String
   startTime                      String
+  endTime                        String
   toolsNeed                      Boolean
   file                           String?
   isCompletedFromServiceProvider Boolean          @default(false)

@@ -6,10 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ServiceProviderService } from './service-provider.service';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
 import { UpdateServiceProviderDto } from './dto/update-service-provider.dto';
+import { AuthenticationGuard } from 'src/guards/auth.guard';
 
 @Controller('service-provider')
 export class ServiceProviderController {
@@ -18,8 +21,15 @@ export class ServiceProviderController {
   ) {}
 
   @Post('create-service-provider')
-  create(@Body() createServiceProviderDto: CreateServiceProviderDto) {
-    return this.serviceProviderService.create(createServiceProviderDto);
+  @UseGuards(AuthenticationGuard)
+  async create(
+    @Body() createServiceProviderDto: CreateServiceProviderDto,
+    @Req() req: Request,
+  ) {
+    return await this.serviceProviderService.create(
+      req['userid'],
+      createServiceProviderDto,
+    );
   }
 
   @Get()

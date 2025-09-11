@@ -23,7 +23,6 @@ export class JobController {
   @Post('create-job')
   @UseGuards(AuthenticationGuard)
   create(@Body() createJobDto: CreateJobDto, @Req() req: Request) {
-    console.log(req);
     return this.jobService.create(req['userid'] as string, createJobDto);
   }
 
