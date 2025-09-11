@@ -19,7 +19,6 @@ export class ServiceProviderService {
     try {
       // user exists check
       const user = await this.helperService.userExistsByUserid(userid);
-      console.log(user);
       if (!user) {
         throw new NotFoundException('user not found');
       }
@@ -37,6 +36,10 @@ export class ServiceProviderService {
           serviceArea: createServiceProviderDto.serviceArea,
           serviceCategories: createServiceProviderDto.serviceCategories,
         },
+      });
+      await this.prisma.user.update({
+        where: { id: userid },
+        data: { role: 'SERVICE_PROVIDER' },
       });
       return ApiResponse.success(
         serviceProvider,
