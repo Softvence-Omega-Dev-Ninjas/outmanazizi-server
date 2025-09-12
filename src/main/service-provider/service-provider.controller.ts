@@ -11,8 +11,9 @@ import {
 } from '@nestjs/common';
 import { ServiceProviderService } from './service-provider.service';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
-import { UpdateServiceProviderDto } from './dto/update-service-provider.dto';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
+import { ApiOperation } from '@nestjs/swagger';
+import { ServiceProviderBidDto } from './dto/service-provider-bid.dto';
 
 @Controller('service-provider')
 export class ServiceProviderController {
@@ -33,25 +34,18 @@ export class ServiceProviderController {
   }
 
   @Get()
-  findAll() {
-    return this.serviceProviderService.findAll();
+  @ApiOperation({ summary: 'Get all service providers' })
+  async findAll() {
+    return await this.serviceProviderService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.serviceProviderService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
+  @Post('makes-bid/:id')
+  @UseGuards(AuthenticationGuard)
+  async makeBid(
     @Param('id') id: string,
-    @Body() updateServiceProviderDto: UpdateServiceProviderDto,
+    @Req() req: Request,
+    @Body() body: ServiceProviderBidDto,
   ) {
-    return this.serviceProviderService.update(+id, updateServiceProviderDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.serviceProviderService.remove(+id);
+    return await this.serviceProviderService.makeBid(req['userid'], id, body);
   }
 }

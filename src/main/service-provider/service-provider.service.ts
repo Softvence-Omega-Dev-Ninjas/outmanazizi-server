@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
-import { UpdateServiceProviderDto } from './dto/update-service-provider.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { HelperService } from 'src/utils/helper/helper.service';
+import { ServiceProviderBidDto } from './dto/service-provider-bid.dto';
 
 @Injectable()
 export class ServiceProviderService {
@@ -50,19 +50,38 @@ export class ServiceProviderService {
     }
   }
 
-  findAll() {
-    return `This action returns all serviceProvider`;
+  async findAll() {
+    const result = await this.prisma.serviceProvider.findMany({});
+    return ApiResponse.success(
+      result,
+      'Service providers retrieved successfully',
+    );
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} serviceProvider`;
-  }
-
-  update(id: number, updateServiceProviderDto: UpdateServiceProviderDto) {
-    return `This action updates a #${id} serviceProvider`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} serviceProvider`;
+  async makeBid(
+    userid: string,
+    serviceRequestId: string,
+    body: ServiceProviderBidDto,
+  ) {
+    const validSerivceProvider =
+      await this.helperService.validServiceProvider(userid);
+    if (!validSerivceProvider) {
+      throw new NotFoundException('Invalid service provider');
+    }
+    const serviceRequest = await this.prisma.service.findUnique({
+      where: { id: serviceRequestId },
+    });
+    if (!serviceRequest) {
+      throw new NotFoundException('Service request not found');
+    }
+    const bid = await this.prisma.bid.create({
+      data: {
+        serviceId: serviceRequestId,
+        serviceProviderId: validSerivceProvider.id,
+        price: body.price,
+        serviceProviderProposal: body.serviceProviderProposal ?? '',
+      },
+    });
+    return ApiResponse.success(bid, 'Bid placed successfully');
   }
 }

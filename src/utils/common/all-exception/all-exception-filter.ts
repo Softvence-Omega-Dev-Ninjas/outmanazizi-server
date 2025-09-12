@@ -1,11 +1,9 @@
 import {
-  ExceptionFilter,
-  Catch,
   ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   HttpException,
   HttpStatus,
-  UnauthorizedException,
-  NotFoundException,
 } from '@nestjs/common';
 import { Response } from 'express';
 
@@ -16,36 +14,46 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let responseBody: any = {
-      success: false,
-      error: 'Internal server error',
-    };
+    let message = 'Internal server error';
+    let errorData: any = null;
 
+    // Handle HttpException
     if (exception instanceof HttpException) {
       status = exception.getStatus();
+      const res = exception.getResponse();
 
-      if (exception instanceof NotFoundException) {
-        responseBody = {
-          success: false,
-          error: 'Resource not found',
-        };
-      } else {
-        // Other HttpExceptions
-        const exceptionResponse = exception.getResponse();
-        responseBody = {
-          success: false,
-          statusCode: status,
-          message:
-            typeof exceptionResponse === 'object' &&
-            exceptionResponse !== null &&
-            'message' in exceptionResponse
-              ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                (exceptionResponse as any).message
-              : exceptionResponse || exception.message,
-        };
+      if (typeof res === 'string') {
+        message = res;
+      } else if (typeof res === 'object' && res !== null) {
+        errorData = res;
+        message = (res as any).message || message;
       }
     }
 
-    response.status(status).json(responseBody);
+    // 👉 Custom messages by status
+    switch (status) {
+      case HttpStatus.UNAUTHORIZED:
+        message = '🚫 You are not authorized to perform this action';
+        break;
+      case HttpStatus.NOT_FOUND:
+        message = '❌ The requested resource was not found';
+        break;
+      case HttpStatus.FORBIDDEN:
+        message = '⛔ Access forbidden';
+        break;
+      case HttpStatus.BAD_REQUEST:
+        message = '⚠️ Invalid request data';
+        break;
+      case HttpStatus.INTERNAL_SERVER_ERROR:
+        message = '⚠️ Something went wrong, please try again later';
+        break;
+    }
+
+    response.status(status).json({
+      success: false,
+      statusCode: status,
+      error: errorData.message,
+      // details: errorData ?? null,
+    });
   }
 }

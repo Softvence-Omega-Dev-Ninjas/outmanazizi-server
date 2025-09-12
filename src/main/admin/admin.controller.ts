@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Patch, Param, Delete } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { Public } from 'src/guards/public.decorator';

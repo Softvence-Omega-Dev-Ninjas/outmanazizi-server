@@ -9,7 +9,6 @@ model Bid {
   price String
 
   serviceProviderProposal String
-  providerId              String
   status                  Status   @default(PENDING)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt

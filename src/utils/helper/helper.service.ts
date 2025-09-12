@@ -3,7 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class HelperService {
-  constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) {}
 
   async userExistsByEmail(email: string) {
     const user = await this.prismaService.user.findUnique({
@@ -23,5 +23,9 @@ export class HelperService {
     }
     return user;
   }
-
+  async validServiceProvider(userId: string) {
+    return await this.prismaService.serviceProvider.findUnique({
+      where: { userId },
+    });
+  }
 }
