@@ -9,10 +9,11 @@ import { AuthenticationGuard } from './guards/auth.guard';
 import { JobModule } from './main/job/job.module';
 import { ServiceProviderModule } from './main/service-provider/service-provider.module';
 import { AdminModule } from './main/admin/admin.module';
+import { ConsumerModule } from './main/consumer/consumer.module';
 
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, JwtModule.register({}), JobModule, ServiceProviderModule, AdminModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, JwtModule.register({}), JobModule, ServiceProviderModule, AdminModule, ConsumerModule],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
 })

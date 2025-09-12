@@ -3,11 +3,10 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
   UseGuards,
   Req,
+  Patch,
 } from '@nestjs/common';
 import { ServiceProviderService } from './service-provider.service';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
@@ -47,5 +46,30 @@ export class ServiceProviderController {
     @Body() body: ServiceProviderBidDto,
   ) {
     return await this.serviceProviderService.makeBid(req['userid'], id, body);
+  }
+
+  @Get('my-bids')
+  @UseGuards(AuthenticationGuard)
+  @ApiOperation({ summary: 'Get my bids' })
+  @UseGuards(AuthenticationGuard)
+  async myBids(@Req() req: Request) {
+    return await this.serviceProviderService.myBids(req['userid']);
+  }
+
+  @Patch('work-coplete/:serviceId')
+  @UseGuards(AuthenticationGuard)
+  @ApiOperation({ summary: 'Work Complete from service provider..' })
+  async updateBid(@Param('serviceId') serviceId: string, @Req() req: Request) {
+    return await this.serviceProviderService.workComplete(
+      req['userid'],
+      serviceId,
+    );
+  }
+  @Get('my-all-bids')
+  @UseGuards(AuthenticationGuard)
+  @ApiOperation({ summary: 'Get my all bids' })
+  @UseGuards(AuthenticationGuard)
+  async myAllBids(@Req() req: Request) {
+    return await this.serviceProviderService.myAllBids(req['userid']);
   }
 }

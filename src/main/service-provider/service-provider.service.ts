@@ -95,4 +95,58 @@ export class ServiceProviderService {
     });
     return ApiResponse.success(bid, 'Bid placed successfully');
   }
+
+  async myBids(userid: string) {
+    const validSerivceProvider =
+      await this.helperService.validServiceProvider(userid);
+    if (!validSerivceProvider) {
+      throw new NotFoundException('Invalid service provider');
+    }
+    const bids = await this.prisma.bid.findMany({
+      where: { serviceProviderId: validSerivceProvider.id },
+      include: {
+        service: true,
+      },
+    });
+    return ApiResponse.success(bids, 'Bids retrieved successfully');
+  }
+
+  async workComplete(userid: string, serviceId: string) {
+    const validSerivceProvider =
+      await this.helperService.validServiceProvider(userid);
+    if (!validSerivceProvider) {
+      throw new NotFoundException('Invalid service provider');
+    }
+    const service = await this.prisma.service.findFirst({
+      where: {
+        AND: [
+          { assignedServiceProviderId: validSerivceProvider.id },
+          { id: serviceId },
+        ],
+      },
+    });
+    if (!service) {
+      throw new NotFoundException('Service not found or not assigned to you');
+    }
+    const updatedService = await this.prisma.service.update({
+      where: { id: serviceId },
+      data: { isCompletedFromServiceProvider: true },
+    });
+    return ApiResponse.success(
+      updatedService,
+      'Service marked as completed from service provider, and waiting for consumer confirmation',
+    );
+  }
+
+  async myAllBids(userid: string) {
+    const validSerivceProvider =
+      await this.helperService.validServiceProvider(userid);
+    if (!validSerivceProvider) {
+      throw new NotFoundException('Invalid service provider');
+    }
+    const bids = await this.prisma.bid.findMany({
+      where: { serviceProviderId: validSerivceProvider.id },
+    });
+    return ApiResponse.success(bids, 'Bids retrieved successfully');
+  }
 }

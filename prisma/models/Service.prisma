@@ -18,6 +18,6 @@ model Service {
   createdAt                      DateTime         @default(now())
   updatedAt                      DateTime         @updatedAt
   bids                           Bid[]
-  ServiceProvider                ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
-  serviceProviderId              String?
+  assignedServiceProviderId      String?
+  assignedServiceProvider        ServiceProvider? @relation(fields: [assignedServiceProviderId], references: [id])
 }

@@ -25,11 +25,11 @@ export class JobService {
 
   // find all job
   async findAll() {
-    const result = ApiResponse.success(
-      await this.prisma.service.findMany(),
-      'Jobs retrieved successfully',
-    );
-    return result;
+    const result = await this.prisma.service.findMany({
+      include: { bids: true },
+    });
+
+    return ApiResponse.success(result, 'Jobs retrieved successfully');
   }
 
   // find one job in details
