@@ -63,6 +63,17 @@ export class ServiceProviderService {
     serviceRequestId: string,
     body: ServiceProviderBidDto,
   ) {
+    const bidExists = await this.prisma.bid.findFirst({
+      where: {
+        serviceId: serviceRequestId,
+        serviceProvider: {
+          userId: userid,
+        },
+      },
+    });
+    if (bidExists) {
+      throw new NotFoundException('You have already placed a bid');
+    }
     const validSerivceProvider =
       await this.helperService.validServiceProvider(userid);
     if (!validSerivceProvider) {
