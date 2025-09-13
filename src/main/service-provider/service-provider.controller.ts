@@ -72,4 +72,14 @@ export class ServiceProviderController {
   async myAllBids(@Req() req: Request) {
     return await this.serviceProviderService.myAllBids(req['userid']);
   }
+  @Get('my-completed-bids')
+  @UseGuards(AuthenticationGuard)
+  @ApiOperation({
+    summary:
+      'Get my completed bids also complete from service provider and consumer ',
+  })
+  @UseGuards(AuthenticationGuard)
+  async myCompletedBids(@Req() req: Request) {
+    return await this.serviceProviderService.myAcceptedBids(req['userid']);
+  }
 }

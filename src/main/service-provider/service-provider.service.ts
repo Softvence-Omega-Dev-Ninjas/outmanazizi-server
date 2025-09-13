@@ -149,4 +149,27 @@ export class ServiceProviderService {
     });
     return ApiResponse.success(bids, 'Bids retrieved successfully');
   }
+
+  // my accepted bids
+  async myAcceptedBids(userid: string) {
+    const validSerivceProvider =
+      await this.helperService.validServiceProvider(userid);
+    if (!validSerivceProvider) {
+      throw new NotFoundException('Invalid service provider');
+    }
+    const bids = await this.prisma.bid.findMany({
+      where: {
+        serviceProviderId: validSerivceProvider.id,
+        status: 'ACCEPTED',
+        service: {
+          isCompletedFromServiceProvider: true,
+          isCompleteFromConsumer: true,
+        },
+      },
+      include: {
+        service: true,
+      },
+    });
+    return ApiResponse.success(bids, 'Accepted bids retrieved successfully');
+  }
 }

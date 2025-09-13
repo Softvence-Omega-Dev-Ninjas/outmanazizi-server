@@ -14,6 +14,8 @@ import { AcceptBid } from './dto/create-consumer.dto';
 import { UpdateConsumerDto } from './dto/update-consumer.dto';
 import { ApiOperation } from '@nestjs/swagger';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
+import { Send } from 'express';
+import { SendReviewDto } from './dto/sendReview.dto';
 
 @Controller('consumer')
 export class ConsumerController {
@@ -38,5 +40,20 @@ export class ConsumerController {
   @ApiOperation({ summary: 'Work Complete from consumer..' })
   async updateBid(@Param('serviceId') serviceId: string, @Req() req: Request) {
     return await this.consumerService.serviceComplete(req['userid'], serviceId);
+  }
+
+  @Post('give-review/:serviceId')
+  @UseGuards(AuthenticationGuard)
+  @ApiOperation({ summary: 'Give review to service provider' })
+  async giveReview(
+    @Param('serviceProviderId') serviceProviderId: string,
+    @Req() req: Request,
+    @Body() body: SendReviewDto,
+  ) {
+    return await this.consumerService.giveReview(
+      req['userid'],
+      serviceProviderId,
+      body,
+    );
   }
 }

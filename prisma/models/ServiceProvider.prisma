@@ -9,6 +9,9 @@ model ServiceProvider {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
   bids                Bid[]
+  myCurrentRating     Float?        @default(0)
+  getFromUsers        Int           @default(0)
   noteServices        NoteService[]
   services            Service[]
+  reviews             Review[]
 }

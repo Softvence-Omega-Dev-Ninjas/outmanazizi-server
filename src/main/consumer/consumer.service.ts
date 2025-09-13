@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AcceptBid } from './dto/create-consumer.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SendReviewDto } from './dto/sendReview.dto';
 
 @Injectable()
 export class ConsumerService {
@@ -74,5 +75,64 @@ export class ConsumerService {
       data: { isCompleteFromConsumer: true },
     });
     return { message: 'Service completed successfully', updatedService };
+  }
+  async giveReview(userid: string, serviceId: string, body: SendReviewDto) {
+    try {
+      console.log(body);
+      // check if the user is the owner of the service request
+      const validConsumer = await this.prisma.user.findFirst({
+        where: { id: userid, role: 'CONSUMER' },
+      });
+      if (!validConsumer) {
+        throw new BadRequestException('You are not a valid consumer');
+      }
+      // check if the service provider is valid
+      const validServiceProvider = await this.prisma.serviceProvider.findFirst({
+        where: { userId: serviceId },
+      });
+      if (!validServiceProvider) {
+        throw new BadRequestException('Invalid service provider');
+      }
+      // if the user give the review to the service provider previous review then update the review
+
+      const totalRating =
+        (validServiceProvider.myCurrentRating ?? 0) + parseFloat(body.rating);
+      const totalUsers = validServiceProvider.getFromUsers + 1;
+      const averageRating = totalRating / totalUsers;
+
+      const existingReview = await this.prisma.review.findUnique({
+        where: {
+          userId_serviceProviderId: {
+            userId: userid,
+            serviceProviderId: validServiceProvider.id,
+          },
+        },
+      });
+
+      if (existingReview) {
+        throw new BadRequestException('You already reviewed this provider');
+      }
+
+      const savedReview = await this.prisma.review.create({
+        data: {
+          rating: body.rating,
+          comment: body.comments,
+          userId: userid,
+          serviceProviderId: validServiceProvider.id,
+        },
+      });
+
+      await this.prisma.serviceProvider.update({
+        where: { id: validServiceProvider.id },
+        data: {
+          myCurrentRating: averageRating,
+          getFromUsers: totalUsers,
+        },
+      });
+
+      return { message: 'Review submitted successfully', review: savedReview };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 }

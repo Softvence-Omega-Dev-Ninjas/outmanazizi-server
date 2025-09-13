@@ -30,30 +30,32 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     }
 
-    // 👉 Custom messages by status
-    switch (status) {
-      case HttpStatus.UNAUTHORIZED:
-        message = '🚫 You are not authorized to perform this action';
-        break;
-      case HttpStatus.NOT_FOUND:
-        message = '❌ The requested resource was not found';
-        break;
-      case HttpStatus.FORBIDDEN:
-        message = '⛔ Access forbidden';
-        break;
-      case HttpStatus.BAD_REQUEST:
-        message = '⚠️ Invalid request data';
-        break;
-      case HttpStatus.INTERNAL_SERVER_ERROR:
-        message = '⚠️ Something went wrong, please try again later';
-        break;
+    if (errorData?.message) {
+      message = errorData.message;
+    } else {
+      switch (status) {
+        case HttpStatus.UNAUTHORIZED:
+          message = '🚫 You are not authorized to perform this action';
+          break;
+        case HttpStatus.NOT_FOUND:
+          message = '❌ The requested resource was not found';
+          break;
+        case HttpStatus.FORBIDDEN:
+          message = '⛔ Access forbidden';
+          break;
+        case HttpStatus.BAD_REQUEST:
+          message = '⚠️ Invalid request data';
+          break;
+        case HttpStatus.INTERNAL_SERVER_ERROR:
+          message = '⚠️ Something went wrong, please try again later';
+          break;
+      }
     }
-
     response.status(status).json({
       success: false,
       statusCode: status,
       error: errorData.message,
-      // details: errorData ?? null,
+      details: errorData ?? null,
     });
   }
 }
