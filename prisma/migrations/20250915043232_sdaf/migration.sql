@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "public"."AreaAndServices" ALTER COLUMN "area" SET NOT NULL,
+ALTER COLUMN "area" SET DATA TYPE TEXT,
+ALTER COLUMN "services" SET NOT NULL,
+ALTER COLUMN "services" SET DATA TYPE TEXT;

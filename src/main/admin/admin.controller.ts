@@ -1,11 +1,24 @@
-import { Controller, Get, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Delete,
+  Body,
+  Post,
+} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { Public } from 'src/guards/public.decorator';
+import { AreaAndservicesService } from './area-andservices/area-andservices.service';
+import { CreateAreaDto, CreateServicesDto } from './dto/areaAndServices.dto';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly areaAndservicesService: AreaAndservicesService,
+  ) {}
 
   // Make Service Provider verified
   @Patch('verify-service-provider/:userid')
@@ -44,5 +57,27 @@ export class AdminController {
   })
   async deleteService(@Param('serviceid') serviceid: string) {
     return await this.adminService.deleteService(serviceid);
+  }
+
+  // create area and services
+  @Post('create-area')
+  @Public()
+  @ApiOperation({ summary: 'Create area  ' })
+  async createAreaAndServices(@Body() body: CreateAreaDto) {
+    return await this.areaAndservicesService.createArea(body);
+  }
+
+  @Post('create-service')
+  @Public()
+  @ApiOperation({ summary: 'Create service  ' })
+  async createServices(@Body() body: CreateServicesDto) {
+    return await this.areaAndservicesService.createServices(body);
+  }
+  // find all area and services
+  @Get('all-area-and-services')
+  @Public()
+  @ApiOperation({ summary: 'Find all area and services  ' })
+  async findAllAreaAndService() {
+    return await this.areaAndservicesService.findAllAreaAndService();
   }
 }

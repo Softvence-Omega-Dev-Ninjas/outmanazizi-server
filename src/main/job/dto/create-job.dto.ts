@@ -3,7 +3,7 @@ import { IsString, IsBoolean, IsOptional } from 'class-validator';
 export class CreateJobDto {
   @ApiProperty({
     description: 'Title of the job',
-    example: 'House Painting Service',
+    example: '8d3cce0b-45f9-424f-b27c-bc5071133acb',
   })
   @IsString()
   title: string;
@@ -17,7 +17,7 @@ export class CreateJobDto {
 
   @ApiProperty({
     description: 'Job location',
-    example: 'Dhaka, Bangladesh',
+    example: '6eaaaf9c-1902-4aee-ab12-1e6561ab2c36',
   })
   @IsString()
   location: string;

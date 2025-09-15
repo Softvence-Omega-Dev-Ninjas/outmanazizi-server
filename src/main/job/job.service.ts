@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -10,6 +10,18 @@ export class JobService {
   // Create a job
   async create(userId: string, createJobDto: CreateJobDto) {
     try {
+      const areaExists = await this.prisma.area.findFirst({
+        where: { id: createJobDto.location },
+      });
+      if (!areaExists) {
+        throw new NotFoundException('Area does not exist');
+      }
+      const serviceExists = await this.prisma.services.findFirst({
+        where: { id: createJobDto.title },
+      });
+      if (!serviceExists) {
+        throw new NotFoundException('Service does not exist');
+      }
       const savedJob = await this.prisma.service.create({
         data: {
           userId,
