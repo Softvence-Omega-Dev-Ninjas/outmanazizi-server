@@ -12,6 +12,7 @@ model User {
   provider        String?
   otp             String?
   otpExpiresAt    String?
+  isEmailVerified Boolean          @default(false)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   serviceProvider ServiceProvider?

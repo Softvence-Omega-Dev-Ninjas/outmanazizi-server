@@ -125,4 +125,12 @@ export class AuthController {
       updateUserDto,
     );
   }
+
+  // get resend otp
+  @Get('resend-otp')
+  @Public()
+  @ApiBody({ type: String })
+  async resendOtp(@Body('email') email: string) {
+    return await this.authService.resendOtp(email);
+  }
 }

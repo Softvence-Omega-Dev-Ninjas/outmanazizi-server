@@ -41,13 +41,23 @@ export class AuthService {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = getLocalDateTime(10);
       // Create the user
-      const user = await this.prisma.user.create({
-        data: {
+      const user = await this.prisma.user.upsert({
+        where: { email: registerDto.email },
+        update: {
+          name: registerDto.name,
+          phone: registerDto.phone,
+          password: hashedPassword,
+          picture: '',
+          role: registerDto.role,
+          otp,
+          otpExpiresAt,
+        },
+        create: {
           email: registerDto.email,
           name: registerDto.name,
           phone: registerDto.phone,
           password: hashedPassword,
-          picture: '', // Add default value for picture
+          picture: '',
           otp,
           otpExpiresAt,
           role: registerDto.role,
@@ -87,7 +97,7 @@ export class AuthService {
       }
       const data = await this.prisma.user.update({
         where: { email },
-        data: { otp: null, otpExpiresAt: null },
+        data: { otp: null, otpExpiresAt: null, isEmailVerified: true },
       });
       return ApiResponse.success(
         data,
@@ -101,7 +111,9 @@ export class AuthService {
       const userExists = await this.helperService.userExistsByEmail(
         loginDto.email,
       );
-
+      if (!userExists?.isEmailVerified) {
+        throw new UnauthorizedException('Please verify your email first');
+      }
       if (!userExists) {
         throw new NotFoundException('User not found');
       }
@@ -314,6 +326,29 @@ export class AuthService {
     } catch (error) {
       console.error('Error updating user:', error);
       throw new UnauthorizedException('Update user failed');
+    }
+  }
+
+  async resendOtp(email: string) {
+    try {
+      const userExists = await this.helperService.userExistsByEmail(email);
+      if (!userExists) {
+        throw new NotFoundException('User not found');
+      }
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiresAt = getLocalDateTime(10);
+      await this.prisma.user.update({
+        where: { email },
+        data: { otp, otpExpiresAt },
+      });
+      await this.mailService.sendMail(
+        email,
+        'Resend OTP',
+        `<p>Your OTP code is: <strong>${otp}</strong></p>`,
+      );
+      return ApiResponse.success(null, 'OTP resent to email successfully');
+    } catch (error) {
+      throw new UnauthorizedException('Resend OTP failed');
     }
   }
 }
