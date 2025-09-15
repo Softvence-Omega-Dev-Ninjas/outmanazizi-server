@@ -16,3 +16,11 @@ export class EmailAndOtpDto {
   @IsNotEmpty({ message: 'OTP is required' })
   otp: string;
 }
+export class ResendOtpDto {
+  @ApiProperty({
+    example: 'shantohmmm@gmail.com',
+    description: 'User email address',
+  })
+  @IsNotEmpty({ message: 'Email is required' })
+  email: string;
+}

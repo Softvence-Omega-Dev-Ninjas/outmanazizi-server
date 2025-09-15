@@ -17,7 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { AuthService } from './auth.service';
 import { PasswordResetDto, ResetPasswordEmailDto } from './dto/resetPassword';
-import { EmailAndOtpDto } from './dto/emailAndOtp.dto';
+import { EmailAndOtpDto, ResendOtpDto } from './dto/emailAndOtp.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 
 @ApiTags('Authentication')
@@ -129,8 +129,8 @@ export class AuthController {
   // get resend otp
   @Get('resend-otp')
   @Public()
-  @ApiBody({ type: String })
-  async resendOtp(@Body('email') email: string) {
-    return await this.authService.resendOtp(email);
+  @ApiBody({ type: ResendOtpDto })
+  async resendOtp(@Body('email') body: ResendOtpDto) {
+    return await this.authService.resendOtp(body.email);
   }
 }
