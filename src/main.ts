@@ -10,7 +10,6 @@ async function bootstrap() {
   app.enableCors({
     origin: ['*'],
     credentials: true,
-
   });
   const config = new DocumentBuilder()
     .setTitle('Outmanazizi Server')

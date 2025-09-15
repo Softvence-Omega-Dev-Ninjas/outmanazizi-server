@@ -25,6 +25,14 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     try {
+      const userExists = await this.prisma.user.findUnique({
+        where: { email: registerDto.email },
+      });
+      if (userExists) {
+        throw new UnauthorizedException(
+          'You are already registered. Please log in.',
+        );
+      }
       const saltRounds = 12;
       const hashedPassword = await bcrypt.hash(
         registerDto.password,
@@ -33,17 +41,8 @@ export class AuthService {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = getLocalDateTime(10);
       // Create the user
-      const user = await this.prisma.user.upsert({
-        where: { email: registerDto.email },
-        update: {
-          name: registerDto.name,
-          phone: registerDto.phone,
-          password: hashedPassword,
-          picture: '', // Add default value for picture
-          otp,
-          otpExpiresAt,
-        },
-        create: {
+      const user = await this.prisma.user.create({
+        data: {
           email: registerDto.email,
           name: registerDto.name,
           phone: registerDto.phone,
@@ -51,6 +50,7 @@ export class AuthService {
           picture: '', // Add default value for picture
           otp,
           otpExpiresAt,
+          role: registerDto.role,
         },
       });
       // send otp to user email
@@ -65,8 +65,7 @@ export class AuthService {
         'User registered successfully. Please verify OTP sent to your email.',
       );
     } catch (error) {
-      console.error('Error registering user:', error);
-      throw new UnauthorizedException('User registration failed');
+      throw new UnauthorizedException(error.message);
     }
   }
 
