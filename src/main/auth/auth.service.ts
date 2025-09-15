@@ -11,9 +11,8 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { HelperService } from 'src/utils/helper/helper.service';
 import { getLocalDateTime } from 'src/utils/common/localtimeAndDate/localtime';
 import { MailService } from 'src/utils/mail/mail.service';
-import { ResetPasswordDto } from './dto/resetPassword';
-import { UpdateJobDto } from '../job/dto/update-job.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { EmailAndOtpDto } from './dto/emailAndOtp.dto';
 
 @Injectable()
 export class AuthService {
@@ -74,7 +73,6 @@ export class AuthService {
   // verify otp and create user
   async verifyOtp(email: string, otp: string) {
     try {
-      console.log('Email:', email, 'OTP:', otp); // Debugging line
       const user = await this.prisma.user.findUnique({
         where: { email },
       });
@@ -205,10 +203,10 @@ export class AuthService {
     }
   }
 
-  // verify reset password
-  async verifyResetPassword(resetPasswordDto: ResetPasswordDto) {
+  // verify otp  reset password
+  async verifyOtpForResetPassword(EmailAndOtpDto: EmailAndOtpDto) {
     try {
-      const { email, otp, newPassword } = resetPasswordDto;
+      const { email, otp } = EmailAndOtpDto;
       const userExists = await this.helperService.userExistsByEmail(email);
 
       if (!userExists) {
@@ -233,17 +231,40 @@ export class AuthService {
         throw new UnauthorizedException('OTP expired');
       }
 
+      // const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      await this.prisma.user.update({
+        where: { email },
+        data: { otp: null, otpExpiresAt: null },
+      });
+
+      return ApiResponse.success(
+        null,
+        'Otp verified successfully, Please give me new passwords',
+      );
+    } catch (error) {
+      console.error('Error verifying reset password:', error);
+      throw new UnauthorizedException('Reset password verification failed');
+    }
+  }
+
+  // set new password
+  async resetPassword(email: string, newPassword: string) {
+    try {
+      const userExists = await this.helperService.userExistsByEmail(email);
+      if (!userExists) {
+        throw new NotFoundException('User not found');
+      }
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       await this.prisma.user.update({
         where: { email },
-        data: { password: hashedPassword, otp: null, otpExpiresAt: null },
+        data: { password: hashedPassword },
       });
-
       return ApiResponse.success(null, 'Password reset successfully');
     } catch (error) {
-      console.error('Error verifying reset password:', error);
-      throw new UnauthorizedException('Reset password verification failed');
+      console.error('Error resetting password:', error);
+      throw new UnauthorizedException('Reset password failed');
     }
   }
 

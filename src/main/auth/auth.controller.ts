@@ -16,7 +16,7 @@ import { ChangePasswordDto } from './dto/changePassword.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { AuthService } from './auth.service';
-import { ResetPasswordDto, ResetPasswordEmailDto } from './dto/resetPassword';
+import { PasswordResetDto, ResetPasswordEmailDto } from './dto/resetPassword';
 import { EmailAndOtpDto } from './dto/emailAndOtp.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 
@@ -48,32 +48,32 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @Get('google')
-  @Public()
-  @UseGuards(AuthGuard('google'))
-  googleAuth() {
-    console.log('Google Auth');
-  }
+  // @Get('google')
+  // @Public()
+  // @UseGuards(AuthGuard('google'))
+  // googleAuth() {
+  //   console.log('Google Auth');
+  // }
 
-  @Get('google/redirect')
-  @UseGuards(AuthGuard('google'))
-  @Public()
-  googleRedirect(@Req() req: Request) {
-    return this.authService.saveGoogleUser(req.user as GoogleUser);
-  }
+  // @Get('google/redirect')
+  // @UseGuards(AuthGuard('google'))
+  // @Public()
+  // googleRedirect(@Req() req: Request) {
+  //   return this.authService.saveGoogleUser(req.user as GoogleUser);
+  // }
 
-  // ---- Facebook Login ----
-  @Get('facebook')
-  @Public()
-  @UseGuards(AuthGuard('facebook'))
-  async facebookLogin() {}
+  // // ---- Facebook Login ----
+  // @Get('facebook')
+  // @Public()
+  // @UseGuards(AuthGuard('facebook'))
+  // async facebookLogin() {}
 
-  @Get('facebook/redirect')
-  @UseGuards(AuthGuard('facebook'))
-  @Public()
-  facebookRedirect(@Req() req: Request) {
-    return this.authService.saveFacebookUser(req.user);
-  }
+  // @Get('facebook/redirect')
+  // @UseGuards(AuthGuard('facebook'))
+  // @Public()
+  // facebookRedirect(@Req() req: Request) {
+  //   return this.authService.saveFacebookUser(req.user);
+  // }
 
   // reset password send otp to user
   @Post('reset-password')
@@ -84,14 +84,23 @@ export class AuthController {
   }
 
   // reset password verify otp
-  @Post('reset-password/verify')
+  @Post('reset-password/verify-otp')
   @Public()
-  @ApiBody({ type: ResetPasswordDto })
-  async verifyResetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    console.log(resetPasswordDto);
-    return this.authService.verifyResetPassword(resetPasswordDto);
+  @ApiBody({ type: EmailAndOtpDto })
+  async verifyResetPassword(@Body() EmailAndOtpDto: EmailAndOtpDto) {
+    return this.authService.verifyOtpForResetPassword(EmailAndOtpDto);
   }
 
+  // reset password set new password
+  @Post('reset-password/set-new-password')
+  @Public()
+  @ApiBody({ type: PasswordResetDto })
+  async setNewPassword(@Body() passwordResetDto: PasswordResetDto) {
+    return this.authService.resetPassword(
+      passwordResetDto.email,
+      passwordResetDto.password,
+    );
+  }
   // Change password
   @Post('change-password')
   @UseGuards(AuthenticationGuard)
