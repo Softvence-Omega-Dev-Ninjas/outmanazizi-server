@@ -55,7 +55,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       success: false,
       statusCode: status,
       error: errorData.message,
-      details: errorData ?? null,
+      // details: errorData ?? null,
     });
   }
 }

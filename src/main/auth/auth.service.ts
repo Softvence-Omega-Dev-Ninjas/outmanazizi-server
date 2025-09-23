@@ -136,7 +136,10 @@ export class AuthService {
         role: userExists.role,
       };
       const token = await this.jwtService.signAsync(payload);
-      return ApiResponse.success(token, 'User logged in successfully');
+      return ApiResponse.success(
+        { token, userExists },
+        'User logged in successfully',
+      );
     } catch (error) {
       return ApiResponse.error('Login failed', error.message);
     }
