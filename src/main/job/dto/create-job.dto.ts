@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsBoolean } from 'class-validator';
+import { Type } from 'class-transformer';
+
 export class CreateJobDto {
   @ApiProperty({
     description: 'Title of the job',
@@ -35,25 +37,27 @@ export class CreateJobDto {
   })
   @IsString()
   startTime: string;
+
   @ApiProperty({
-    description: 'Starting time of the job',
-    example: '2025-09-10T10:00:00Z',
+    description: 'Ending time of the job',
+    example: '2025-09-10T15:00:00Z',
   })
   @IsString()
   endTime: string;
+
   @ApiProperty({
     description: 'Whether tools are needed or not',
     example: true,
   })
   @IsBoolean()
+  @Type(() => Boolean)
   toolsNeed: boolean;
 
   @ApiProperty({
-    description: 'Optional file attachment',
-    example: 'uploads/job-files/abc.pdf',
-    required: false,
+    description: 'Job images (required)',
+    type: 'array',
+    items: { type: 'string', format: 'binary' },
+    required: true,
   })
-  @IsOptional()
-  @IsString()
-  file?: string;
+  images: string[];
 }

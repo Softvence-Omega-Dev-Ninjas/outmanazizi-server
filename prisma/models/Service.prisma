@@ -10,7 +10,7 @@ model Service {
   startTime                      String
   endTime                        String
   toolsNeed                      Boolean
-  file                           String?
+  file                           String[]
   isCompletedFromServiceProvider Boolean          @default(false)
   isCompleteFromConsumer         Boolean          @default(false)
   isDeleteRequestToAdmin         Boolean          @default(false)

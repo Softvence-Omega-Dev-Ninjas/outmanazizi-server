@@ -6,19 +6,22 @@ import {
   Req,
   UseGuards,
   Patch,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { LoginDto, RegisterDto } from './dto';
 import { Public } from 'src/guards/public.decorator';
-import { GoogleUser } from './strategy/goggle.strategy';
 import type { Request } from 'express';
 import { ChangePasswordDto } from './dto/changePassword.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { AuthService } from './auth.service';
 import { PasswordResetDto, ResetPasswordEmailDto } from './dto/resetPassword';
 import { EmailAndOtpDto, ResendOtpDto } from './dto/emailAndOtp.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { storageConfig } from 'src/utils/common/file/fileUploads';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -27,9 +30,21 @@ export class AuthController {
 
   @Post('register')
   @Public()
-  // @ApiBody({ type: RegisterDto })
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  @ApiBody({ type: RegisterDto })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('images', 10, { storage: storageConfig() }))
+  async register(
+    @Body() registerDto: RegisterDto,
+    @UploadedFiles() images: Express.Multer.File[],
+  ) {
+    if (!images || images.length === 0) {
+      throw new BadRequestException('At least one image is required');
+    }
+    const image = images.map(
+      (f) => `${process.env.DOMAIN}/uploads/${f.filename}`,
+    );
+
+    return await this.authService.register(registerDto, image);
   }
   // otp verification and create user
   @Post('verify-otp')

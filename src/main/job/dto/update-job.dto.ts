@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsString, IsBoolean, IsOptional, IsArray } from 'class-validator';
 export class UpdateJobDto {
   @ApiProperty({
     description: 'Title of the job',
@@ -46,15 +47,16 @@ export class UpdateJobDto {
     example: true,
   })
   @IsBoolean()
-  @IsOptional()
+  @Type(() => Boolean)
   toolsNeed?: boolean;
 
   @ApiProperty({
-    description: 'Optional file attachment',
-    example: 'uploads/job-files/abc.pdf',
-    required: false,
+    description: 'Job images ',
+    type: 'array',
+    items: { type: 'string', format: 'binary' },
   })
   @IsOptional()
-  @IsString()
-  file?: string;
+  @IsArray()
+  @IsString({ each: true })
+  file?: string[];
 }

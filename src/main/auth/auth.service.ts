@@ -23,7 +23,7 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto, images: string[]) {
     try {
       const userExists = await this.prisma.user.findUnique({
         where: { email: registerDto.email },
@@ -41,13 +41,14 @@ export class AuthService {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = getLocalDateTime(10);
       // Create the user
+      console.log(images[0]);
       const user = await this.prisma.user.upsert({
         where: { email: registerDto.email },
         update: {
           name: registerDto.name,
           phone: registerDto.phone,
           password: hashedPassword,
-          picture: '',
+          picture: images[0],
           role: registerDto.role,
           otp,
           otpExpiresAt,
@@ -57,7 +58,7 @@ export class AuthService {
           name: registerDto.name,
           phone: registerDto.phone,
           password: hashedPassword,
-          picture: '',
+          picture: images[0],
           otp,
           otpExpiresAt,
           role: registerDto.role,

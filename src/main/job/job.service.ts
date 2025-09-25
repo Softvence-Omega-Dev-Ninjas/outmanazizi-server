@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -10,6 +14,8 @@ export class JobService {
   // Create a job
   async create(userId: string, createJobDto: CreateJobDto) {
     try {
+      const { images, ...rest } = createJobDto;
+      console.log(images);
       const areaExists = await this.prisma.area.findFirst({
         where: { id: createJobDto.location },
       });
@@ -22,16 +28,17 @@ export class JobService {
       if (!serviceExists) {
         throw new NotFoundException('Service does not exist');
       }
+
       const savedJob = await this.prisma.service.create({
         data: {
           userId,
-          ...createJobDto,
+          ...rest,
+          file: images,
         },
       });
       return ApiResponse.success(savedJob, 'Job created successfully');
     } catch (error) {
-      console.error('Error creating job:', error);
-      throw new Error('Error creating job');
+      throw new BadRequestException('Error creating job', error);
     }
   }
 
@@ -53,9 +60,14 @@ export class JobService {
   // update a job
   async update(id: string, updateJobDto: UpdateJobDto) {
     try {
+      console.log(updateJobDto);
+      const { file, ...rest } = updateJobDto;
       const updatedJob = await this.prisma.service.update({
         where: { id },
-        data: updateJobDto,
+        data: {
+          ...rest,
+          file: file ? (Array.isArray(file) ? file : [file]) : undefined,
+        },
       });
       return ApiResponse.success(updatedJob, 'Job updated successfully');
     } catch (error) {
