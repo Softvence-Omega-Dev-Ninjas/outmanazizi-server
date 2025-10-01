@@ -3,6 +3,9 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './utils/common/all-exception/all-exception-filter';
+import { seedSuperAdmin } from './utils/seed/seed';
+import { PrismaService } from './prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -45,6 +48,11 @@ async function bootstrap() {
   );
 
   SwaggerModule.setup('api', app, document);
+
+  // Seed super admin user
+  const prismaService = app.get(PrismaService);
+  const configService = app.get(ConfigService);
+  await seedSuperAdmin(prismaService, configService);
 
   await app.listen(process.env.PORT ?? 3000);
 }

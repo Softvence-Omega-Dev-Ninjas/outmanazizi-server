@@ -80,4 +80,11 @@ export class AdminController {
   async findAllAreaAndService() {
     return await this.areaAndservicesService.findAllAreaAndService();
   }
+  // find all serviceProvider
+  @Get('all-service-provider')
+  @Public()
+  @ApiOperation({ summary: 'Find all serviceProvider  ' })
+  async findAllServiceProvider() {
+    return await this.adminService.findAllServiceProvider();
+  }
 }

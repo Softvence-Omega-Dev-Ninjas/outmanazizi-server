@@ -15,7 +15,7 @@ export class JobService {
   async create(userId: string, createJobDto: CreateJobDto) {
     try {
       const { images, ...rest } = createJobDto;
-      console.log(images);
+ 
       const areaExists = await this.prisma.area.findFirst({
         where: { id: createJobDto.location },
       });

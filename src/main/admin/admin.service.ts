@@ -110,4 +110,12 @@ export class AdminService {
       'Service is deleted successfully',
     );
   }
+  // find all serviceProvider
+  async findAllServiceProvider() {
+    const serviceProviders = await this.prisma.serviceProvider.findMany({});
+    return ApiResponse.success(
+      serviceProviders,
+      'All service providers fetched successfully',
+    );
+  }
 }
