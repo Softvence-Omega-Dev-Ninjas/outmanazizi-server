@@ -7,12 +7,16 @@ import {
   UseGuards,
   Req,
   Patch,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ServiceProviderService } from './service-provider.service';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { ServiceProviderBidDto } from './dto/service-provider-bid.dto';
+import { storageConfig } from 'src/utils/common/file/fileUploads';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { UploadDocumentsDto } from './dto/uploadDocuments.dto';
 
 @Controller('service-provider')
 export class ServiceProviderController {
@@ -31,7 +35,38 @@ export class ServiceProviderController {
       createServiceProviderDto,
     );
   }
+  // patch document upload
+  @Patch('upload-documents')
+  @UseGuards(AuthenticationGuard)
+  @ApiOperation({ summary: 'Upload service provider documents' })
+  // upload documents in file formate
+  @ApiBody({ type: UploadDocumentsDto })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FilesInterceptor('documents', 10, { storage: storageConfig() }),
+  )
+  async uploadDocuments(@Req() req: Request) {
+    interface UploadedFile {
+      filename: string;
+      [key: string]: any;
+    }
 
+    interface CustomRequest extends Request {
+      files?: UploadedFile[];
+      userid?: string;
+    }
+
+    const documents =
+      (req as CustomRequest)['files']
+        ?.map(
+          (f: UploadedFile) => `${process.env.DOMAIN}/uploads/${f.filename}`,
+        )
+        .toString() || '';
+    return await this.serviceProviderService.uploadDocuments(
+      req['userid'],
+      documents,
+    );
+  }
   @Get()
   @ApiOperation({ summary: 'Get all service providers' })
   async findAll() {

@@ -22,21 +22,39 @@ export class ServiceProviderService {
       if (!user) {
         throw new NotFoundException('You need to register first');
       }
-
-      const serviceProvider = await this.prisma.serviceProvider.upsert({
-        where: { userId: userid },
-        create: {
+      const serviceAreaExists = await this.prisma.area.findMany({
+        where: { id: { in: createServiceProviderDto.serviceArea } },
+      });
+      if (!serviceAreaExists) {
+        throw new NotFoundException('Invalid service area');
+      }
+      console.log(createServiceProviderDto.serviceCategories);
+      const serviceCategoryExists = await this.prisma.services.findMany({
+        where: { id: { in: createServiceProviderDto.serviceCategories } },
+      });
+      if (!serviceCategoryExists) {
+        throw new NotFoundException('Invalid service category');
+      }
+      if (
+        createServiceProviderDto.address &&
+        createServiceProviderDto.serviceArea
+      ) {
+        await this.prisma.user.update({
+          where: { id: userid },
+          data: {},
+        });
+      }
+      const serviceProvider = await this.prisma.serviceProvider.create({
+        data: {
           userId: userid,
           address: createServiceProviderDto.address,
-          serviceArea: createServiceProviderDto.serviceArea,
-          serviceCategories: createServiceProviderDto.serviceCategories,
-        },
-        update: {
-          address: createServiceProviderDto.address,
-          serviceArea: createServiceProviderDto.serviceArea,
-          serviceCategories: createServiceProviderDto.serviceCategories,
+          serviceArea: serviceAreaExists.map((area) => area.area),
+          serviceCategories: serviceCategoryExists.map(
+            (category) => category.name,
+          ),
         },
       });
+
       await this.prisma.user.update({
         where: { id: userid },
         data: { role: 'SERVICE_PROVIDER' },
@@ -49,7 +67,24 @@ export class ServiceProviderService {
       console.log(error);
     }
   }
-
+  // patch document upload
+  async uploadDocuments(userid: string, documents: string) {
+    const validServiceProvider =
+      await this.helperService.validServiceProvider(userid);
+    if (!validServiceProvider) {
+      throw new NotFoundException('Invalid service provider');
+    }
+    const updatedServiceProvider = await this.prisma.serviceProvider.update({
+      where: { id: validServiceProvider.id },
+      data: {
+        documents: documents,
+      },
+    });
+    return ApiResponse.success(
+      updatedServiceProvider,
+      'Documents uploaded  successfully',
+    );
+  }
   async findAll() {
     const result = await this.prisma.serviceProvider.findMany({});
     return ApiResponse.success(
