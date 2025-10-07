@@ -10,6 +10,7 @@ import { JobModule } from './main/job/job.module';
 import { ServiceProviderModule } from './main/service-provider/service-provider.module';
 import { AdminModule } from './main/admin/admin.module';
 import { ConsumerModule } from './main/consumer/consumer.module';
+import { WebsocketModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ConsumerModule } from './main/consumer/consumer.module';
     ServiceProviderModule,
     AdminModule,
     ConsumerModule,
+    WebsocketModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
