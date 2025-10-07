@@ -39,9 +39,9 @@ export class ServiceProviderService {
         createServiceProviderDto.address &&
         createServiceProviderDto.serviceArea
       ) {
-        await this.prisma.user.update({
+        await this.prisma.serviceProvider.update({
           where: { id: userid },
-          data: {},
+          data: { isProfileCompleted: true },
         });
       }
       const serviceProvider = await this.prisma.serviceProvider.create({
