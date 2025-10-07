@@ -5,6 +5,8 @@ model ServiceProvider {
   address             String
   serviceArea         String[]
   serviceCategories   String[]
+  documents           String?
+  isProfileCompleted  Boolean       @default(false)
   isVerifiedFromAdmin Boolean       @default(false)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -13,6 +14,7 @@ import { getLocalDateTime } from 'src/utils/common/localtimeAndDate/localtime';
 import { MailService } from 'src/utils/mail/mail.service';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { EmailAndOtpDto } from './dto/emailAndOtp.dto';
+import { UserRole } from './role.enum';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +31,7 @@ export class AuthService {
         where: { email: registerDto.email },
       });
       if (userExists) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You are already registered. Please log in.',
         );
       }
@@ -40,8 +42,6 @@ export class AuthService {
       );
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = getLocalDateTime(10);
-      // Create the user
-      console.log(images[0]);
       const user = await this.prisma.user.upsert({
         where: { email: registerDto.email },
         update: {
@@ -113,8 +113,9 @@ export class AuthService {
         loginDto.email,
       );
       if (!userExists?.isEmailVerified) {
-        throw new UnauthorizedException('Please verify your email first');
+        throw new BadRequestException('Please verify your email first');
       }
+
       if (!userExists) {
         throw new NotFoundException('User not found');
       }
@@ -136,7 +137,16 @@ export class AuthService {
         email: userExists.email,
         role: userExists.role,
       };
+      const serviceProvider = await this.prisma.serviceProvider.findFirst({
+        where: { userId: userExists.id },
+      });
       const token = await this.jwtService.signAsync(payload);
+      if (userExists.role === UserRole.SERVICE_PROVIDER) {
+        return ApiResponse.success(
+          { token, serviceProvider },
+          'Service provider logged in successfully',
+        );
+      }
       return ApiResponse.success(
         { token, userExists },
         'User logged in successfully',

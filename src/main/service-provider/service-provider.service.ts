@@ -20,7 +20,7 @@ export class ServiceProviderService {
       // user exists check
       const user = await this.helperService.userExistsByUserid(userid);
       if (!user) {
-        throw new NotFoundException('user not found');
+        throw new NotFoundException('You need to register first');
       }
 
       const serviceProvider = await this.prisma.serviceProvider.upsert({
