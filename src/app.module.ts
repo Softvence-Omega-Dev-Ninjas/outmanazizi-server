@@ -1,11 +1,30 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './main/auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthenticationGuard } from './guards/auth.guard';
+import { JobModule } from './main/job/job.module';
+import { ServiceProviderModule } from './main/service-provider/service-provider.module';
+import { AdminModule } from './main/admin/admin.module';
+import { ConsumerModule } from './main/consumer/consumer.module';
+import { WebsocketModule } from './messages/messages.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true })],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    AuthModule,
+    JwtModule.register({}),
+    JobModule,
+    ServiceProviderModule,
+    AdminModule,
+    ConsumerModule,
+    WebsocketModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
 })
 export class AppModule {}

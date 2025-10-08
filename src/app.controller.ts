@@ -1,12 +1,16 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Public } from './guards/public.decorator';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Public()
+  getHello() {
+    return {
+      message: 'Welcome to My Outmanazizi API Server 🚀',
+      status: 'OK',
+      version: '1.0.0',
+      docs: '/api',
+    };
   }
 }
