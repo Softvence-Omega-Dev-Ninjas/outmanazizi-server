@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import nodemailer from 'nodemailer';
-import { ApiResponse } from '../common/apiresponse/apiresponse';
 
 @Injectable()
 export class MailService {
@@ -35,7 +34,7 @@ export class MailService {
 
       this.logger.log(`Email sent successfully to ${to}`);
     } catch (error) {
-      this.logger.error(`Failed to send email to ${to}: ${error.message}`);
+      this.logger.error(`Failed to send email to ${to}: ${error}`);
     }
   }
 }
