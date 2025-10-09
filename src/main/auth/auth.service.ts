@@ -374,13 +374,13 @@ export class AuthService {
         where: { email },
         data: { otp, otpExpiresAt },
       });
-      console.log(otp);
+
       await this.mailService.sendMail(
         email,
         'Resend OTP',
         `<p>Your OTP code is: <strong>${otp}</strong></p>`,
       );
-      return ApiResponse.success(null, 'OTP resent to email successfully');
+      return ApiResponse.success(otp, 'OTP resent to email successfully');
     } catch (error) {
       return ApiResponse.error('Resend OTP failed', error.message);
     }
