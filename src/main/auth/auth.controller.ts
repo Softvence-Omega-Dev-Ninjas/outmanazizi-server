@@ -154,10 +154,11 @@ export class AuthController {
   }
 
   // get resend otp
-  @Get('resend-otp')
+  @Post('resend-otp')
   @Public()
   @ApiBody({ type: ResendOtpDto })
-  async resendOtp(@Body('email') body: ResendOtpDto) {
+  async resendOtp(@Body() body: ResendOtpDto) {
+    console.log(body.email);
     return await this.authService.resendOtp(body.email);
   }
 }

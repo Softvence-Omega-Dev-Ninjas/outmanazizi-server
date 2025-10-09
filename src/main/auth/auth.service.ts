@@ -364,6 +364,7 @@ export class AuthService {
   async resendOtp(email: string) {
     try {
       const userExists = await this.helperService.userExistsByEmail(email);
+      console.log(userExists);
       if (!userExists) {
         throw new NotFoundException('User not found');
       }
@@ -373,6 +374,7 @@ export class AuthService {
         where: { email },
         data: { otp, otpExpiresAt },
       });
+      console.log(otp);
       await this.mailService.sendMail(
         email,
         'Resend OTP',
@@ -380,7 +382,7 @@ export class AuthService {
       );
       return ApiResponse.success(null, 'OTP resent to email successfully');
     } catch (error) {
-      throw new UnauthorizedException('Resend OTP failed');
+      return ApiResponse.error('Resend OTP failed', error.message);
     }
   }
 }
