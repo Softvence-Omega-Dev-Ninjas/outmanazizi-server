@@ -54,11 +54,5 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'Username is required' })
   name: string;
 
-  @ApiProperty({
-    description: 'image  field is (required)',
-    type: 'array',
-    items: { type: 'file', format: 'binary' },
-    required: true,
-  })
-  images: Express.Multer.File[];
+
 }

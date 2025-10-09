@@ -23,48 +23,42 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly helperService: HelperService,
     private readonly mailService: MailService,
-  ) {}
+  ) { }
 
-  async register(registerDto: RegisterDto, images: string[]) {
+  async register(registerDto: RegisterDto) {
     try {
       const userExists = await this.prisma.user.findUnique({
         where: { email: registerDto.email },
       });
+
       if (userExists) {
         throw new BadRequestException(
           'You are already registered. Please log in.',
         );
       }
+
       const saltRounds = 12;
       const hashedPassword = await bcrypt.hash(
         registerDto.password,
         saltRounds,
       );
+
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = getLocalDateTime(10);
-      const user = await this.prisma.user.upsert({
-        where: { email: registerDto.email },
-        update: {
-          name: registerDto.name,
-          phone: registerDto.phone,
-          password: hashedPassword,
-          picture: images[0],
-          role: registerDto.role,
-          otp,
-          otpExpiresAt,
-        },
-        create: {
+
+      const user = await this.prisma.user.create({
+        data: {
           email: registerDto.email,
           name: registerDto.name,
           phone: registerDto.phone,
           password: hashedPassword,
-          picture: images[0],
+          role: registerDto.role,
           otp,
           otpExpiresAt,
-          role: registerDto.role,
         },
       });
-      // send otp to user email
+
+      // Send OTP email
       await this.mailService.sendMail(
         registerDto.email,
         'Account Verification OTP',
@@ -75,10 +69,15 @@ export class AuthService {
         user,
         'User registered successfully. Please verify OTP sent to your email.',
       );
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
+    } catch (error: any) {
+      const errorMessage =
+        typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message?: unknown }).message)
+          : 'Unknown error';
+      return ApiResponse.error('Registration failed', errorMessage);
     }
   }
+
 
   // verify otp and create user
   async verifyOtp(email: string, otp: string) {
@@ -104,9 +103,27 @@ export class AuthService {
         data,
         'OTP verified successfully and user created',
       );
-    } catch (error) {}
+    } catch (error) {
+      return ApiResponse.error('OTP verification failed', error.message);
+    }
   }
-
+  async uploadProfilePicture(userId: string, image: string[]) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: { picture: image[0] },
+      });
+      return ApiResponse.success(updatedUser, 'Profile picture uploaded successfully');
+    } catch (error) {
+      return ApiResponse.error('Upload profile picture failed', error.message);
+    }
+  }
   async login(loginDto: LoginDto) {
     try {
       const userExists = await this.helperService.userExistsByEmail(
@@ -152,6 +169,7 @@ export class AuthService {
         'User logged in successfully',
       );
     } catch (error) {
+      console.log(error);
       return ApiResponse.error('Login failed', error.message);
     }
   }
@@ -251,7 +269,7 @@ export class AuthService {
           (userExists.otpExpiresAt as any) instanceof Date
         ) ||
         new Date(userExists.otpExpiresAt as string | number | Date) <
-          currentTime
+        currentTime
       ) {
         throw new UnauthorizedException('OTP expired');
       }

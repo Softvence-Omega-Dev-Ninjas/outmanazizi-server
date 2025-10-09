@@ -22,20 +22,31 @@ import { EmailAndOtpDto, ResendOtpDto } from './dto/emailAndOtp.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
+import { UploadImageDto } from './dto/uploadImage.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
   @Public()
   @ApiBody({ type: RegisterDto })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FilesInterceptor('images', 10, { storage: storageConfig() }))
   async register(
     @Body() registerDto: RegisterDto,
+  ) {
+    return await this.authService.register(registerDto);
+  }
+
+  @Post('upload-profile-picture')
+  @ApiTags('Upload Profile Picture')
+  @UseGuards(AuthenticationGuard)
+  @ApiBody({ type: UploadImageDto })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('images', 10, { storage: storageConfig() }))
+  async uploadProfilePicture(
     @UploadedFiles() images: Express.Multer.File[],
+    @Req() req: Request,
   ) {
     if (!images || images.length === 0) {
       throw new BadRequestException('At least one image is required');
@@ -44,8 +55,9 @@ export class AuthController {
       (f) => `${process.env.DOMAIN}/uploads/${f.filename}`,
     );
 
-    return await this.authService.register(registerDto, image);
+    return await this.authService.uploadProfilePicture(req['userid'] as string, image);
   }
+
   // otp verification and create user
   @Post('verify-otp')
   @Public()
