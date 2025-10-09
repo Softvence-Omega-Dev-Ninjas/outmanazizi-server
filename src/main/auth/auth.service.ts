@@ -382,7 +382,7 @@ export class AuthService {
       );
       return ApiResponse.success(otp, 'OTP resent to email successfully');
     } catch (error) {
-      return ApiResponse.error('Resend OTP failed', error.message);
+      return ApiResponse.error('Resend OTP failed', error);
     }
   }
 }
