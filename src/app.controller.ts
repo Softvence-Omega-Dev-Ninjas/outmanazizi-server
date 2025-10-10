@@ -10,7 +10,7 @@ export class AppController {
   @Get('/')
 
   @ApiOperation({
-    summary: '🧩 OutManzizi server check 💅',
+    summary: 'Server says: ‘I got you, boss!’ 😁🟢 Please you check me',
     description:
       'This is the official test route for the OutManzizi API. If you’re seeing this, congrats — the server is alive, the code’s behaving, and your day just got better! 😎🎉',
   })

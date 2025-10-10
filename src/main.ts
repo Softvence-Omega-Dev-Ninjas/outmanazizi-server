@@ -15,8 +15,8 @@ async function bootstrap() {
     credentials: true,
   });
   const config = new DocumentBuilder()
-    .setTitle('Outmanazizi Server')
-    .setDescription('Project API docs')
+    .setTitle('OutManzizi Playground 🎉 — Where APIs Party')
+    .setDescription('Your favorite API playground! Hit the routes, explore the endpoints, and enjoy the ride 😄🎯')
     .setVersion('1.0')
     .addBearerAuth(
       {

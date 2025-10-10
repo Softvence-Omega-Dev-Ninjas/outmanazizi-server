@@ -22,7 +22,7 @@ import { UploadDocumentsDto } from './dto/uploadDocuments.dto';
 export class ServiceProviderController {
   constructor(
     private readonly serviceProviderService: ServiceProviderService,
-  ) {}
+  ) { }
 
   @Post('create-service-provider')
   @UseGuards(AuthenticationGuard)
@@ -31,7 +31,7 @@ export class ServiceProviderController {
     @Req() req: Request,
   ) {
     return await this.serviceProviderService.create(
-      req['userid'],
+      req['userid'] as string,
       createServiceProviderDto,
     );
   }
@@ -63,7 +63,7 @@ export class ServiceProviderController {
         )
         .toString() || '';
     return await this.serviceProviderService.uploadDocuments(
-      req['userid'],
+      req['userid'] as string,
       documents,
     );
   }
@@ -80,7 +80,7 @@ export class ServiceProviderController {
     @Req() req: Request,
     @Body() body: ServiceProviderBidDto,
   ) {
-    return await this.serviceProviderService.makeBid(req['userid'], id, body);
+    return await this.serviceProviderService.makeBid(req['userid'] as string, id, body);
   }
 
   @Get('my-bids')
@@ -88,7 +88,7 @@ export class ServiceProviderController {
   @ApiOperation({ summary: 'Get my bids' })
   @UseGuards(AuthenticationGuard)
   async myBids(@Req() req: Request) {
-    return await this.serviceProviderService.myBids(req['userid']);
+    return await this.serviceProviderService.myBids(req['userid'] as string);
   }
 
   @Patch('work-coplete/:serviceId')
@@ -96,7 +96,7 @@ export class ServiceProviderController {
   @ApiOperation({ summary: 'Work Complete from service provider..' })
   async updateBid(@Param('serviceId') serviceId: string, @Req() req: Request) {
     return await this.serviceProviderService.workComplete(
-      req['userid'],
+      req['userid'] as string,
       serviceId,
     );
   }
@@ -105,7 +105,7 @@ export class ServiceProviderController {
   @ApiOperation({ summary: 'Get my all bids' })
   @UseGuards(AuthenticationGuard)
   async myAllBids(@Req() req: Request) {
-    return await this.serviceProviderService.myAllBids(req['userid']);
+    return await this.serviceProviderService.myAllBids(req['userid'] as string);
   }
   @Get('my-completed-bids')
   @UseGuards(AuthenticationGuard)
@@ -115,6 +115,6 @@ export class ServiceProviderController {
   })
   @UseGuards(AuthenticationGuard)
   async myCompletedBids(@Req() req: Request) {
-    return await this.serviceProviderService.myAcceptedBids(req['userid']);
+    return await this.serviceProviderService.myAcceptedBids(req['userid'] as string);
   }
 }
