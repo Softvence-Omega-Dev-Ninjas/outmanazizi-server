@@ -10,7 +10,7 @@ export class ServiceProviderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly helperService: HelperService,
-  ) {}
+  ) { }
 
   async create(
     userid: string,
@@ -28,22 +28,13 @@ export class ServiceProviderService {
       if (!serviceAreaExists) {
         throw new NotFoundException('Invalid service area');
       }
-      console.log(createServiceProviderDto.serviceCategories);
       const serviceCategoryExists = await this.prisma.services.findMany({
         where: { id: { in: createServiceProviderDto.serviceCategories } },
       });
       if (!serviceCategoryExists) {
         throw new NotFoundException('Invalid service category');
       }
-      if (
-        createServiceProviderDto.address &&
-        createServiceProviderDto.serviceArea
-      ) {
-        await this.prisma.serviceProvider.update({
-          where: { id: userid },
-          data: { isProfileCompleted: true },
-        });
-      }
+
       const serviceProvider = await this.prisma.serviceProvider.create({
         data: {
           userId: userid,
@@ -54,7 +45,15 @@ export class ServiceProviderService {
           ),
         },
       });
-
+      if (
+        createServiceProviderDto.address &&
+        createServiceProviderDto.serviceArea
+      ) {
+        await this.prisma.serviceProvider.update({
+          where: { id: userid },
+          data: { isProfileCompleted: true },
+        });
+      }
       await this.prisma.user.update({
         where: { id: userid },
         data: { role: 'SERVICE_PROVIDER' },
