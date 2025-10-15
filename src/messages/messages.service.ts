@@ -1,29 +1,26 @@
 import {
   Injectable,
   NotFoundException,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
-import { Messages } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class WebsocketService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async saveMessage(
     currentUserId: string,
     payload: { to: string; text: string },
-    files?: string,
+
   ) {
     try {
       console.log(currentUserId);
       const currentUserIdExist = await this.prisma.messages.findFirst({
         where: { id: currentUserId },
       });
-      // if (!currentUserIdExist) {
-      //   throw new NotFoundException('Current user not found');
-      // }
+      if (!currentUserIdExist) {
+        throw new NotFoundException('Current user not found');
+      }
       // You can add your message saving logic here
       const message = await this.prisma.messages.create({
         data: {
@@ -38,7 +35,7 @@ export class WebsocketService {
     }
   }
 
-  async getMessagesForUser(currentUserId: string, user: string) {}
+  async getMessagesForUser(currentUserId: string, user: string) { }
 
-  async getAllMessages(userId: string) {}
+  async getAllMessages(userId: string) { }
 }
