@@ -1,21 +1,21 @@
-// model Bid {
-//   id        String  @id @default(uuid())
-//   serviceId String
-//   service   Service @relation(fields: [serviceId], references: [id])
+model Bid {
+  id        String  @id @default(uuid())
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
 
-//   serviceProviderId String
-//   serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
 
-//   price String
+  price String
 
-//   serviceProviderProposal String
-//   status                  Status   @default(PENDING)
-//   createdAt               DateTime @default(now())
-//   updatedAt               DateTime @updatedAt
-// }
+  serviceProviderProposal String
+  status                  Status   @default(PENDING)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
 
-// enum Status {
-//   PENDING
-//   ACCEPTED
-//   REJECTED
-// }
+enum Status {
+  PENDING
+  ACCEPTED
+  REJECTED
+}

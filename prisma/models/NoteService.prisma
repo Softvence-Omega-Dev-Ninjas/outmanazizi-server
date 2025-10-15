@@ -1,12 +1,12 @@
-// model NoteService {
-//   id                String   @id @default(uuid())
-//   serviceProviderId String
-//   serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
-//   title             String
-//   startTime         String
-//   specialNote      String
-//   clientName       String
-//   email            String
-//   createdAt        DateTime  @default(now())
-//   updatedAt        DateTime  @updatedAt
-// }
+model NoteService {
+  id                String          @id @default(uuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  title             String
+  startTime         String
+  specialNote       String
+  clientName        String
+  email             String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}

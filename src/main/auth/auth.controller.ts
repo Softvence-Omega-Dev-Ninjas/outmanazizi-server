@@ -8,6 +8,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
+  Get,
 } from '@nestjs/common';
 import { ApiTags, ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { LoginDto, RegisterDto } from './dto';
@@ -22,6 +23,8 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { GoogleUser } from './strategy/goggle.strategy';
 
 @ApiTags('Authentication & User Management')
 @Controller('auth')
@@ -59,32 +62,32 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  // @Get('google')
-  // @Public()
-  // @UseGuards(AuthGuard('google'))
-  // googleAuth() {
-  //   console.log('Google Auth');
-  // }
+  @Get('google')
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  googleAuth() {
+    console.log('Google Auth');
+  }
 
-  // @Get('google/redirect')
-  // @UseGuards(AuthGuard('google'))
-  // @Public()
-  // googleRedirect(@Req() req: Request) {
-  //   return this.authService.saveGoogleUser(req.user as GoogleUser);
-  // }
+  @Get('google/redirect')
+  @UseGuards(AuthGuard('google'))
+  @Public()
+  googleRedirect(@Req() req: Request) {
+    return this.authService.saveGoogleUser(req.user as GoogleUser);
+  }
 
-  // // ---- Facebook Login ----
-  // @Get('facebook')
-  // @Public()
-  // @UseGuards(AuthGuard('facebook'))
-  // async facebookLogin() {}
+  // ---- Facebook Login ----
+  @Get('facebook')
+  @Public()
+  @UseGuards(AuthGuard('facebook'))
+  async facebookLogin() { }
 
-  // @Get('facebook/redirect')
-  // @UseGuards(AuthGuard('facebook'))
-  // @Public()
-  // facebookRedirect(@Req() req: Request) {
-  //   return this.authService.saveFacebookUser(req.user);
-  // }
+  @Get('facebook/redirect')
+  @UseGuards(AuthGuard('facebook'))
+  @Public()
+  facebookRedirect(@Req() req: Request) {
+    return this.authService.saveFacebookUser(req.user);
+  }
 
   // reset password send otp to user
   @Post('upload-profile-picture')

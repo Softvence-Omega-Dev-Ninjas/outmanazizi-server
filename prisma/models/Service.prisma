@@ -1,23 +1,23 @@
-// model Service {
-//   id     String @id @default(uuid())
-//   userId String
-//   user   User   @relation(fields: [userId], references: [id])
+model Service {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-//   title                          String
-//   description                    String
-//   location                       String
-//   budget                         String
-//   startTime                      String
-//   endTime                        String
-//   toolsNeed                      Boolean
-//   file                           String[]
-//   isCompletedFromServiceProvider Boolean          @default(false)
-//   isCompleteFromConsumer         Boolean          @default(false)
-//   isDeleteRequestToAdmin         Boolean          @default(false)
-//   isDeleted                      Boolean          @default(false)
-//   createdAt                      DateTime         @default(now())
-//   updatedAt                      DateTime         @updatedAt
-//   bids                           Bid[]
-//   assignedServiceProviderId      String?
-//   assignedServiceProvider        ServiceProvider? @relation(fields: [assignedServiceProviderId], references: [id])
-// }
+  title                          String
+  description                    String
+  location                       String
+  budget                         String
+  startTime                      String
+  endTime                        String
+  toolsNeed                      Boolean
+  file                           String[]
+  isCompletedFromServiceProvider Boolean          @default(false)
+  isCompleteFromConsumer         Boolean          @default(false)
+  isDeleteRequestToAdmin         Boolean          @default(false)
+  isDeleted                      Boolean          @default(false)
+  createdAt                      DateTime         @default(now())
+  updatedAt                      DateTime         @updatedAt
+  bids                           Bid[]
+  assignedServiceProviderId      String?
+  assignedServiceProvider        ServiceProvider? @relation(fields: [assignedServiceProviderId], references: [id])
+}

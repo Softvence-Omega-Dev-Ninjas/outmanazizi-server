@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// model User {
+//   id               String           @id @default(uuid())
+//   email            String           @unique
+//   password         String?
+//   picture          String?
+//   name             String
+//   phone            String
+//   role             Role             @default(CONSUMER)
+//   isActive         Boolean          @default(true)
+//   isDeleted        Boolean          @default(false)
+//   isBlocked        Boolean          @default(false)
+//   provider         String?
+//   otp              String?
+//   otpExpiresAt     String?
+//   isEmailVerified  Boolean          @default(false)
+//   createdAt        DateTime         @default(now())
+//   updatedAt        DateTime         @updatedAt
+//   serviceProvider  ServiceProvider?
+//   services         Service[]
+//   reviews          Review[]
+//   sentMessages     Messages[]       @relation("SentMessages")
+//   receivedMessages Messages[]       @relation("ReceivedMessages")
+// }
+
+// enum Role {
+//   ADMIN
+//   CONSUMER
+//   SERVICE_PROVIDER
+//   SUPER_ADMIN
+// }
+
+// model ServiceProvider {
+//   id                  String        @id @default(uuid())
+//   userId              String        @unique
+//   user                User          @relation(fields: [userId], references: [id])
+//   address             String
+//   serviceArea         String[]
+//   serviceCategories   String[]
+//   documents           String?
+//   isProfileCompleted  Boolean       @default(false)
+//   isVerifiedFromAdmin Boolean       @default(false)
+//   createdAt           DateTime      @default(now())
+//   updatedAt           DateTime      @updatedAt
+//   bids                Bid[]
+//   myCurrentRating     Float?        @default(0)
+//   getFromUsers        Int           @default(0)
+//   noteServices        NoteService[]
+//   services            Service[]
+//   reviews             Review[]
+// }
+
+// model Service {
+//   id     String @id @default(uuid())
+//   userId String
+//   user   User   @relation(fields: [userId], references: [id])
+
+//   title                          String
+//   description                    String
+//   location                       String
+//   budget                         String
+//   startTime                      String
+//   endTime                        String
+//   toolsNeed                      Boolean
+//   file                           String[]
+//   isCompletedFromServiceProvider Boolean          @default(false)
+//   isCompleteFromConsumer         Boolean          @default(false)
+//   isDeleteRequestToAdmin         Boolean          @default(false)
+//   isDeleted                      Boolean          @default(false)
+//   createdAt                      DateTime         @default(now())
+//   updatedAt                      DateTime         @updatedAt
+//   bids                           Bid[]
+//   assignedServiceProviderId      String?
+//   assignedServiceProvider        ServiceProvider? @relation(fields: [assignedServiceProviderId], references: [id])
+// }
+
+// model Review {
+//   id                String   @id @default(uuid())
+//   rating            String
+//   comment           String?
+//   userId            String
+//   serviceProviderId String
+//   createdAt         DateTime @default(now())
+//   updatedAt         DateTime @updatedAt
+
+//   user            User            @relation(fields: [userId], references: [id])
+//   serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+
+//   @@unique([userId, serviceProviderId])
+// }
+
+// model NoteService {
+//   id                String          @id @default(uuid())
+//   serviceProviderId String
+//   serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+//   title             String
+//   startTime         String
+//   specialNote       String
+//   clientName        String
+//   email             String
+//   createdAt         DateTime        @default(now())
+//   updatedAt         DateTime        @updatedAt
+// }
+
+// model Messages {
+//   id         String   @id @default(uuid())
+//   senderId   String
+//   receiverId String
+//   content    String
+//   timestamp  DateTime @default(now())
+
+//   sender   User @relation("SentMessages", fields: [senderId], references: [id])
+//   receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+//   @@index([senderId])
+//   @@index([receiverId])
+// }
+
+// model Bid {
+//   id        String  @id @default(uuid())
+//   serviceId String
+//   service   Service @relation(fields: [serviceId], references: [id])
+
+//   serviceProviderId String
+//   serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+
+//   price String
+
+//   serviceProviderProposal String
+//   status                  Status   @default(PENDING)
+//   createdAt               DateTime @default(now())
+//   updatedAt               DateTime @updatedAt
+// }
+
+// enum Status {
+//   PENDING
+//   ACCEPTED
+//   REJECTED
+// }
+
+// model Area {
+//   id   String @id @default(uuid())
+//   area String
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
+
+// model Services {
+//   id        String   @id @default(uuid())
+//   name      String
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
