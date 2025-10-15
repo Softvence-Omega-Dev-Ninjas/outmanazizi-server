@@ -1,19 +1,19 @@
-model ServiceProvider {
-  id                  String        @id @default(uuid())
-  userId              String        @unique
-  user                User          @relation(fields: [userId], references: [id])
-  address             String
-  serviceArea         String[]
-  serviceCategories   String[]
-  documents           String?
-  isProfileCompleted  Boolean       @default(false)
-  isVerifiedFromAdmin Boolean       @default(false)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  bids                Bid[]
-  myCurrentRating     Float?        @default(0)
-  getFromUsers        Int           @default(0)
-  noteServices        NoteService[]
-  services            Service[]
-  reviews             Review[]
-}
+// model ServiceProvider {
+//   id                  String        @id @default(uuid())
+//   userId              String        @unique
+//   user                User          @relation(fields: [userId], references: [id])
+//   address             String
+//   serviceArea         String[]
+//   serviceCategories   String[]
+//   documents           String?
+//   isProfileCompleted  Boolean       @default(false)
+//   isVerifiedFromAdmin Boolean       @default(false)
+//   createdAt           DateTime      @default(now())
+//   updatedAt           DateTime      @updatedAt
+//   bids                Bid[]
+//   myCurrentRating     Float?        @default(0)
+//   getFromUsers        Int           @default(0)
+//   noteServices        NoteService[]
+//   services            Service[]
+//   reviews             Review[]
+// }

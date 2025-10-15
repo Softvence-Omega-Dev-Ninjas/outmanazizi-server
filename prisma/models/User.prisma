@@ -1,30 +1,30 @@
-model User {
-  id               String           @id @default(uuid())
-  email            String           @unique
-  password         String?
-  picture          String?
-  name             String
-  phone            String
-  role             Role             @default(CONSUMER)
-  isActive         Boolean          @default(true)
-  isDeleted        Boolean          @default(false)
-  isBlocked        Boolean          @default(false)
-  provider         String?
-  otp              String?
-  otpExpiresAt     String?
-  isEmailVerified  Boolean          @default(false)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  serviceProvider  ServiceProvider?
-  services         Service[]
-  reviews          Review[]
-  sentMessages     Messages[]       @relation("SentMessages")
-  receivedMessages Messages[]       @relation("ReceivedMessages")
-}
+// model User {
+//   id               String           @id @default(uuid())
+//   email            String           @unique
+//   password         String?
+//   picture          String?
+//   name             String
+//   phone            String
+//   role             Role             @default(CONSUMER)
+//   isActive         Boolean          @default(true)
+//   isDeleted        Boolean          @default(false)
+//   isBlocked        Boolean          @default(false)
+//   provider         String?
+//   otp              String?
+//   otpExpiresAt     String?
+//   isEmailVerified  Boolean          @default(false)
+//   createdAt        DateTime         @default(now())
+//   updatedAt        DateTime         @updatedAt
+//   serviceProvider  ServiceProvider?
+//   services         Service[]
+//   reviews          Review[]
+//   sentMessages     Messages[]       @relation("SentMessages")
+//   receivedMessages Messages[]       @relation("ReceivedMessages")
+// }
 
-enum Role {
-  ADMIN
-  CONSUMER
-  SERVICE_PROVIDER
-  SUPER_ADMIN
-}
+// enum Role {
+//   ADMIN
+//   CONSUMER
+//   SERVICE_PROVIDER
+//   SUPER_ADMIN
+// }
