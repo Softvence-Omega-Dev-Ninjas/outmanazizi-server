@@ -45,18 +45,53 @@ export class AuthService {
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = getLocalDateTime(10);
+      if (registerDto.role === UserRole.CONSUMER) {
+        const user = await this.prisma.user.create({
+          data: {
+            email: registerDto.email,
+            name: registerDto.name,
+            phone: registerDto.phone,
+            password: hashedPassword,
+            role: registerDto.role,
+            otp,
+            otpExpiresAt,
+          },
+        });
+        const data = { ...user, otp }
+        return ApiResponse.success(
+          data,
+          'User registered successfully. Please verify OTP sent to your email.',
+        );
+      }
 
-      const user = await this.prisma.user.create({
-        data: {
-          email: registerDto.email,
-          name: registerDto.name,
-          phone: registerDto.phone,
-          password: hashedPassword,
-          role: registerDto.role,
-          otp,
-          otpExpiresAt,
-        },
-      });
+      if (registerDto.role === UserRole.SERVICE_PROVIDER) {
+        const user = await this.prisma.user.create({
+          data: {
+            email: registerDto.email,
+            name: registerDto.name,
+            phone: registerDto.phone,
+            password: hashedPassword,
+            role: registerDto.role,
+            otp,
+            otpExpiresAt,
+          },
+        });
+
+        const serviceProvider = await this.prisma.serviceProvider.create({
+          data: {
+            userId: user.id,
+            isProfileCompleted: false,
+            address: '',
+          }
+        });
+        const data = {
+          ...serviceProvider, otp
+        }
+        return ApiResponse.success(
+          data,
+          'Service Provider registered successfully. Please verify OTP sent to your email.',
+        );
+      }
 
       // Send OTP email
       await this.mailService.sendMail(
@@ -65,10 +100,7 @@ export class AuthService {
         `<p>Your OTP code is: <strong>${otp}</strong></p>`,
       );
 
-      return ApiResponse.success(
-        user,
-        'User registered successfully. Please verify OTP sent to your email.',
-      );
+
     } catch (error: any) {
       const errorMessage =
         typeof error === 'object' && error !== null && 'message' in error

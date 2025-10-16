@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
@@ -10,87 +10,124 @@ export class ServiceProviderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly helperService: HelperService,
-  ) {}
+  ) {
+    if (!this.prisma) {
+      throw new Error('PrismaService not initialized');
+    }
+  }
 
   async create(
     userid: string,
     createServiceProviderDto: CreateServiceProviderDto,
   ) {
     try {
+
       // user exists check
       const user = await this.helperService.userExistsByUserid(userid);
+
       if (!user) {
         throw new NotFoundException('You need to register first');
       }
-      const serviceAreaExists = await this.prisma.area.findMany({
-        where: { id: { in: createServiceProviderDto.serviceArea } },
+      const serviceProviderExists = await this.prisma.serviceProvider.findFirst({
+        where: { userId: user.id },
       });
-      if (!serviceAreaExists) {
-        throw new NotFoundException('Invalid service area');
+      if (!serviceProviderExists) {
+        throw new NotFoundException('Service provider not found');
       }
-      console.log(createServiceProviderDto.serviceCategories);
-      const serviceCategoryExists = await this.prisma.services.findMany({
-        where: { id: { in: createServiceProviderDto.serviceCategories } },
-      });
-      if (!serviceCategoryExists) {
-        throw new NotFoundException('Invalid service category');
-      }
-      if (
-        createServiceProviderDto.address &&
-        createServiceProviderDto.serviceArea
-      ) {
-        await this.prisma.serviceProvider.update({
-          where: { id: userid },
-          data: { isProfileCompleted: true },
-        });
-      }
-      const serviceProvider = await this.prisma.serviceProvider.create({
-        data: {
-          userId: userid,
-          address: createServiceProviderDto.address,
-          serviceArea: serviceAreaExists.map((area) => area.area),
-          serviceCategories: serviceCategoryExists.map(
-            (category) => category.name,
-          ),
+
+
+      const serviceAreas: { id: string }[] = await this.prisma.area.findMany({
+        where: {
+          id: { in: createServiceProviderDto.serviceArea }
         },
+        select: { id: true }
       });
 
-      await this.prisma.user.update({
-        where: { id: userid },
-        data: { role: 'SERVICE_PROVIDER' },
+      if (serviceAreas.length !== createServiceProviderDto.serviceArea.length) {
+        throw new NotFoundException('One or more service areas are invalid');
+      }
+      const serviceCategories: { id: string }[] = await this.prisma.services.findMany({
+        where: {
+          id: { in: createServiceProviderDto.serviceCategories }
+        },
+        select: { id: true }
       });
+
+
+      if (serviceCategories.length !== createServiceProviderDto.serviceCategories.length) {
+        throw new NotFoundException('One or more service categories are invalid');
+      }
+
+      const newServiceProvider =
+        await this.prisma.serviceProvider.update({
+          where: { id: serviceProviderExists.id },
+          data: {
+            address: createServiceProviderDto.address,
+            serviceArea: {
+              set: serviceAreas.map(area => area.id)
+            },
+            serviceCategories: {
+              set: serviceCategories.map(category => category.id)
+            }
+          },
+        });
       return ApiResponse.success(
-        serviceProvider,
-        'Service provider created successfully',
+        newServiceProvider,
+        'Service provider profile created successfully',
+      )
+
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+  async currentServiceProvider(userid: string) {
+    try {
+      const validServiceProvider =
+        await this.helperService.validServiceProvider(userid);
+      if (!validServiceProvider) {
+        throw new NotFoundException('Invalid service provider');
+      }
+      return ApiResponse.success(
+        validServiceProvider,
+        'Current service provider retrieved successfully',
       );
     } catch (error) {
-      console.log(error);
+      throw new BadRequestException(error.message);
     }
   }
   // patch document upload
   async uploadDocuments(userid: string, documents: string) {
-    const validServiceProvider =
-      await this.helperService.validServiceProvider(userid);
-    if (!validServiceProvider) {
-      throw new NotFoundException('Invalid service provider');
+    try {
+      const validServiceProvider =
+        await this.helperService.validServiceProvider(userid);
+      if (!validServiceProvider) {
+        throw new NotFoundException('Invalid service provider');
+      }
+      const updatedServiceProvider = await this.prisma.serviceProvider.update({
+        where: { id: validServiceProvider.id },
+        data: {
+          documents: documents,
+        },
+      });
+      return ApiResponse.success(
+        updatedServiceProvider,
+        'Documents uploaded  successfully',
+      );
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
-    const updatedServiceProvider = await this.prisma.serviceProvider.update({
-      where: { id: validServiceProvider.id },
-      data: {
-        documents: documents,
-      },
-    });
-    return ApiResponse.success(
-      updatedServiceProvider,
-      'Documents uploaded  successfully',
-    );
   }
   async findAll() {
-    const result = await this.prisma.serviceProvider.findMany({});
-    return ApiResponse.success(
-      result,
-      'Service providers retrieved successfully',
-    );
+    try {
+      const result = await this.prisma.serviceProvider.findMany({});
+      return ApiResponse.success(
+        result,
+        'Service providers retrieved successfully',
+      );
+    } catch (error) {
+      throw new BadRequestException(error.message)
+    }
+
   }
 
   async makeBid(

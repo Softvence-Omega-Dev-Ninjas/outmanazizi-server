@@ -35,6 +35,11 @@ export class ServiceProviderController {
       createServiceProviderDto,
     );
   }
+  @Get("current-service-provider")
+  @UseGuards(AuthenticationGuard)
+  async currentServiceProvider(@Req() req: Request) {
+    return await this.serviceProviderService.currentServiceProvider(req['userid'] as string);
+  }
   // patch document upload
   @Patch('upload-documents')
   @UseGuards(AuthenticationGuard)
