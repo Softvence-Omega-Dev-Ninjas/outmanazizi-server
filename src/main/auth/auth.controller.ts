@@ -72,8 +72,8 @@ export class AuthController {
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
   @Public()
-  googleRedirect(@Req() req: Request) {
-    return this.authService.saveGoogleUser(req.user as GoogleUser);
+  async googleRedirect(@Req() req: Request) {
+    return await this.authService.saveGoogleUser(req.user as GoogleUser);
   }
 
   // ---- Facebook Login ----

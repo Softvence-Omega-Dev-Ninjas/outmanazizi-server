@@ -136,7 +136,11 @@ export class AuthService {
         'OTP verified successfully and user created',
       );
     } catch (error) {
-      return ApiResponse.error('OTP verification failed', error.message);
+      const errorMessage =
+        typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message?: unknown }).message)
+          : 'Unknown error';
+      return ApiResponse.error('OTP verification failed', errorMessage);
     }
   }
   async uploadProfilePicture(userId: string, image: string[]) {
@@ -153,7 +157,11 @@ export class AuthService {
       });
       return ApiResponse.success(updatedUser, 'Profile picture uploaded successfully');
     } catch (error) {
-      return ApiResponse.error('Upload profile picture failed', error.message);
+      const errorMessage =
+        typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message?: unknown }).message)
+          : 'Unknown error';
+      return ApiResponse.error('Upload profile picture failed', errorMessage);
     }
   }
   async login(loginDto: LoginDto) {
@@ -201,8 +209,11 @@ export class AuthService {
         'User logged in successfully',
       );
     } catch (error) {
-      console.log(error);
-      return ApiResponse.error('Login failed', error.message);
+      const errorMessage =
+        typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message?: unknown }).message)
+          : 'Unknown error';
+      return ApiResponse.error('Login failed', errorMessage);
     }
   }
 
@@ -223,9 +234,10 @@ export class AuthService {
       };
       const token = await this.jwtService.signAsync(payload);
       return ApiResponse.success(token, 'User created successfully');
+
     } catch (error) {
       console.error('Error saving Google user:', error);
-      throw new UnauthorizedException('Google user registration failed');
+      throw new UnauthorizedException('Google user registration failed', error as UnauthorizedException);
     }
   }
 
@@ -274,7 +286,8 @@ export class AuthService {
       );
       return ApiResponse.success(null, 'OTP sent to email for password reset');
     } catch (error) {
-      throw new UnauthorizedException('Forgot password failed', error);
+
+      throw new UnauthorizedException('Forgot password failed', error as UnauthorizedException);
     }
   }
 
@@ -414,7 +427,11 @@ export class AuthService {
       );
       return ApiResponse.success(otp, 'OTP resent to email successfully');
     } catch (error) {
-      return ApiResponse.error('Resend OTP failed', error);
+      const errorMessage =
+        typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message?: unknown }).message)
+          : 'Unknown error';
+      return ApiResponse.error('Resend OTP failed', errorMessage);
     }
   }
 }

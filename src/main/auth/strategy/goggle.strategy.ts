@@ -5,7 +5,6 @@ import { PassportStrategy } from '@nestjs/passport';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor() {
-    console.log('passport initialized');
     super({
       clientID: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
@@ -20,7 +19,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Record<string, any>,
     done: VerifyCallback,
   ): void {
-    console.log('profile', profile);
 
     if (!profile) {
       done(null, false);
