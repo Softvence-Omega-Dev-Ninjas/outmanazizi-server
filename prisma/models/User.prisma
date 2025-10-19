@@ -1,25 +1,27 @@
 model User {
-  id               String           @id @default(uuid())
-  email            String           @unique
-  password         String?
-  picture          String?
-  name             String
-  phone            String
-  role             Role             @default(CONSUMER)
-  isActive         Boolean          @default(true)
-  isDeleted        Boolean          @default(false)
-  isBlocked        Boolean          @default(false)
-  provider         String?
-  otp              String?
-  otpExpiresAt     String?
-  isEmailVerified  Boolean          @default(false)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  serviceProvider  ServiceProvider?
-  services         Service[]
-  reviews          Review[]
-  sentMessages     Messages[]       @relation("SentMessages")
-  receivedMessages Messages[]       @relation("ReceivedMessages")
+  id                   String           @id @default(uuid())
+  email                String           @unique
+  password             String?
+  picture              String?
+  name                 String
+  phone                String
+  role                 Role             @default(CONSUMER)
+  isActive             Boolean          @default(true)
+  isDeleted            Boolean          @default(false)
+  isBlocked            Boolean          @default(false)
+  provider             String?
+  otp                  String?
+  otpExpiresAt         String?
+  isEmailVerified      Boolean          @default(false)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  serviceProvider      ServiceProvider?
+  services             Service[]
+  reviews              Review[]
+  sentMessages         Message[]        @relation("SentMessages")
+  receivedMessages     Message[]        @relation("ReceivedMessages")
+  conversationsAsUser1 Conversation[]   @relation("User1Conversations")
+  conversationsAsUser2 Conversation[]   @relation("User2Conversations")
 }
 
 enum Role {

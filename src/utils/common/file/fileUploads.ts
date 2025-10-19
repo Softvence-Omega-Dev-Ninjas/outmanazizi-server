@@ -1,12 +1,26 @@
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
+/**
+ * Multer storage configuration generator
+ * @param folder - Folder where files will be saved (default: ./public/uploads)
+ */
 export const storageConfig = (folder = './public/uploads') =>
   diskStorage({
-    destination: folder,
+    destination: (req, file, callback) => {
+      const uploadPath = join(process.cwd(), folder);
+
+      // Ensure directory exists
+      if (!existsSync(uploadPath)) {
+        mkdirSync(uploadPath, { recursive: true });
+      }
+
+      callback(null, uploadPath);
+    },
     filename: (req, file, callback) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const ext = extname(file.originalname); // keeps dot + extension (.jpg, .png)
+      const ext = extname(file.originalname).toLowerCase(); // keeps .jpg, .png, etc.
       callback(null, `${uniqueSuffix}${ext}`);
     },
   });

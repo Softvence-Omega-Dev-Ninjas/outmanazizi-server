@@ -1,0 +1,2 @@
+// Base schema file - generator and datasource are in _schema.composed.prisma
+// This file is used by the compose script to generate the final schema

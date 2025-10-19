@@ -3,15 +3,13 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
-  MessageBody,
-  ConnectedSocket,
+
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
-import { WebsocketService } from './messages.service';
+import { Injectable, Logger } from '@nestjs/common';
 
 @WebSocketGateway({
+  namespace: '/chat',
   cors: {
     origin: '*',
     methods: ['GET', 'POST'],
@@ -19,64 +17,75 @@ import { WebsocketService } from './messages.service';
   },
 })
 @Injectable()
-export class SmsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
-  private logger = new Logger('SmsGateway');
+  private logger = new Logger('MessagesGateway');
 
-  constructor(
-    @Inject(forwardRef(() => WebsocketService))
-    private readonly chatService: WebsocketService,
-  ) {}
+  // Map to track connected users
+  private connectedUsers = new Map<string, string>(); // userId -> socketId
 
   handleConnection(client: Socket) {
-    const user = client.handshake.query.user;
-    const username = Array.isArray(user) ? user[0] : user;
-    if (username) {
-      client.join(username);
-      this.logger.log(`Client ${client.id} joined room ${username}`);
+    const userId = client.handshake.query.userId;
+    const userIdStr = Array.isArray(userId) ? userId[0] : userId;
+
+    if (userIdStr) {
+      this.connectedUsers.set(userIdStr, client.id);
+      void client.join(`user:${userIdStr}`);
+      this.logger.log(`User ${userIdStr} connected with socket ${client.id}`);
+
+      // Notify user is online
+      client.broadcast.emit('user_online', { userId: userIdStr });
     }
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+    // Find and remove user from connected users map
+    for (const [userId, socketId] of this.connectedUsers.entries()) {
+      if (socketId === client.id) {
+        this.connectedUsers.delete(userId);
+        this.logger.log(`User ${userId} disconnected`);
+        client.broadcast.emit('user_offline', { userId });
+        break;
+      }
+    }
   }
 
-  sendMessageToUser(toUserId: string, message: any) {
+  // Send message to specific user
+  sendMessageToUser(userId: string, message: any) {
     if (!this.server) return;
-    this.server.to(toUserId).emit('receive_message', message);
+
+    this.server.to(`user:${userId}`).emit('new_message', message);
+    this.logger.log(`Sent message to user ${userId}`);
   }
 
-  @SubscribeMessage('send_message')
-  async handleMessage(
-    @MessageBody()
-    data: {
-      senderId: string;
-      toUserId: string;
-      content: string;
-    },
-    @ConnectedSocket() client: Socket,
-  ) {
-    // Validate payload
-    if (!data.senderId || !data.toUserId || !data.content) {
-      client.emit('error', { message: 'Invalid message payload' });
-      return;
-    }
+  // Send message update (edit)
+  sendMessageUpdate(userId: string, message: any) {
+    if (!this.server) return;
 
-    try {
-      // Save message in the database
-      const savedMessage = await this.chatService.saveMessage(data.senderId, {
-        to: data.toUserId,
-        text: data.content,
-      });
-      console.log('Message saved:', savedMessage);
-      // Emit message to the receiver
-      this.server.to(data.toUserId).emit('receive_message', savedMessage);
-      // Emit back to sender for confirmation
-      client.emit('receive_message', savedMessage);
-    } catch (error) {
-      console.error('Error saving message:', error);
-      client.emit('error', { message: 'Failed to save message' });
-    }
+    this.server.to(`user:${userId}`).emit('message_updated', message);
+    this.logger.log(`Sent message update to user ${userId}`);
+  }
+
+  // Send message delete notification
+  sendMessageDelete(userId: string, messageId: string) {
+    if (!this.server) return;
+
+    this.server.to(`user:${userId}`).emit('message_deleted', { messageId });
+    this.logger.log(`Sent message deletion to user ${userId}`);
+  }
+
+
+
+
+
+
+  // Get online status
+  isUserOnline(userId: string): boolean {
+    return this.connectedUsers.has(userId);
+  }
+
+  getOnlineUsers(): string[] {
+    return Array.from(this.connectedUsers.keys());
   }
 }

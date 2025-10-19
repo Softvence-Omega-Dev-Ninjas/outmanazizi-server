@@ -4,34 +4,42 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { HelperModule } from 'src/utils/helper/helper.module';
 import { GoogleStrategy } from './strategy/goggle.strategy';
 import { FacebookStrategy } from './strategy/facebook.strategy';
 import { MailModule } from 'src/utils/mail/mail.module';
+import { AuthenticationGuard } from 'src/guards/auth.guard';
 
 @Module({
   imports: [
-    ConfigModule,
+    ConfigModule.forRoot({ isGlobal: true }), // ✅ ensure env works globally
     MailModule,
-    PassportModule.register({ session: false }),
     HelperModule,
     PrismaModule,
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    PassportModule.register({ defaultStrategy: 'jwt', session: false }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.get<string>('JWT_SECRET') || 'supersecretkey123',
         signOptions: {
           expiresIn: configService.get<string>('JWT_EXPIRES_IN', '7d'),
         },
       }),
-      inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard, GoogleStrategy, FacebookStrategy],
-  exports: [AuthService, JwtAuthGuard],
+  providers: [
+    AuthService,
+    GoogleStrategy,
+    FacebookStrategy,
+    AuthenticationGuard
+  ],
+  exports: [
+    AuthService,
+    JwtModule,
+    AuthenticationGuard,
+  ],
 })
 export class AuthModule { }

@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
-import { WebsocketService } from './messages.service';
-import { SmsGateway } from './messages.gateway';
+import { PrismaModule } from 'src/prisma/prisma.module';
+import { ChatController } from './messages.controller';
+import { MessagesService } from './messages.service';
+import { MessagesGateway } from './messages.gateway';
+import { AuthModule } from 'src/main/auth/auth.module';
 
 @Module({
-  imports: [],
-  controllers: [],
-  providers: [SmsGateway, WebsocketService],
+  imports: [PrismaModule, AuthModule],
+  controllers: [ChatController],
+  providers: [MessagesGateway, MessagesService],
+  exports: [MessagesService, MessagesGateway],
 })
-export class WebsocketModule {}
+export class MessagesModule { }

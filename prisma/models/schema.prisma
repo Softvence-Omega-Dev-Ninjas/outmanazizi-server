@@ -1,3 +1,6 @@
+// Generator and datasource definitions for composed schema
+// These will be used in the final _schema.composed.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
