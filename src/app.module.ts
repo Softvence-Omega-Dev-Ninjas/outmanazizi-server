@@ -11,6 +11,7 @@ import { ServiceProviderModule } from './main/service-provider/service-provider.
 import { AdminModule } from './main/admin/admin.module';
 import { ConsumerModule } from './main/consumer/consumer.module';
 import { MessagesModule } from './messages/messages.module';
+import { StripeModule } from './main/stripe/stripe.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { MessagesModule } from './messages/messages.module';
     AdminModule,
     ConsumerModule,
     MessagesModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
