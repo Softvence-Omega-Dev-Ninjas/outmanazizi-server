@@ -21,16 +21,13 @@ import { MessagesService } from './messages.service';
 import { MessagesGateway } from './messages.gateway';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 
-
-
-
 @Controller('chat')
 @UseGuards(AuthenticationGuard)
 export class ChatController {
   constructor(
     private readonly messagesService: MessagesService,
     private readonly gateway: MessagesGateway,
-  ) { }
+  ) {}
 
   @Post('conversations')
   async createConversation(@Req() req: Request, @Body() dto: CreateConversationDto) {
@@ -47,12 +44,10 @@ export class ChatController {
     return ApiResponse.success(conversations, 'Conversations retrieved');
   }
 
-
   @Post('messages/send')
   async sendMessage(@Req() req: Request, @Body() dto: SendMessageSimpleDto) {
     const message = await this.messagesService.sendMessage(req['userid'] as string, dto);
     this.gateway.sendMessageToUser(dto.receiverId, message);
-
     return ApiResponse.success(message, 'Message sent');
   }
 
@@ -95,6 +90,4 @@ export class ChatController {
   }
 
   // ============ Utility ============
-
-
 }

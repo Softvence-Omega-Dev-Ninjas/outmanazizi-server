@@ -15,6 +15,7 @@ import { MailService } from 'src/utils/mail/mail.service';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { EmailAndOtpDto } from './dto/emailAndOtp.dto';
 import { UserRole } from './role.enum';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +24,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly helperService: HelperService,
     private readonly mailService: MailService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -182,7 +184,10 @@ export class AuthService {
       const serviceProvider = await this.prisma.serviceProvider.findFirst({
         where: { userId: userExists.id },
       });
-      const token = await this.jwtService.signAsync(payload);
+      const token = await this.jwtService.signAsync(payload, {
+        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+        expiresIn: '7d',
+      });
       if (userExists.role === UserRole.SERVICE_PROVIDER) {
         return ApiResponse.success(
           { token, serviceProvider },

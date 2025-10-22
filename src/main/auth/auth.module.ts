@@ -22,7 +22,7 @@ import { AuthenticationGuard } from 'src/guards/auth.guard';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET') || 'supersecretkey123',
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '7d'),
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d',
         },
       }),
     }),

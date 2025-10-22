@@ -1,0 +1,146 @@
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { Injectable, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { SendMessageSimpleDto } from './dto/send-message-simple.dto';
+import { MessagesService } from './messages.service';
+import NodeCache from 'node-cache';
+import { ConfigService } from '@nestjs/config';
+
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+})
+@Injectable()
+export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  @WebSocketServer()
+  server: Server;
+  private logger = new Logger('MessagesGateway');
+
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+    private readonly messagesService: MessagesService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  // Map to track connected users
+  private connectedUsers = new Map<string, string>(); // userId -> socketId
+  private allUsers = new Map<
+    string,
+    {
+      socketId: string;
+      userId: string;
+    }
+  >(); // socketId -> { socketId, userId }
+  private cache = new NodeCache({
+    stdTTL: 300, // 5 minutes
+  });
+  // private userIdSocketId = new Map<string, string>(); // userId -> socketId
+
+  async handleConnection(client: Socket) {
+    const token = client.handshake.headers.cookie as string;
+
+    if (!token) {
+      client.emit('error', { message: 'Authentication token is required' });
+      client.disconnect();
+      return;
+    }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not defined');
+    }
+
+    try {
+      const decoded: Awaited<Record<string, any>> = await this.jwtService.verifyAsync(token, {
+        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      });
+      if (!decoded || !decoded.sub) {
+        client.emit('error', { message: 'Invalid token payload' });
+        client.disconnect();
+        return;
+      }
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+      if (!user) {
+        client.emit('error', { message: 'User not found.' });
+        client.disconnect();
+        return;
+      }
+
+      // this.userIdSocketId.set(user.id, client.id);
+      // this.socketIdUserId.set(client.id, user.id);
+      this.connectedUsers.set(user.id, client.id);
+      this.cache.set(client.id, user.id);
+      this.cache.set(user.id, client.id);
+      this.allUsers.set('online', {
+        socketId: client.id,
+        userId: user.id,
+      });
+      this.logger.log(`User ${user.id} connected with socket ID ${client.id}`);
+      console.log('list of online: ', this.allUsers.get('online'));
+      // client.join(`${this.userIdSocketId.get(user.id)}-${this.socketIdUserId.get(client.id)}`);
+    } catch (error) {
+      console.error('Authentication error:', error);
+      client.emit('error', { message: 'Invalid or expired token' });
+      client.disconnect();
+    }
+  }
+
+  handleDisconnect(client: Socket) {
+    this.cache.del(client.id);
+    // Find and remove user from connected users map
+    for (const [userId, socketId] of this.connectedUsers.entries()) {
+      if (socketId === client.id) {
+        this.connectedUsers.delete(userId);
+        this.logger.log(`User ${userId} disconnected`);
+        client.broadcast.emit('user_offline', { userId });
+        break;
+      }
+    }
+  }
+
+  @SubscribeMessage('send_message')
+  async sendMessage(@MessageBody() dto: SendMessageSimpleDto, @ConnectedSocket() client: Socket) {
+    // console.log('Received send_message event:', dto.receiverId);
+    const receiveSocketId: string = this.cache.get(dto.receiverId) as string;
+
+    if (!receiveSocketId) return console.error('Receiver not connected');
+    // const receiverSocketId = this.connectedUsers.get(dto.receiverId);
+    // console.log({ receiverSocketId });
+    // if (!receiverSocketId) return console.error('Receiver not connected');
+    // this.server
+    //   .to(receiveSocketId)
+    //   .emit('send_message', { ...dto, senderId: this.cache.get(client.id) });
+
+    // client.on('receive_message', (data) => {
+    //   console.log('Message sent acknowledgement received:', data);
+    // });
+
+    const senderId = this.cache.get(client.id) as string;
+    await this.messagesService.sendMessage(senderId, { ...dto });
+
+    this.server
+      .to(receiveSocketId)
+      .emit('receive_message', { ...dto, senderId: this.cache.get(client.id) });
+    // return ApiResponse.success(message, 'Message sent');
+  }
+  // Send message to specific user
+  sendMessageToUser(userId: string, message: any) {
+    if (!this.server) return;
+    this.server.to(`user:${userId}`).emit('new_message', message);
+  }
+}

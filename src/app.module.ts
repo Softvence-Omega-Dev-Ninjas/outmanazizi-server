@@ -10,7 +10,7 @@ import { JobModule } from './main/job/job.module';
 import { ServiceProviderModule } from './main/service-provider/service-provider.module';
 import { AdminModule } from './main/admin/admin.module';
 import { ConsumerModule } from './main/consumer/consumer.module';
-import { MessagesModule } from './messages/messages.module';
+import { MessagesModule } from './main/messages/messages.module';
 import { StripeModule } from './main/stripe/stripe.module';
 import { PaymentModule } from './main/payment/payment.module';
 
@@ -31,4 +31,4 @@ import { PaymentModule } from './main/payment/payment.module';
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
 })
-export class AppModule { }
+export class AppModule {}

@@ -11,12 +11,11 @@ import { GetMessagesSimpleDto } from './dto/get-messages-simple.dto';
 
 @Injectable()
 export class MessagesService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   // ============ Conversation Management ============
 
   async getOrCreateConversation(userId: string, dto: CreateConversationDto) {
-
     const otherUser = await this.prisma.user.findUnique({
       where: { id: dto.otherUserId },
     });
@@ -118,54 +117,56 @@ export class MessagesService {
     }
   }
 
-
-
   // ============ Message Management ============
 
   async sendMessage(userId: string, dto: SendMessageSimpleDto) {
-    // Validate receiver exists
-    const receiver = await this.prisma.user.findUnique({
-      where: { id: dto.receiverId },
-    });
+    try {
+      const receiver = await this.prisma.user.findUnique({
+        where: { id: dto.receiverId },
+      });
 
-    if (!receiver) {
-      throw new NotFoundException('Receiver not found');
+      if (!receiver) {
+        throw new NotFoundException('Receiver not found');
+      }
+
+      // Get or create conversation
+      const conversation = await this.getOrCreateConversation(userId, {
+        otherUserId: dto.receiverId,
+      });
+
+      // Create message
+      const message = await this.prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          senderId: userId,
+          receiverId: dto.receiverId,
+          content: dto.content,
+          messageType: dto.messageType || 'TEXT',
+          fileUrl: dto.fileUrl,
+          fileName: dto.fileName,
+          fileSize: dto.fileSize,
+        },
+        include: {
+          sender: {
+            select: { id: true, name: true, email: true, picture: true },
+          },
+          receiver: {
+            select: { id: true, name: true, email: true, picture: true },
+          },
+        },
+      });
+
+      // Update conversation timestamp
+      await this.prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { updatedAt: new Date() },
+      });
+
+      return message;
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException('Failed to send message');
     }
-
-    // Get or create conversation
-    const conversation = await this.getOrCreateConversation(userId, {
-      otherUserId: dto.receiverId,
-    });
-
-    // Create message
-    const message = await this.prisma.message.create({
-      data: {
-        conversationId: conversation.id,
-        senderId: userId,
-        receiverId: dto.receiverId,
-        content: dto.content,
-        messageType: dto.messageType || 'TEXT',
-        fileUrl: dto.fileUrl,
-        fileName: dto.fileName,
-        fileSize: dto.fileSize,
-      },
-      include: {
-        sender: {
-          select: { id: true, name: true, email: true, picture: true },
-        },
-        receiver: {
-          select: { id: true, name: true, email: true, picture: true },
-        },
-      },
-    });
-
-    // Update conversation timestamp
-    await this.prisma.conversation.update({
-      where: { id: conversation.id },
-      data: { updatedAt: new Date() },
-    });
-
-    return message;
   }
 
   async getMessages(userId: string, dto: GetMessagesSimpleDto) {
@@ -228,13 +229,4 @@ export class MessagesService {
       throw new InternalServerErrorException('Failed to retrieve messages');
     }
   }
-
-
-
-
-
-
-
-
-
 }
