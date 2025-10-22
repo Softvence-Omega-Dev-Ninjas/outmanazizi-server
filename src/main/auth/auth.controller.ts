@@ -23,25 +23,19 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { GoogleUser } from './strategy/goggle.strategy';
 
 @ApiTags('Authentication & User Management')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @Public()
   @ApiBody({ type: RegisterDto })
-  async register(
-    @Body() registerDto: RegisterDto,
-  ) {
+  async register(@Body() registerDto: RegisterDto) {
     return await this.authService.register(registerDto);
   }
-
-
 
   // otp verification and create user
   @Post('verify-otp')
@@ -49,10 +43,7 @@ export class AuthController {
   @Public()
   @ApiBody({ type: EmailAndOtpDto })
   async verifyOtp(@Body() emailAndOtpDto: EmailAndOtpDto) {
-    return await this.authService.verifyOtp(
-      emailAndOtpDto.email,
-      emailAndOtpDto.otp,
-    );
+    return await this.authService.verifyOtp(emailAndOtpDto.email, emailAndOtpDto.otp);
   }
   @Post('login')
   @ApiOperation({ summary: 'User login' })
@@ -62,33 +53,6 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @Get('google')
-  @Public()
-  @UseGuards(AuthGuard('google'))
-  googleAuth() {
-    console.log('Google Auth');
-  }
-
-  @Get('google/redirect')
-  @UseGuards(AuthGuard('google'))
-  @Public()
-  async googleRedirect(@Req() req: Request) {
-    return await this.authService.saveGoogleUser(req.user as GoogleUser);
-  }
-
-  // ---- Facebook Login ----
-  @Get('facebook')
-  @Public()
-  @UseGuards(AuthGuard('facebook'))
-  async facebookLogin() { }
-
-  @Get('facebook/redirect')
-  @UseGuards(AuthGuard('facebook'))
-  @Public()
-  facebookRedirect(@Req() req: Request) {
-    return this.authService.saveFacebookUser(req.user);
-  }
-
   // reset password send otp to user
   @Post('upload-profile-picture')
   @ApiOperation({ summary: 'Upload profile picture' })
@@ -96,16 +60,11 @@ export class AuthController {
   @ApiBody({ type: UploadImageDto })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('images', 10, { storage: storageConfig() }))
-  async uploadProfilePicture(
-    @UploadedFiles() images: Express.Multer.File[],
-    @Req() req: Request,
-  ) {
+  async uploadProfilePicture(@UploadedFiles() images: Express.Multer.File[], @Req() req: Request) {
     if (!images || images.length === 0) {
       throw new BadRequestException('At least one image is required');
     }
-    const image = images.map(
-      (f) => `${process.env.DOMAIN}/uploads/${f.filename}`,
-    );
+    const image = images.map((f) => `${process.env.DOMAIN}/uploads/${f.filename}`);
 
     return await this.authService.uploadProfilePicture(req['userid'] as string, image);
   }
@@ -132,20 +91,14 @@ export class AuthController {
   @Public()
   @ApiBody({ type: PasswordResetDto })
   async setNewPassword(@Body() passwordResetDto: PasswordResetDto) {
-    return this.authService.resetPassword(
-      passwordResetDto.email,
-      passwordResetDto.password,
-    );
+    return this.authService.resetPassword(passwordResetDto.email, passwordResetDto.password);
   }
   // Change password
   @Post('change-password')
   @ApiOperation({ summary: 'Change user password' })
   @UseGuards(AuthenticationGuard)
   @ApiBody({ type: ChangePasswordDto })
-  async changePassword(
-    @Body() changePasswordDto: ChangePasswordDto,
-    @Req() req: Request,
-  ) {
+  async changePassword(@Body() changePasswordDto: ChangePasswordDto, @Req() req: Request) {
     return this.authService.changePassword(
       req['email'] as string,
       changePasswordDto.oldPassword,
@@ -158,10 +111,7 @@ export class AuthController {
   @UseGuards(AuthenticationGuard)
   @ApiBody({ type: UpdateUserDto })
   async updateUser(@Body() updateUserDto: UpdateUserDto, @Req() req: Request) {
-    return await this.authService.updateUser(
-      req['userid'] as string,
-      updateUserDto,
-    );
+    return await this.authService.updateUser(req['userid'] as string, updateUserDto);
   }
 
   // get resend otp

@@ -23,7 +23,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly helperService: HelperService,
     private readonly mailService: MailService,
-  ) { }
+  ) {}
 
   async register(registerDto: RegisterDto) {
     try {
@@ -32,16 +32,11 @@ export class AuthService {
       });
 
       if (userExists) {
-        throw new BadRequestException(
-          'You are already registered. Please log in.',
-        );
+        throw new BadRequestException('You are already registered. Please log in.');
       }
 
       const saltRounds = 12;
-      const hashedPassword = await bcrypt.hash(
-        registerDto.password,
-        saltRounds,
-      );
+      const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = getLocalDateTime(10);
@@ -57,7 +52,7 @@ export class AuthService {
             otpExpiresAt,
           },
         });
-        const data = { ...user, otp }
+        const data = { ...user, otp };
         return ApiResponse.success(
           data,
           'User registered successfully. Please verify OTP sent to your email.',
@@ -82,11 +77,12 @@ export class AuthService {
             userId: user.id,
             isProfileCompleted: false,
             address: '',
-          }
+          },
         });
         const data = {
-          ...serviceProvider, otp
-        }
+          ...serviceProvider,
+          otp,
+        };
         return ApiResponse.success(
           data,
           'Service Provider registered successfully. Please verify OTP sent to your email.',
@@ -99,8 +95,6 @@ export class AuthService {
         'Account Verification OTP',
         `<p>Your OTP code is: <strong>${otp}</strong></p>`,
       );
-
-
     } catch (error: any) {
       const errorMessage =
         typeof error === 'object' && error !== null && 'message' in error
@@ -109,7 +103,6 @@ export class AuthService {
       return ApiResponse.error('Registration failed', errorMessage);
     }
   }
-
 
   // verify otp and create user
   async verifyOtp(email: string, otp: string) {
@@ -131,10 +124,7 @@ export class AuthService {
         where: { email },
         data: { otp: null, otpExpiresAt: null, isEmailVerified: true },
       });
-      return ApiResponse.success(
-        data,
-        'OTP verified successfully and user created',
-      );
+      return ApiResponse.success(data, 'OTP verified successfully and user created');
     } catch (error) {
       const errorMessage =
         typeof error === 'object' && error !== null && 'message' in error
@@ -166,9 +156,7 @@ export class AuthService {
   }
   async login(loginDto: LoginDto) {
     try {
-      const userExists = await this.helperService.userExistsByEmail(
-        loginDto.email,
-      );
+      const userExists = await this.helperService.userExistsByEmail(loginDto.email);
       if (!userExists?.isEmailVerified) {
         throw new BadRequestException('Please verify your email first');
       }
@@ -181,10 +169,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      const passwordMatch = await bcrypt.compare(
-        loginDto.password,
-        userExists.password,
-      );
+      const passwordMatch = await bcrypt.compare(loginDto.password, userExists.password);
 
       if (!passwordMatch) {
         throw new UnauthorizedException('Invalid credentials');
@@ -204,63 +189,13 @@ export class AuthService {
           'Service provider logged in successfully',
         );
       }
-      return ApiResponse.success(
-        { token, userExists },
-        'User logged in successfully',
-      );
+      return ApiResponse.success({ token, userExists }, 'User logged in successfully');
     } catch (error) {
       const errorMessage =
         typeof error === 'object' && error !== null && 'message' in error
           ? String((error as { message?: unknown }).message)
           : 'Unknown error';
       return ApiResponse.error('Login failed', errorMessage);
-    }
-  }
-
-  // Google OAuth Save information
-  async saveGoogleUser(user: any) {
-    try {
-      const { email, firstName, picture, provider } = user;
-
-      const newUser = await this.prisma.user.upsert({
-        where: { email },
-        update: { name: firstName, picture, provider },
-        create: { email, name: firstName, picture, provider, phone: '' },
-      });
-      const payload = {
-        sub: newUser.id,
-        email: newUser.email,
-        role: 'CONSUMER',
-      };
-      const token = await this.jwtService.signAsync(payload);
-      return ApiResponse.success(token, 'User created successfully');
-
-    } catch (error) {
-      console.error('Error saving Google user:', error);
-      throw new UnauthorizedException('Google user registration failed', error as UnauthorizedException);
-    }
-  }
-
-  // facebook OAuth Save information
-  async saveFacebookUser(user: any) {
-    try {
-      const { email, firstName, picture, provider } = user;
-
-      const newUser = await this.prisma.user.upsert({
-        where: { email },
-        update: { name: firstName, picture, provider },
-        create: { email, name: firstName, picture, provider, phone: '' },
-      });
-      const payload = {
-        sub: newUser.id,
-        email: newUser.email,
-        role: 'CONSUMER',
-      };
-      const token = await this.jwtService.signAsync(payload);
-      return ApiResponse.success(token, 'User created successfully');
-    } catch (error) {
-      console.error('Error saving Facebook user:', error);
-      throw new UnauthorizedException('Facebook user registration failed');
     }
   }
 
@@ -286,7 +221,6 @@ export class AuthService {
       );
       return ApiResponse.success(null, 'OTP sent to email for password reset');
     } catch (error) {
-
       throw new UnauthorizedException('Forgot password failed', error as UnauthorizedException);
     }
   }
@@ -313,8 +247,7 @@ export class AuthService {
           typeof userExists.otpExpiresAt === 'number' ||
           (userExists.otpExpiresAt as any) instanceof Date
         ) ||
-        new Date(userExists.otpExpiresAt as string | number | Date) <
-        currentTime
+        new Date(userExists.otpExpiresAt as string | number | Date) < currentTime
       ) {
         throw new UnauthorizedException('OTP expired');
       }
@@ -326,10 +259,7 @@ export class AuthService {
         data: { otp: null, otpExpiresAt: null },
       });
 
-      return ApiResponse.success(
-        null,
-        'Otp verified successfully, Please give me new passwords',
-      );
+      return ApiResponse.success(null, 'Otp verified successfully, Please give me new passwords');
     } catch (error) {
       console.error('Error verifying reset password:', error);
       throw new UnauthorizedException('Reset password verification failed');
@@ -357,11 +287,7 @@ export class AuthService {
   }
 
   // Change password
-  async changePassword(
-    email: string,
-    oldPassword: string,
-    newPassword: string,
-  ) {
+  async changePassword(email: string, oldPassword: string, newPassword: string) {
     try {
       const user = await this.helperService.userExistsByEmail(email);
 

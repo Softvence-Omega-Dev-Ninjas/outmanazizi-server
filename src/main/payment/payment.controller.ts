@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { PaymentsService } from './payment.service';
 import { CreatePaymentIntentDto, CreateTransferDto, RefundDto } from './dto/create-payment.dto';
 import { Public } from 'src/guards/public.decorator';
@@ -29,12 +29,7 @@ export class PaymentsController {
   @Post('refund')
   // @UseGuards(AuthGuard)
   async refundCharge(@Body() dto: RefundDto) {
-    if (!dto.chargeId) throw new BadRequestException('chargeId is required');
-
-    const refund = await this.paymentsService.refundCharge({
-      chargeId: dto.chargeId,
-      amountCents: dto.amountCents,
-    });
+    const refund = await this.paymentsService.refundCharge(dto);
     return refund;
   }
 

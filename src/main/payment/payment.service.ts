@@ -1,7 +1,7 @@
 // payments.service.ts (snippet)
 import { Injectable, Inject, Logger, BadRequestException } from '@nestjs/common';
 import Stripe from 'stripe';
-import { CreatePaymentIntentDto } from './dto/create-payment.dto';
+import { CreatePaymentIntentDto, CreateTransferDto, RefundDto } from './dto/create-payment.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -26,46 +26,23 @@ export class PaymentsService {
     }
   }
 
-  async createTransfer({
-    amountCents,
-    currency,
-    destinationAcctId,
-    orderId,
-    idempotencyKey,
-  }: {
-    amountCents: number;
-    currency: string;
-    destinationAcctId: string;
-    orderId: string;
-    idempotencyKey?: string;
-  }) {
-    const transfer = await this.stripe.transfers.create(
-      {
-        amount: amountCents,
-        currency,
-        destination: destinationAcctId,
-        transfer_group: `ORDER_${orderId}`,
-      },
-      idempotencyKey ? { idempotencyKey } : undefined,
-    );
-    this.logger.log(`Transfer ${transfer.id} to ${destinationAcctId} for order ${orderId}`);
+  async createTransfer(dto: CreateTransferDto) {
+    const transfer = await this.stripe.transfers.create({
+      amount: dto.amountCents,
+      currency: dto.currency || 'usd',
+      destination: dto.destinationAcctId,
+      transfer_group: `ORDER_${dto.orderId}`,
+    });
+    this.logger.log(`Transfer ${transfer.id} to ${dto.destinationAcctId} for order ${dto.orderId}`);
     return transfer;
   }
 
-  async refundCharge({
-    chargeId,
-    amountCents,
-    idempotencyKey,
-  }: {
-    chargeId: string;
-    amountCents?: number;
-    idempotencyKey?: string;
-  }) {
-    const refund = await this.stripe.refunds.create(
-      { charge: chargeId, amount: amountCents },
-      idempotencyKey ? { idempotencyKey } : undefined,
-    );
-    this.logger.log(`Refund ${refund.id} for charge ${chargeId}`);
+  async refundCharge(dto: RefundDto) {
+    const refund = await this.stripe.refunds.create({
+      charge: dto.chargeId,
+      amount: dto.amountCents,
+    });
+    this.logger.log(`Refund ${refund.id} for charge ${dto.chargeId}`);
     return refund;
   }
 
