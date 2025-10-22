@@ -11,15 +11,16 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateConversationDto } from './dto/create-conversation-simple.dto';
-import { SendMessageSimpleDto } from './dto/send-message-simple.dto';
 import { GetMessagesSimpleDto } from './dto/get-messages-simple.dto';
-import { UploadFileSimpleDto, FileType } from './dto/upload-file-simple.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import type { Request } from 'express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { MessagesService } from './messages.service';
 import { MessagesGateway } from './messages.gateway';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
+import { UploadImageDto } from '../auth/dto/uploadImage.dto';
+import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { Public } from 'src/guards/public.decorator';
 
 @Controller('chat')
 @UseGuards(AuthenticationGuard)
@@ -44,49 +45,29 @@ export class ChatController {
     return ApiResponse.success(conversations, 'Conversations retrieved');
   }
 
-  @Post('messages/send')
-  async sendMessage(@Req() req: Request, @Body() dto: SendMessageSimpleDto) {
-    const message = await this.messagesService.sendMessage(req['userid'] as string, dto);
-    this.gateway.sendMessageToUser(dto.receiverId, message);
-    return ApiResponse.success(message, 'Message sent');
-  }
-
   @Post('messages')
   async getMessages(@Req() req: Request, @Body() query: GetMessagesSimpleDto) {
-    console.log(query);
     const result = await this.messagesService.getMessages(req['userid'] as string, query);
     return ApiResponse.success(result, 'Messages retrieved');
   }
 
   @Post('upload')
+  @Public()
+  @ApiBody({ type: UploadImageDto })
+  @ApiConsumes('multipart/form-data')
   @UseInterceptors(
-    FileInterceptor('file', {
+    FileInterceptor('images', {
       storage: storageConfig('./public/uploads/chat'),
     }),
   )
-  async uploadFile(
+  uploadFile(
     @Req() req: Request,
     @UploadedFile() file: Express.Multer.File,
-    @Body() dto: UploadFileSimpleDto,
+    // @Body() dto: UploadImageDto,
   ) {
     if (!file) throw new BadRequestException('No file uploaded');
-
     const fileUrl = `${process.env.DOMAIN}/uploads/chat/${file.filename}`;
-    const messageType = dto.fileType === FileType.IMAGE ? 'IMAGE' : 'PDF';
-
-    const message = await this.messagesService.sendMessage(req['userid'] as string, {
-      receiverId: dto.receiverId,
-      content: dto.caption || file.originalname,
-      messageType: messageType as any,
-      fileUrl,
-      fileName: file.originalname,
-      fileSize: file.size,
-    });
-
-    // Emit via WebSocket
-    this.gateway.sendMessageToUser(dto.receiverId, message);
-
-    return ApiResponse.success(message, 'File sent successfully');
+    return ApiResponse.success(fileUrl, 'File sent successfully');
   }
 
   // ============ Utility ============

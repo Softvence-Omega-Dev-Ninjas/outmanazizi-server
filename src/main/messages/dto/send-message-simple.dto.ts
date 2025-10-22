@@ -12,7 +12,6 @@ export class SendMessageSimpleDto {
   @IsString()
   receiverId: string;
 
-
   @ApiProperty({ description: 'The message content' })
   @IsOptional()
   @IsString()

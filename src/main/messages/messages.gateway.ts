@@ -44,11 +44,10 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       socketId: string;
       userId: string;
     }
-  >(); // socketId -> { socketId, userId }
+  >();
   private cache = new NodeCache({
-    stdTTL: 300, // 5 minutes
+    stdTTL: 300,
   });
-  // private userIdSocketId = new Map<string, string>(); // userId -> socketId
 
   async handleConnection(client: Socket) {
     const token = client.handshake.headers.cookie as string;
@@ -81,8 +80,6 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
         return;
       }
 
-      // this.userIdSocketId.set(user.id, client.id);
-      // this.socketIdUserId.set(client.id, user.id);
       this.connectedUsers.set(user.id, client.id);
       this.cache.set(client.id, user.id);
       this.cache.set(user.id, client.id);
@@ -115,30 +112,17 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   @SubscribeMessage('send_message')
   async sendMessage(@MessageBody() dto: SendMessageSimpleDto, @ConnectedSocket() client: Socket) {
-    // console.log('Received send_message event:', dto.receiverId);
     const receiveSocketId: string = this.cache.get(dto.receiverId) as string;
-
     if (!receiveSocketId) return console.error('Receiver not connected');
-    // const receiverSocketId = this.connectedUsers.get(dto.receiverId);
-    // console.log({ receiverSocketId });
-    // if (!receiverSocketId) return console.error('Receiver not connected');
-    // this.server
-    //   .to(receiveSocketId)
-    //   .emit('send_message', { ...dto, senderId: this.cache.get(client.id) });
-
-    // client.on('receive_message', (data) => {
-    //   console.log('Message sent acknowledgement received:', data);
-    // });
-
     const senderId = this.cache.get(client.id) as string;
     await this.messagesService.sendMessage(senderId, { ...dto });
-
-    this.server
-      .to(receiveSocketId)
-      .emit('receive_message', { ...dto, senderId: this.cache.get(client.id) });
-    // return ApiResponse.success(message, 'Message sent');
+    this.server.to(receiveSocketId).emit('receive_message', {
+      ...dto,
+      senderId: this.cache.get(client.id),
+      status: 'Sms sent via socket server successfully',
+    });
   }
-  // Send message to specific user
+
   sendMessageToUser(userId: string, message: any) {
     if (!this.server) return;
     this.server.to(`user:${userId}`).emit('new_message', message);
