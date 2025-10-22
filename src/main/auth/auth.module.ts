@@ -6,8 +6,6 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { HelperModule } from 'src/utils/helper/helper.module';
-import { GoogleStrategy } from './strategy/goggle.strategy';
-import { FacebookStrategy } from './strategy/facebook.strategy';
 import { MailModule } from 'src/utils/mail/mail.module';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 
@@ -30,16 +28,7 @@ import { AuthenticationGuard } from 'src/guards/auth.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    GoogleStrategy,
-    FacebookStrategy,
-    AuthenticationGuard
-  ],
-  exports: [
-    AuthService,
-    JwtModule,
-    AuthenticationGuard,
-  ],
+  providers: [AuthService, AuthenticationGuard],
+  exports: [AuthService, JwtModule, AuthenticationGuard],
 })
-export class AuthModule { }
+export class AuthModule {}

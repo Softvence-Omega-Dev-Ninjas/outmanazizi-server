@@ -8,8 +8,8 @@ import {
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
-  Get,
 } from '@nestjs/common';
+
 import { ApiTags, ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { LoginDto, RegisterDto } from './dto';
 import { Public } from 'src/guards/public.decorator';
@@ -45,6 +45,7 @@ export class AuthController {
   async verifyOtp(@Body() emailAndOtpDto: EmailAndOtpDto) {
     return await this.authService.verifyOtp(emailAndOtpDto.email, emailAndOtpDto.otp);
   }
+
   @Post('login')
   @ApiOperation({ summary: 'User login' })
   @Public()
