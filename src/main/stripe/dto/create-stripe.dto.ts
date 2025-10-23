@@ -1,26 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNotEmpty } from 'class-validator';
-
-export class CreateStripeDto {
-  @ApiProperty({
-    description: 'User ID associated with the Stripe account',
-    example: 'd99d8d4a-5960-4878-8c0d-5719944f69e8',
-    required: true,
-  })
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
-
-  @ApiProperty({
-    description: 'Country code for the Stripe account',
-    example: 'US',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  country?: string;
-}
-
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class CreateAccountLinkDto {
   @ApiProperty({

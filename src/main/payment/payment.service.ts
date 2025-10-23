@@ -2,24 +2,51 @@
 import { Injectable, Inject, Logger, BadRequestException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDto, CreateTransferDto, RefundDto } from './dto/create-payment.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  constructor(@Inject('STRIPE_CLIENT') private readonly stripe: Stripe) {}
+  constructor(
+    @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  async createPaymentIntent(dto: CreatePaymentIntentDto) {
+  // make a customer payment intent
+  async makeCustomer(userId: string) {
+    const existingCustomers = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!existingCustomers?.email) {
+      throw new BadRequestException('User not found or email is missing');
+    }
+
+    const customer = await this.stripe.customers.create({
+      metadata: { userId },
+      email: existingCustomers.email,
+      name: existingCustomers.name,
+    });
+    return customer;
+  }
+
+  async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
     try {
-      const pi = await this.stripe.paymentIntents.create({
-        amount: dto.amountCents,
-        currency: dto.currency || 'usd',
+      await this.stripe.paymentMethods.attach(dto.paymentMethodId, {
+        customer: dto.customerId,
+      });
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount: 2000,
+        currency: 'usd',
+        metadata: { userId },
+        payment_method_types: ['card'],
         customer: dto.customerId,
         payment_method: dto.paymentMethodId,
         confirm: true,
-        metadata: { orderId: dto.orderId, transfer_group: `ORDER_${dto.orderId}` },
+        transfer_data: {
+          destination: 'acct_1SKSsiFiMsinqOFu',
+        },
       });
-
-      return pi;
+      return paymentIntent;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(`Failed to create payment intent: ${message}`);
@@ -31,9 +58,7 @@ export class PaymentsService {
       amount: dto.amountCents,
       currency: dto.currency || 'usd',
       destination: dto.destinationAcctId,
-      transfer_group: `ORDER_${dto.orderId}`,
     });
-    this.logger.log(`Transfer ${transfer.id} to ${dto.destinationAcctId} for order ${dto.orderId}`);
     return transfer;
   }
 
@@ -44,13 +69,5 @@ export class PaymentsService {
     });
     this.logger.log(`Refund ${refund.id} for charge ${dto.chargeId}`);
     return refund;
-  }
-
-  async retrieveAccount(acctId: string) {
-    return this.stripe.accounts.retrieve(acctId);
-  }
-
-  async getPlatformBalance() {
-    return this.stripe.balance.retrieve();
   }
 }

@@ -1,27 +1,30 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { PaymentsService } from './payment.service';
 import { CreatePaymentIntentDto, CreateTransferDto, RefundDto } from './dto/create-payment.dto';
-import { Public } from 'src/guards/public.decorator';
+
+import { AuthenticationGuard } from 'src/guards/auth.guard';
 
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
+  // post make a customer
+  @Post('make-customer')
+  @UseGuards(AuthenticationGuard)
+  async makeCustomer(@Req() req: Request) {
+    const customer = await this.paymentsService.makeCustomer(req['userid'] as string);
+    return customer;
+  }
+
   @Post('create-payment-intent')
-  @Public()
-  async createPaymentIntent(@Body() dto: CreatePaymentIntentDto) {
-    const pi = await this.paymentsService.createPaymentIntent(dto);
+  async createPaymentIntent(@Req() req: Request, @Body() dto: CreatePaymentIntentDto) {
+    const pi = await this.paymentsService.createPaymentIntent(dto, req['userid'] as string);
     return pi;
   }
 
   @Post('create-transfer')
-  async createTransfer(@Body() dto: CreateTransferDto) {
-    const transfer = await this.paymentsService.createTransfer({
-      amountCents: dto.amountCents,
-      currency: dto.currency ?? 'usd',
-      destinationAcctId: dto.destinationAcctId,
-      orderId: dto.orderId,
-    });
+  async createTransfer(@Req() req: Request, @Body() dto: CreateTransferDto) {
+    const transfer = await this.paymentsService.createTransfer(dto);
     return transfer;
   }
 
@@ -31,23 +34,5 @@ export class PaymentsController {
   async refundCharge(@Body() dto: RefundDto) {
     const refund = await this.paymentsService.refundCharge(dto);
     return refund;
-  }
-
-  // GET /payments/account/:acctId
-  @Get('account/:acctId')
-  @Public()
-  // @UseGuards(AuthGuard) // restrict access as needed
-  async retrieveAccount(@Param('acctId') acctId: string) {
-    const account = await this.paymentsService.retrieveAccount(acctId);
-    return account;
-  }
-
-  // GET /payments/platform-balance
-  @Get('platform-balance')
-  @Public()
-  // @UseGuards(AuthGuard) // restrict to admin or operations
-  async getPlatformBalance() {
-    const balance = await this.paymentsService.getPlatformBalance();
-    return balance;
   }
 }

@@ -1,24 +1,23 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Stripe from 'stripe';
-import { CreateAccountLinkDto, CreateStripeDto } from './dto/create-stripe.dto';
+import { CreateAccountLinkDto } from './dto/create-stripe.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Injectable()
 export class StripeService {
-  constructor(@Inject('STRIPE_CLIENT') private readonly stripe: Stripe) { }
+  constructor(@Inject('STRIPE_CLIENT') private readonly stripe: Stripe) {}
 
-  async createExpressAccount(dto: CreateStripeDto) {
-
+  async createExpressAccount(userId: string) {
     try {
       const account = await this.stripe.accounts.create({
         type: 'express',
-        country: dto.country,
+        country: 'US',
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
         },
         business_type: 'individual',
-        metadata: { userId: dto.userId },
+        metadata: { userId },
       });
       return account;
     } catch (error) {
@@ -44,15 +43,8 @@ export class StripeService {
     }
   }
 
-
   async createLoginLink(accountId: string): Promise<Stripe.LoginLink> {
     const loginLink = await this.stripe.accounts.createLoginLink(accountId);
     return loginLink;
-  }
-
-  async retrieveAccount(accountId: string): Promise<Stripe.Account> {
-    const result = await this.stripe.accounts.retrieve(accountId);
-    console.log(result);
-    return result;
   }
 }
