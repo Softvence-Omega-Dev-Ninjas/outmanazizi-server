@@ -69,7 +69,8 @@ export class ServiceProviderService {
         'Service provider profile created successfully',
       );
     } catch (error) {
-      throw new BadRequestException(error.message);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException(message);
     }
   }
   async currentServiceProvider(userid: string) {
@@ -83,7 +84,8 @@ export class ServiceProviderService {
         'Current service provider retrieved successfully',
       );
     } catch (error) {
-      throw new BadRequestException(error.message);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException(message);
     }
   }
   // patch document upload
@@ -101,7 +103,8 @@ export class ServiceProviderService {
       });
       return ApiResponse.success(updatedServiceProvider, 'Documents uploaded  successfully');
     } catch (error) {
-      throw new BadRequestException(error.message);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException('Document upload failed', message);
     }
   }
   async findAll() {
@@ -109,7 +112,8 @@ export class ServiceProviderService {
       const result = await this.prisma.serviceProvider.findMany({});
       return ApiResponse.success(result, 'Service providers retrieved successfully');
     } catch (error) {
-      throw new BadRequestException(error.message);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException('Failed to retrieve service providers', message);
     }
   }
 

@@ -196,10 +196,7 @@ export class AuthService {
       }
       return ApiResponse.success({ token, userExists }, 'User logged in successfully');
     } catch (error) {
-      const errorMessage =
-        typeof error === 'object' && error !== null && 'message' in error
-          ? String((error as { message?: unknown }).message)
-          : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       return ApiResponse.error('Login failed', errorMessage);
     }
   }

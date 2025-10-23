@@ -22,8 +22,8 @@ export class StripeService {
       return account;
     } catch (error) {
       console.log(error);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-      ApiResponse.error('Stripe Account Creation Failed', error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      ApiResponse.error('Stripe Account Creation Failed', errorMessage);
     }
   }
   async createAccountLink(dto: CreateAccountLinkDto) {
@@ -36,10 +36,8 @@ export class StripeService {
       });
       return link;
     } catch (error) {
-      console.error('Stripe account link creation failed:', error);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const msg = error?.message ?? JSON.stringify(error);
-      throw new Error(`Stripe Account Link Creation Failed: ${msg}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      ApiResponse.error('Stripe Account Link Creation Failed', errorMessage);
     }
   }
 

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Patch, Param, Req, UseGuards, Get } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, Req, UseGuards } from '@nestjs/common';
 
 import { ConsumerService } from './consumer.service';
 import { ApiOperation } from '@nestjs/swagger';

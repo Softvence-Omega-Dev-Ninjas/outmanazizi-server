@@ -60,7 +60,8 @@ export class ConsumerService {
         data: { updatedBid, assingedServiceRequest },
       };
     } catch (error) {
-      throw new BadRequestException(error.message);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException(message);
     }
   }
 
@@ -88,7 +89,8 @@ export class ConsumerService {
       });
       return { message: 'Service completed successfully', updatedService };
     } catch (error) {
-      throw new BadRequestException(error.message);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException(message);
     }
   }
 }

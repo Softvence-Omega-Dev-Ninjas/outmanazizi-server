@@ -34,7 +34,8 @@ export class JobService {
       });
       return ApiResponse.success(savedJob, 'Job created successfully');
     } catch (error) {
-      throw new BadRequestException('Error creating job', error.message);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException(message);
     }
   }
 
@@ -67,7 +68,8 @@ export class JobService {
       });
       return ApiResponse.success(updatedJob, 'Job updated successfully');
     } catch (error) {
-      throw new Error('Error updating job', error);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException('Update failed ', message);
     }
   }
 
@@ -80,8 +82,8 @@ export class JobService {
       });
       return ApiResponse.success(deletedJob, 'Job removal requested to admin successfully');
     } catch (error) {
-      console.error('Error removing job:', error);
-      throw new Error('Error removing job');
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException('Delete request failed', message);
     }
   }
 }
