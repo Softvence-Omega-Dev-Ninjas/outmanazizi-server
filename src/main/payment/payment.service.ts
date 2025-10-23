@@ -1,9 +1,20 @@
 // payments.service.ts (snippet)
-import { Injectable, Inject, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDto, CreateTransferDto, RefundDto } from './dto/create-payment.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-
+import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
+export interface CustomerResponse {
+  id: string;
+  email: string | null;
+  name: string | null;
+}
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
@@ -14,19 +25,48 @@ export class PaymentsService {
 
   // make a customer payment intent
   async makeCustomer(userId: string) {
-    const existingCustomers = await this.prisma.user.findUnique({
+    // 1️⃣ Fetch user from DB
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
-    if (!existingCustomers?.email) {
-      throw new BadRequestException('User not found or email is missing');
+
+    if (!user) {
+      throw new BadRequestException('User not found');
     }
 
-    const customer = await this.stripe.customers.create({
-      metadata: { userId },
-      email: existingCustomers.email,
-      name: existingCustomers.name,
-    });
-    return customer;
+    try {
+      let customer: Stripe.Customer;
+
+      if (!user.customerId) {
+        // 2️⃣ Create Stripe Customer if not exists
+        customer = await this.stripe.customers.create({
+          metadata: { userId },
+          email: user.email ?? undefined,
+          name: user.name ?? undefined,
+        });
+
+        // 3️⃣ Save customerId in DB
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { customerId: customer.id },
+        });
+      } else {
+        // 4️⃣ Retrieve existing Stripe Customer
+        customer = (await this.stripe.customers.retrieve(user.customerId)) as Stripe.Customer;
+      }
+      return ApiResponse.success(
+        {
+          id: customer.id,
+          email: customer.email ?? null,
+          name: customer.name ?? null,
+        },
+        'Customer retrieved successfully',
+      );
+    } catch (error: unknown) {
+      // Proper error handling
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(`Failed to create or retrieve customer: ${message}`);
+    }
   }
 
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
@@ -35,8 +75,8 @@ export class PaymentsService {
         customer: dto.customerId,
       });
       const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: 2000,
-        currency: 'usd',
+        amount: dto.amountCents,
+        currency: dto.currency || 'usd',
         metadata: { userId },
         payment_method_types: ['card'],
         customer: dto.customerId,
@@ -46,7 +86,7 @@ export class PaymentsService {
           destination: 'acct_1SKSsiFiMsinqOFu',
         },
       });
-      return paymentIntent;
+      return ApiResponse.success(paymentIntent, 'Payment intent created successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(`Failed to create payment intent: ${message}`);

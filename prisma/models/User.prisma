@@ -15,6 +15,7 @@ model User {
   isEmailVerified      Boolean          @default(false)
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
+  customerId           String?
   serviceProvider      ServiceProvider?
   services             Service[]
   reviews              Review[]
