@@ -13,6 +13,7 @@ import { ConsumerModule } from './main/consumer/consumer.module';
 import { MessagesModule } from './main/messages/messages.module';
 import { StripeModule } from './main/stripe/stripe.module';
 import { PaymentModule } from './main/payment/payment.module';
+import { ReviewModule } from './main/review/review.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PaymentModule } from './main/payment/payment.module';
     MessagesModule,
     StripeModule,
     PaymentModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
