@@ -83,7 +83,7 @@ export class PaymentsService {
         payment_method: dto.paymentMethodId,
         confirm: true,
         transfer_data: {
-          destination: 'acct_1SKSsiFiMsinqOFu',
+          destination: process.env.ADMIN_ACCOUNT!,
         },
       });
       return ApiResponse.success(paymentIntent, 'Payment intent created successfully');
@@ -107,7 +107,6 @@ export class PaymentsService {
       charge: dto.chargeId,
       amount: dto.amountCents,
     });
-    this.logger.log(`Refund ${refund.id} for charge ${dto.chargeId}`);
     return refund;
   }
 }
