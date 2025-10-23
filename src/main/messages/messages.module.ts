@@ -4,11 +4,12 @@ import { ChatController } from './messages.controller';
 import { MessagesService } from './messages.service';
 import { MessagesGateway } from './messages.gateway';
 import { AuthModule } from 'src/main/auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, JwtModule],
   controllers: [ChatController],
   providers: [MessagesGateway, MessagesService],
   exports: [MessagesService, MessagesGateway],
 })
-export class MessagesModule { }
+export class MessagesModule {}

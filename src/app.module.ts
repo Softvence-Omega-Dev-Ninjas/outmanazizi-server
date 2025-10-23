@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './main/auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
@@ -14,13 +14,13 @@ import { MessagesModule } from './main/messages/messages.module';
 import { StripeModule } from './main/stripe/stripe.module';
 import { PaymentModule } from './main/payment/payment.module';
 import { ReviewModule } from './main/review/review.module';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
-    JwtModule.register({}),
     JobModule,
     ServiceProviderModule,
     AdminModule,
@@ -29,6 +29,17 @@ import { ReviewModule } from './main/review/review.module';
     StripeModule,
     PaymentModule,
     ReviewModule,
+    PassportModule.register({ defaultStrategy: 'jwt', session: false }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET') || 'supersecretkey123',
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d',
+        },
+      }),
+    }),
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],

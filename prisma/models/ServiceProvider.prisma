@@ -12,7 +12,7 @@ model ServiceProvider {
   updatedAt           DateTime      @updatedAt
   bids                Bid[]
   myCurrentRating     Float?        @default(0)
-  getFromUsers        Int           @default(0)
+  ratingGetFromUsers  Int           @default(0)
   noteServices        NoteService[]
   services            Service[]
   reviews             Review[]

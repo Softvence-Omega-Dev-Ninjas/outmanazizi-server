@@ -9,6 +9,4 @@ model Review {
 
     user            User            @relation(fields: [userId], references: [id])
     serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id])
-
-    @@unique([userId, serviceProviderId])
 }

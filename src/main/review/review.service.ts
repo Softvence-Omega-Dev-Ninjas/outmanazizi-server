@@ -1,26 +1,60 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
-import { UpdateReviewDto } from './dto/update-review.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Injectable()
 export class ReviewService {
-  create(createReviewDto: CreateReviewDto) {
-    return 'This action adds a new review';
+  constructor(private readonly prisma: PrismaService) {}
+  async create(createReviewDto: CreateReviewDto, userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) {
+        throw new BadRequestException('Invalid user ID');
+      }
+      const serviceProviderExists = await this.prisma.serviceProvider.findUnique({
+        where: {
+          id: createReviewDto.serviceProviderId,
+        },
+      });
+      if (!serviceProviderExists) {
+        throw new BadRequestException('Invalid service provider ID');
+      }
+
+      const existingReviews = await this.prisma.review.findMany({
+        where: { serviceProviderId: createReviewDto.serviceProviderId },
+      });
+      const numberOfReviews = existingReviews.length;
+      const totalRating =
+        existingReviews.reduce((acc, review) => acc + Number(review.rating), 0) +
+        Number(createReviewDto.rating);
+
+      const rating = totalRating / (numberOfReviews + 1);
+
+      const review = await this.prisma.review.create({
+        data: {
+          rating: createReviewDto.rating,
+          comment: createReviewDto.comment,
+          userId: userId,
+          serviceProviderId: createReviewDto.serviceProviderId,
+        },
+      });
+      await this.prisma.serviceProvider.update({
+        where: { id: serviceProviderExists.id },
+        data: {
+          myCurrentRating: rating,
+          ratingGetFromUsers: numberOfReviews + 1,
+        },
+      });
+      return ApiResponse.success(review, 'Review created successfully');
+    } catch (error) {
+      return ApiResponse.error(error instanceof Error ? error.message : 'An error occurred');
+    }
   }
 
   findAll() {
     return `This action returns all review`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} review`;
-  }
-
-  update(id: number, updateReviewDto: UpdateReviewDto) {
-    return `This action updates a #${id} review`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} review`;
   }
 }
