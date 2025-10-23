@@ -16,12 +16,8 @@ export class ServiceProviderService {
     }
   }
 
-  async create(
-    userid: string,
-    createServiceProviderDto: CreateServiceProviderDto,
-  ) {
+  async create(userid: string, createServiceProviderDto: CreateServiceProviderDto) {
     try {
-
       // user exists check
       const user = await this.helperService.userExistsByUserid(userid);
 
@@ -35,12 +31,11 @@ export class ServiceProviderService {
         throw new NotFoundException('Service provider not found');
       }
 
-
       const serviceAreas: { id: string }[] = await this.prisma.area.findMany({
         where: {
-          id: { in: createServiceProviderDto.serviceArea }
+          id: { in: createServiceProviderDto.serviceArea },
         },
-        select: { id: true }
+        select: { id: true },
       });
 
       if (serviceAreas.length !== createServiceProviderDto.serviceArea.length) {
@@ -48,42 +43,38 @@ export class ServiceProviderService {
       }
       const serviceCategories: { id: string }[] = await this.prisma.services.findMany({
         where: {
-          id: { in: createServiceProviderDto.serviceCategories }
+          id: { in: createServiceProviderDto.serviceCategories },
         },
-        select: { id: true }
+        select: { id: true },
       });
-
 
       if (serviceCategories.length !== createServiceProviderDto.serviceCategories.length) {
         throw new NotFoundException('One or more service categories are invalid');
       }
 
-      const newServiceProvider =
-        await this.prisma.serviceProvider.update({
-          where: { id: serviceProviderExists.id },
-          data: {
-            address: createServiceProviderDto.address,
-            serviceArea: {
-              set: serviceAreas.map(area => area.id)
-            },
-            serviceCategories: {
-              set: serviceCategories.map(category => category.id)
-            }
+      const newServiceProvider = await this.prisma.serviceProvider.update({
+        where: { id: serviceProviderExists.id },
+        data: {
+          address: createServiceProviderDto.address,
+          serviceArea: {
+            set: serviceAreas.map((area) => area.id),
           },
-        });
+          serviceCategories: {
+            set: serviceCategories.map((category) => category.id),
+          },
+        },
+      });
       return ApiResponse.success(
         newServiceProvider,
         'Service provider profile created successfully',
-      )
-
+      );
     } catch (error) {
       throw new BadRequestException(error.message);
     }
   }
   async currentServiceProvider(userid: string) {
     try {
-      const validServiceProvider =
-        await this.helperService.validServiceProvider(userid);
+      const validServiceProvider = await this.helperService.validServiceProvider(userid);
       if (!validServiceProvider) {
         throw new NotFoundException('Invalid service provider');
       }
@@ -98,8 +89,7 @@ export class ServiceProviderService {
   // patch document upload
   async uploadDocuments(userid: string, documents: string) {
     try {
-      const validServiceProvider =
-        await this.helperService.validServiceProvider(userid);
+      const validServiceProvider = await this.helperService.validServiceProvider(userid);
       if (!validServiceProvider) {
         throw new NotFoundException('Invalid service provider');
       }
@@ -109,10 +99,7 @@ export class ServiceProviderService {
           documents: documents,
         },
       });
-      return ApiResponse.success(
-        updatedServiceProvider,
-        'Documents uploaded  successfully',
-      );
+      return ApiResponse.success(updatedServiceProvider, 'Documents uploaded  successfully');
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -120,21 +107,13 @@ export class ServiceProviderService {
   async findAll() {
     try {
       const result = await this.prisma.serviceProvider.findMany({});
-      return ApiResponse.success(
-        result,
-        'Service providers retrieved successfully',
-      );
+      return ApiResponse.success(result, 'Service providers retrieved successfully');
     } catch (error) {
-      throw new BadRequestException(error.message)
+      throw new BadRequestException(error.message);
     }
-
   }
 
-  async makeBid(
-    userid: string,
-    serviceRequestId: string,
-    body: ServiceProviderBidDto,
-  ) {
+  async makeBid(userid: string, serviceRequestId: string, body: ServiceProviderBidDto) {
     const bidExists = await this.prisma.bid.findFirst({
       where: {
         serviceId: serviceRequestId,
@@ -146,10 +125,9 @@ export class ServiceProviderService {
     if (bidExists) {
       throw new NotFoundException('You have already placed a bid');
     }
-    const validSerivceProvider =
-      await this.helperService.validServiceProvider(userid);
+    const validSerivceProvider = await this.helperService.validServiceProvider(userid);
     if (!validSerivceProvider) {
-      throw new NotFoundException('Invalid service provider');
+      throw new NotFoundException('Invalid service provider id');
     }
     const serviceRequest = await this.prisma.service.findUnique({
       where: { id: serviceRequestId },
@@ -161,6 +139,7 @@ export class ServiceProviderService {
       data: {
         serviceId: serviceRequestId,
         serviceProviderId: validSerivceProvider.id,
+        consumerId: serviceRequest.userId,
         price: body.price,
         serviceProviderProposal: body.serviceProviderProposal ?? '',
       },
@@ -169,8 +148,7 @@ export class ServiceProviderService {
   }
 
   async myBids(userid: string) {
-    const validSerivceProvider =
-      await this.helperService.validServiceProvider(userid);
+    const validSerivceProvider = await this.helperService.validServiceProvider(userid);
     if (!validSerivceProvider) {
       throw new NotFoundException('Invalid service provider');
     }
@@ -184,17 +162,13 @@ export class ServiceProviderService {
   }
 
   async workComplete(userid: string, serviceId: string) {
-    const validSerivceProvider =
-      await this.helperService.validServiceProvider(userid);
+    const validSerivceProvider = await this.helperService.validServiceProvider(userid);
     if (!validSerivceProvider) {
       throw new NotFoundException('Invalid service provider');
     }
     const service = await this.prisma.service.findFirst({
       where: {
-        AND: [
-          { assignedServiceProviderId: validSerivceProvider.id },
-          { id: serviceId },
-        ],
+        AND: [{ assignedServiceProviderId: validSerivceProvider.id }, { id: serviceId }],
       },
     });
     if (!service) {
@@ -211,8 +185,7 @@ export class ServiceProviderService {
   }
 
   async myAllBids(userid: string) {
-    const validSerivceProvider =
-      await this.helperService.validServiceProvider(userid);
+    const validSerivceProvider = await this.helperService.validServiceProvider(userid);
     if (!validSerivceProvider) {
       throw new NotFoundException('Invalid service provider');
     }
@@ -224,8 +197,7 @@ export class ServiceProviderService {
 
   // my accepted bids
   async myAcceptedBids(userid: string) {
-    const validSerivceProvider =
-      await this.helperService.validServiceProvider(userid);
+    const validSerivceProvider = await this.helperService.validServiceProvider(userid);
     if (!validSerivceProvider) {
       throw new NotFoundException('Invalid service provider');
     }

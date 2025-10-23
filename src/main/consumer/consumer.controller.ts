@@ -1,13 +1,20 @@
-import { Controller, Post, Body, Patch, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, Req, UseGuards, Get } from '@nestjs/common';
 
 import { ConsumerService } from './consumer.service';
-import { AcceptBid } from './dto/create-consumer.dto';
 import { ApiOperation } from '@nestjs/swagger';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
+import { AcceptBid } from './dto/create-consumer.dto';
+import { myJobBidDto } from './dto/my-job-bid.dto';
 
 @Controller('consumer')
 export class ConsumerController {
   constructor(private readonly consumerService: ConsumerService) {}
+
+  @Post('bided-providers')
+  @ApiOperation({ summary: 'Get all bided service providers for a service request' })
+  async getBidedProviders(@Req() req: Request, @Body() dto: myJobBidDto) {
+    return await this.consumerService.getBidedProviders(req['userid'] as string, dto.serviceId);
+  }
 
   @Post('accept-bid/:serviceId')
   @ApiOperation({ summary: 'Accept a bid for a service request' })

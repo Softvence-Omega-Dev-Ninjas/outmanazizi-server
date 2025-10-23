@@ -1,10 +1,27 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AcceptBid } from './dto/create-consumer.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Injectable()
 export class ConsumerService {
   constructor(private readonly prisma: PrismaService) {}
+
+  // bidded providers for a service request
+  async getBidedProviders(userid: string, serviceId: string) {
+    try {
+      const bidedProviders = await this.prisma.bid.findMany({
+        where: { consumerId: userid, serviceId: serviceId },
+        include: { serviceProvider: { include: { user: true } } },
+        orderBy: { serviceProvider: { myCurrentRating: 'desc' } },
+      });
+
+      return ApiResponse.success(bidedProviders, 'Bided providers fetched successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      return ApiResponse.error('Failed to fetch bided providers', message);
+    }
+  }
 
   async acceptBid(userid: string, serviceId: string, createConsumerDto: AcceptBid) {
     try {

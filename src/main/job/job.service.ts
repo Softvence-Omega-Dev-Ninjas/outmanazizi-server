@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -15,7 +11,7 @@ export class JobService {
   async create(userId: string, createJobDto: CreateJobDto) {
     try {
       const { images, ...rest } = createJobDto;
- 
+
       const areaExists = await this.prisma.area.findFirst({
         where: { id: createJobDto.location },
       });
@@ -38,7 +34,7 @@ export class JobService {
       });
       return ApiResponse.success(savedJob, 'Job created successfully');
     } catch (error) {
-      throw new BadRequestException('Error creating job', error);
+      throw new BadRequestException('Error creating job', error.message);
     }
   }
 
@@ -82,10 +78,7 @@ export class JobService {
         where: { id },
         data: { isDeleteRequestToAdmin: true },
       });
-      return ApiResponse.success(
-        deletedJob,
-        'Job removal requested to admin successfully',
-      );
+      return ApiResponse.success(deletedJob, 'Job removal requested to admin successfully');
     } catch (error) {
       console.error('Error removing job:', error);
       throw new Error('Error removing job');

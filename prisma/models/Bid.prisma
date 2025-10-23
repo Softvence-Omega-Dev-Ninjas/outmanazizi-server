@@ -6,8 +6,8 @@ model Bid {
   serviceProviderId String
   serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
 
-  price String
-
+  price                   String
+  consumerId              String
   serviceProviderProposal String
   status                  Status   @default(PENDING)
   createdAt               DateTime @default(now())
