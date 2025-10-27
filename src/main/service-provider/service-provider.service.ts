@@ -69,15 +69,17 @@ export class ServiceProviderService {
         'Service provider profile created successfully',
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException(message);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to create service provider profile');
     }
   }
   async currentServiceProvider(userid: string) {
     try {
       const validServiceProvider = await this.helperService.validServiceProvider(userid);
       if (!validServiceProvider) {
-        throw new NotFoundException('Invalid service provider');
+        throw new NotFoundException('Service provider not found');
       }
       return ApiResponse.success(
         validServiceProvider,
