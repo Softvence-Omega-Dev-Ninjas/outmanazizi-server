@@ -37,7 +37,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   ) {}
 
   // Map to track connected users
-  private connectedUsers = new Map<string, string>(); // userId -> socketId
+  private connectedUsers = new Map<string, string>();
   private allUsers = new Map<
     string,
     {
