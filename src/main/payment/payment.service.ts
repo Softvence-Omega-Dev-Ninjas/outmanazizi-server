@@ -3,8 +3,8 @@ import {
   Injectable,
   Inject,
   Logger,
-  BadRequestException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDto, CreateTransferDto, RefundDto } from './dto/create-payment.dto';
@@ -31,7 +31,7 @@ export class PaymentsService {
     });
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new NotFoundException('User not found');
     }
 
     try {
@@ -71,9 +71,20 @@ export class PaymentsService {
 
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
     try {
-      await this.stripe.paymentMethods.attach(dto.paymentMethodId, {
-        customer: dto.customerId,
-      });
+      // Check if payment method is already attached to this customer
+      const paymentMethod = await this.stripe.paymentMethods.retrieve(dto.paymentMethodId);
+      if (paymentMethod.customer !== dto.customerId) {
+        // Check if payment method is already attached to this customer
+        const paymentMethod = await this.stripe.paymentMethods.retrieve(dto.paymentMethodId);
+        if (paymentMethod.customer !== dto.customerId) {
+          await this.stripe.paymentMethods.attach(dto.paymentMethodId, {
+            customer: dto.customerId,
+          });
+        }
+      }
+      if (!process.env.ADMIN_ACCOUNT) {
+        throw new InternalServerErrorException('ADMIN_ACCOUNT environment variable not configured');
+      }
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: dto.amountCents,
         currency: dto.currency || 'usd',
@@ -83,13 +94,13 @@ export class PaymentsService {
         payment_method: dto.paymentMethodId,
         confirm: true,
         transfer_data: {
-          destination: process.env.ADMIN_ACCOUNT!,
+          destination: process.env.ADMIN_ACCOUNT,
         },
       });
       return ApiResponse.success(paymentIntent, 'Payment intent created successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Failed to create payment intent: ${message}`);
+      throw new InternalServerErrorException(`Failed to create payment intent: ${message}`);
     }
   }
 

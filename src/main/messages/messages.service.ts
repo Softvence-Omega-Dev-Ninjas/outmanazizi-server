@@ -65,56 +65,52 @@ export class MessagesService {
   }
 
   async getConversations(userId: string) {
-    try {
-      const conversations = await this.prisma.conversation.findMany({
-        where: {
-          OR: [{ user1Id: userId }, { user2Id: userId }],
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        OR: [{ user1Id: userId }, { user2Id: userId }],
+      },
+      include: {
+        user1: {
+          select: { id: true, name: true, email: true, picture: true },
         },
-        include: {
-          user1: {
-            select: { id: true, name: true, email: true, picture: true },
+        user2: {
+          select: { id: true, name: true, email: true, picture: true },
+        },
+        messages: {
+          take: 1,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            content: true,
+            messageType: true,
+            fileUrl: true,
+            isRead: true,
+            createdAt: true,
           },
-          user2: {
-            select: { id: true, name: true, email: true, picture: true },
-          },
-          messages: {
-            take: 1,
-            orderBy: { createdAt: 'desc' },
-            select: {
-              id: true,
-              content: true,
-              messageType: true,
-              fileUrl: true,
-              isRead: true,
-              createdAt: true,
-            },
-          },
-          _count: {
-            select: {
-              messages: {
-                where: {
-                  receiverId: userId,
-                  isRead: false,
-                },
+        },
+        _count: {
+          select: {
+            messages: {
+              where: {
+                receiverId: userId,
+                isRead: false,
               },
             },
           },
         },
-        orderBy: { updatedAt: 'desc' },
-      });
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
 
-      // Transform to include the other user and unread count
-      return conversations.map((conv) => ({
-        id: conv.id,
-        otherUser: conv.user1Id === userId ? conv.user2 : conv.user1,
-        lastMessage: conv.messages[0] || null,
-        unreadCount: conv._count.messages,
-        updatedAt: conv.updatedAt,
-        createdAt: conv.createdAt,
-      }));
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+    // Transform to include the other user and unread count
+    return conversations.map((conv) => ({
+      id: conv.id,
+      otherUser: conv.user1Id === userId ? conv.user2 : conv.user1,
+      lastMessage: conv.messages[0] || null,
+      unreadCount: conv._count.messages,
+      updatedAt: conv.updatedAt,
+      createdAt: conv.createdAt,
+    }));
   }
 
   // ============ Message Management ============
@@ -135,31 +131,36 @@ export class MessagesService {
       });
 
       // Create message
-      const message = await this.prisma.message.create({
-        data: {
-          conversationId: conversation.id,
-          senderId: userId,
-          receiverId: dto.receiverId,
-          content: dto.content,
-          messageType: dto.messageType || 'TEXT',
-          fileUrl: dto.fileUrl,
-          fileName: dto.fileName,
-          fileSize: dto.fileSize,
-        },
-        include: {
-          sender: {
-            select: { id: true, name: true, email: true, picture: true },
+      const message = await this.prisma.$transaction(async (tx) => {
+        // Create message
+        const newMessage = await tx.message.create({
+          data: {
+            conversationId: conversation.id,
+            senderId: userId,
+            receiverId: dto.receiverId,
+            content: dto.content,
+            messageType: dto.messageType || 'TEXT',
+            fileUrl: dto.fileUrl,
+            fileName: dto.fileName,
+            fileSize: dto.fileSize,
           },
-          receiver: {
-            select: { id: true, name: true, email: true, picture: true },
+          include: {
+            sender: {
+              select: { id: true, name: true, email: true, picture: true },
+            },
+            receiver: {
+              select: { id: true, name: true, email: true, picture: true },
+            },
           },
-        },
-      });
+        });
 
-      // Update conversation timestamp
-      await this.prisma.conversation.update({
-        where: { id: conversation.id },
-        data: { updatedAt: new Date() },
+        // Update conversation timestamp
+        await tx.conversation.update({
+          where: { id: conversation.id },
+          data: { updatedAt: new Date() },
+        });
+
+        return newMessage;
       });
 
       return message;

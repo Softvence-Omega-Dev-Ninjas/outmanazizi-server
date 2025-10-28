@@ -18,7 +18,7 @@ import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -46,11 +46,15 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   >();
   private cache = new NodeCache({
-    stdTTL: 300,
+    stdTTL: 0,
   });
 
   async handleConnection(client: Socket) {
-    const token = client.handshake.headers.cookie as string;
+    const cookieHeader = client.handshake.headers.cookie as string;
+    const token = cookieHeader
+      ?.split(';')
+      .find((c) => c.trim().startsWith('jwt='))
+      ?.split('=')[1];
 
     if (!token) {
       client.emit('error', { message: 'Authentication token is required' });
