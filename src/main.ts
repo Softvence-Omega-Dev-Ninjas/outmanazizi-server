@@ -29,25 +29,16 @@ async function bootstrap() {
       },
       'access-token',
     )
+    .addSecurity('access-token', {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+    })
     .build();
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true })); // to ensure DTO validation works everywhere.
 
   const document = SwaggerModule.createDocument(app, config);
-  document.paths = Object.fromEntries(
-    Object.entries(document.paths).map(([path, ops]) => [
-      path,
-      Object.fromEntries(
-        Object.entries(ops).map(([method, op]) => [
-          method,
-          {
-            ...op,
-            security: [{ 'access-token': [] }],
-          },
-        ]),
-      ),
-    ]),
-  );
 
   SwaggerModule.setup('api', app, document);
 

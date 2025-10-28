@@ -8,9 +8,10 @@ import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [MailModule, HelperModule, PrismaModule, JwtModule],
+  imports: [PrismaModule, HelperModule, MailModule, JwtModule],
   controllers: [AuthController],
   providers: [AuthService, AuthenticationGuard],
-  exports: [AuthService, AuthenticationGuard],
+  // Export AuthenticationGuard only if it is intended for use in other modules
+  exports: [AuthService],
 })
 export class AuthModule {}
