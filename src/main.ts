@@ -8,7 +8,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({
-    origin: ['*', 'http://localhost:4000'],
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? ['https://yourdomain.com']
+        : ['http://localhost:4000', 'http://localhost:3000'],
     credentials: true,
   });
   const config = new DocumentBuilder()
