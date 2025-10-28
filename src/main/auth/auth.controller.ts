@@ -51,7 +51,7 @@ export class AuthController {
   @Public()
   @ApiBody({ type: LoginDto })
   async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+    return await this.authService.login(loginDto);
   }
 
   // reset password send otp to user
@@ -65,7 +65,8 @@ export class AuthController {
     if (!images || images.length === 0) {
       throw new BadRequestException('At least one image is required');
     }
-    const image = images.map((f) => `${process.env.DOMAIN}/uploads/${f.filename}`);
+    const domain = process.env.DOMAIN || 'http://localhost:3000';
+    const image = images.map((f) => `${domain}/uploads/${f.filename}`);
 
     return await this.authService.uploadProfilePicture(req['userid'] as string, image);
   }
