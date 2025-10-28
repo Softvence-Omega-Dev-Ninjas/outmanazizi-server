@@ -320,7 +320,6 @@ export class AuthService {
   }
   // user update
   async updateUser(id: string, data: UpdateUserDto) {
-    console.log(id, data);
     try {
       const user = await this.prisma.user.update({
         where: { id },
@@ -337,7 +336,7 @@ export class AuthService {
   async resendOtp(email: string) {
     try {
       const userExists = await this.helperService.userExistsByEmail(email);
-      console.log(userExists);
+
       if (!userExists) {
         throw new NotFoundException('User not found');
       }

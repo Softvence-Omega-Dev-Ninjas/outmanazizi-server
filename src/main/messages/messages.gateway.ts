@@ -92,7 +92,6 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
         userId: user.id,
       });
       this.logger.log(`User ${user.id} connected with socket ID ${client.id}`);
-      console.log('list of online: ', this.allUsers.get('online'));
       // client.join(`${this.userIdSocketId.get(user.id)}-${this.socketIdUserId.get(client.id)}`);
     } catch (error) {
       console.error('Authentication error:', error);

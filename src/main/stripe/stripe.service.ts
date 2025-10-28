@@ -21,7 +21,6 @@ export class StripeService {
       });
       return account;
     } catch (error) {
-      console.log(error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       ApiResponse.error('Stripe Account Creation Failed', errorMessage);
     }

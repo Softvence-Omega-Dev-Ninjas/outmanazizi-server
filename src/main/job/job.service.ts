@@ -57,7 +57,6 @@ export class JobService {
   // update a job
   async update(id: string, updateJobDto: UpdateJobDto) {
     try {
-      console.log(updateJobDto);
       const { file, ...rest } = updateJobDto;
       const updatedJob = await this.prisma.service.update({
         where: { id },

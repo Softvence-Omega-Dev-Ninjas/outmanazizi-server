@@ -165,8 +165,8 @@ export class MessagesService {
 
       return message;
     } catch (error) {
-      console.log(error);
-      throw new InternalServerErrorException('Failed to send message');
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new InternalServerErrorException('Failed to send message', message);
     }
   }
 
@@ -226,8 +226,8 @@ export class MessagesService {
         conversationId: conversation.id,
       };
     } catch (error) {
-      console.log(error);
-      throw new InternalServerErrorException('Failed to retrieve messages');
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new InternalServerErrorException('Failed to retrieve messages', message);
     }
   }
 }

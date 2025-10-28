@@ -32,7 +32,6 @@ export class StripeController {
   @Public()
   @ApiBody({ type: CreateLoginLinkDto })
   async createLoginLink(@Body() body: CreateLoginLinkDto) {
-    console.log(body);
     const loginLink = await this.stripeService.createLoginLink(body.stripeAccountId);
     return { url: loginLink.url, created: loginLink.created };
   }
