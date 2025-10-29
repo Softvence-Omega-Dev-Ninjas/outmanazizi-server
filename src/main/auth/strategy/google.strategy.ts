@@ -1,40 +1,49 @@
-import { Strategy, StrategyOptionsWithRequest, VerifyCallback } from 'passport-google-oauth20';
+import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(private readonly configService: ConfigService) {
-    const clientId = configService.get<string>('GOOGLE_CLIENT_ID');
-    const secret = configService.get<string>('GOOGLE_CLIENT_SECRET');
-    const callback = configService.get<string>('GOOGLE_CLIENT_CALLBACK_URL');
-
+  constructor() {
+    console.log('passport initialized');
     super({
-      clientID: clientId,
-      clientSecret: secret,
-      callbackURL: callback,
+      clientID: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      callbackURL: `${process.env.GOOGLE_CLIENT_CALLBACK_URL}`,
       scope: ['email', 'profile'],
-      passReqToCallback: true,
-    } as StrategyOptionsWithRequest);
+    });
   }
 
   validate(
-    req: Request,
     accessToken: string,
     refreshToken: string,
-    profile: any,
+    profile: Record<string, any>,
     done: VerifyCallback,
   ): void {
-    console.log(req.query);
-    const { name, emails, photos } = profile;
+    console.log('profile', profile);
+
+    if (!profile) {
+      done(null, false);
+    }
+
+    const { name, emails, photos } = profile as {
+      name: { givenName: string; familyName: string };
+      emails: { value: string }[];
+      photos: { value: string }[];
+    };
     const user = {
-      email: emails[0].value as string,
-      firstName: name.givenName as string,
-      picture: photos[0].value as string,
+      email: emails[0].value,
+      firstName: name.givenName,
+      picture: photos[0].value,
       provider: 'GOOGLE',
     };
     done(null, user);
   }
 }
+
+export type GoogleUser = {
+  email: string;
+  firstName: string;
+  picture: string;
+  provider: 'GOOGLE';
+};

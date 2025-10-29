@@ -25,6 +25,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { GoogleUser } from './strategy/google.strategy';
 
 @ApiTags('Authentication & User Management')
 @Controller('auth')
@@ -139,4 +140,3 @@ export class AuthController {
     return await this.authService.saveGoogleUser(req.user as GoogleUser);
   }
 }
-export type GoogleUser = { email: string; firstName: string; picture: string; provider: string };
