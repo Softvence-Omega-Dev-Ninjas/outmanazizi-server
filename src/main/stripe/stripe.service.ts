@@ -36,7 +36,7 @@ export class StripeService {
         return_url: dto.returnUrl,
         type: 'account_onboarding',
       });
-      return link;
+      return { url: link.url, expires_at: link.expires_at };
     } catch (error) {
       this.logger.error('Stripe account link creation failed', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

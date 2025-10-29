@@ -16,14 +16,12 @@ export class StripeController {
   @Public()
   @Post('create-account-link')
   @ApiBody({ type: CreateAccountLinkDto })
-  async createAccountLink(
-    @Body() body: CreateAccountLinkDto,
-  ): Promise<{ url: string; expires_at: number }> {
+  async createAccountLink(@Body() body: CreateAccountLinkDto) {
     const link = await this.stripeService.createAccountLink(body);
     if (!link) {
       throw new BadRequestException('Failed to create account link');
     }
-    return { url: link.url, expires_at: link.expires_at };
+    return link;
   }
 
   @ApiBody({ type: CreateLoginLinkDto })
