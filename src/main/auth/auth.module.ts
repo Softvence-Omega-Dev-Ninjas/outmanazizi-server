@@ -6,11 +6,19 @@ import { HelperModule } from 'src/utils/helper/helper.module';
 import { MailModule } from 'src/utils/mail/mail.module';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { GoogleStrategy } from './strategy/google.strategy';
 
 @Module({
-  imports: [PrismaModule, HelperModule, MailModule, JwtModule],
+  imports: [
+    PrismaModule,
+    HelperModule,
+    MailModule,
+    JwtModule,
+    PassportModule.register({ defaultStrategy: 'jwt', session: false }),
+  ],
   controllers: [AuthController],
-  providers: [AuthService, AuthenticationGuard],
+  providers: [AuthService, AuthenticationGuard, GoogleStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

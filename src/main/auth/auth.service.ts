@@ -105,7 +105,6 @@ export class AuthService {
       return ApiResponse.error('Registration failed', errorMessage);
     }
   }
-
   // verify otp and create user
   async verifyOtp(email: string, otp: string) {
     try {
@@ -135,6 +134,7 @@ export class AuthService {
       return ApiResponse.error('OTP verification failed', errorMessage);
     }
   }
+
   async uploadProfilePicture(userId: string, image: string[]) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -156,6 +156,7 @@ export class AuthService {
       return ApiResponse.error('Upload profile picture failed', errorMessage);
     }
   }
+
   async login(loginDto: LoginDto) {
     try {
       const userExists = await this.helperService.userExistsByEmail(loginDto.email);
@@ -377,7 +378,10 @@ export class AuthService {
         email: newUser.email,
         role: 'CONSUMER',
       };
-      const token = await this.jwtService.signAsync(payload);
+      const token = await this.jwtService.signAsync(payload, {
+        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+        expiresIn: '7d',
+      });
       return ApiResponse.success(token, 'User created successfully');
     } catch (error) {
       console.error('Error saving Google user:', error);

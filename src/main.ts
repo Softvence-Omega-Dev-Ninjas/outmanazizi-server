@@ -36,7 +36,7 @@ async function bootstrap() {
     })
     .build();
 
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true })); // to ensure DTO validation works everywhere.
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const document = SwaggerModule.createDocument(app, config);
 
