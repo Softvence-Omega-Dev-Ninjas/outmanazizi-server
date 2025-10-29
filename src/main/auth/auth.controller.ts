@@ -8,6 +8,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
+  Get,
 } from '@nestjs/common';
 
 import { ApiTags, ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
@@ -23,6 +24,8 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { GoogleUser } from './strategy/google.strategy';
 
 @ApiTags('Authentication & User Management')
 @Controller('auth')
@@ -123,5 +126,19 @@ export class AuthController {
   @ApiBody({ type: ResendOtpDto })
   async resendOtp(@Body() body: ResendOtpDto) {
     return await this.authService.resendOtp(body.email);
+  }
+
+  @Get('google')
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  googleAuth() {
+    console.log('Google Auth');
+  }
+
+  @Get('google/redirect')
+  @UseGuards(AuthGuard('google'))
+  @Public()
+  async googleRedirect(@Req() req: Request) {
+    return await this.authService.saveGoogleUser(req.user as GoogleUser);
   }
 }

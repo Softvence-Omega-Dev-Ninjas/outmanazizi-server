@@ -361,4 +361,26 @@ export class AuthService {
       return ApiResponse.error('Resend OTP failed', errorMessage);
     }
   }
+  // Google OAuth Save information
+  async saveGoogleUser(user: any) {
+    try {
+      const { email, firstName, picture, provider } = user;
+
+      const newUser = await this.prisma.user.upsert({
+        where: { email },
+        update: { name: firstName, picture, provider },
+        create: { email, name: firstName, picture, provider, phone: '' },
+      });
+      const payload = {
+        sub: newUser.id,
+        email: newUser.email,
+        role: 'CONSUMER',
+      };
+      const token = await this.jwtService.signAsync(payload);
+      return ApiResponse.success(token, 'User created successfully');
+    } catch (error) {
+      console.error('Error saving Google user:', error);
+      throw new UnauthorizedException('Google user registration failed');
+    }
+  }
 }
