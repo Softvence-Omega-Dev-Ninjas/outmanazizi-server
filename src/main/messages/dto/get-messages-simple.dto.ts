@@ -17,6 +17,10 @@ export class GetMessagesSimpleDto {
   @IsNumber()
   limit?: number = 50;
 
+  @ApiProperty({
+    description: 'Message ID to fetch messages before (cursor-based pagination)',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   beforeMessageId?: string; // For cursor-based pagination

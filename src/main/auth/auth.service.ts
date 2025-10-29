@@ -361,8 +361,9 @@ export class AuthService {
       return ApiResponse.error('Resend OTP failed', errorMessage);
     }
   }
+
   // Google OAuth Save information
-  async saveGoogleUser(user: any) {
+  async saveGoogleUser(user: GoogleUserDto) {
     try {
       const { email, firstName, picture, provider } = user;
 
@@ -383,4 +384,10 @@ export class AuthService {
       throw new UnauthorizedException('Google user registration failed');
     }
   }
+}
+interface GoogleUserDto {
+  email: string;
+  firstName: string;
+  picture?: string;
+  provider: string;
 }

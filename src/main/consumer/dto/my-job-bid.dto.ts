@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID } from 'class-validator';
 
-export class myJobBidDto {
+export class MyJobBidDto {
   @ApiProperty({
-    example: 'de3489e5-4e36-4e4e-af0f-9015da33fb3f',
-    description: 'Service ID  ',
+    description: 'Service ID',
   })
+  @IsUUID()
   serviceId: string;
 }

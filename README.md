@@ -233,7 +233,7 @@ To authenticate:
 
 This project is licensed under the UNLICENSED License.
 
-/media/shariar/e254242e-35fc-4d3e-8d94-fb6a42200cb8/outmanazizi-server/
+├─] .env (ignored)
 ├─] .env (ignored)
 ├── .env.example
 ├── .gitignore

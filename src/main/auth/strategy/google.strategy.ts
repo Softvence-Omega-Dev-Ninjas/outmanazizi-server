@@ -22,7 +22,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     console.log('profile', profile);
 
     if (!profile) {
-      done(null, false);
+      return done(null, false);
     }
 
     const { name, emails, photos } = profile as {

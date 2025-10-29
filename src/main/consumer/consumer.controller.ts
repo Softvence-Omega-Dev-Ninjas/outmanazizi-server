@@ -4,7 +4,7 @@ import { ConsumerService } from './consumer.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { AcceptBid } from './dto/create-consumer.dto';
-import { myJobBidDto } from './dto/my-job-bid.dto';
+import { MyJobBidDto } from './dto/my-job-bid.dto';
 
 @Controller('consumer')
 export class ConsumerController {
@@ -12,7 +12,7 @@ export class ConsumerController {
 
   @Post('bided-providers')
   @ApiOperation({ summary: 'Get all bided service providers for a service request' })
-  async getBidedProviders(@Req() req: Request, @Body() dto: myJobBidDto) {
+  async getBidedProviders(@Req() req: Request, @Body() dto: MyJobBidDto) {
     return await this.consumerService.getBidedProviders(req['userid'] as string, dto.serviceId);
   }
 
