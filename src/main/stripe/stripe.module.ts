@@ -18,7 +18,7 @@ export const stripeProvider = {
 
 @Module({
   controllers: [StripeController],
-  providers: [StripeService, stripeProvider],
-  exports: [StripeService],
+  providers: [stripeProvider, StripeService],
+  exports: [stripeProvider, StripeService],
 })
 export class StripeModule {}

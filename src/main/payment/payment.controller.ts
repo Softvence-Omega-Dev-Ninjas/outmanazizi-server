@@ -23,7 +23,7 @@ export class PaymentsController {
   }
 
   @Post('create-transfer')
-  async createTransfer(@Req() req: Request, @Body() dto: CreateTransferDto) {
+  async createTransfer(@Body() dto: CreateTransferDto) {
     const transfer = await this.paymentsService.createTransfer(dto);
     return transfer;
   }

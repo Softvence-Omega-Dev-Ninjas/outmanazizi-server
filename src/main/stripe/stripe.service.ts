@@ -5,9 +5,10 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Injectable()
 export class StripeService {
+  private readonly logger = new Logger(StripeService.name);
   constructor(
     @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
-    private readonly logger: Logger,
+    // private readonly logger: Logger,
   ) {}
 
   async createExpressAccount(userId: string) {

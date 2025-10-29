@@ -51,8 +51,11 @@ export class PaymentsService {
           data: { customerId: customer.id },
         });
       } else {
-        // 4️⃣ Retrieve existing Stripe Customer
-        customer = (await this.stripe.customers.retrieve(user.customerId)) as Stripe.Customer;
+        const retrieved = await this.stripe.customers.retrieve(user.customerId);
+        if (retrieved.deleted) {
+          throw new InternalServerErrorException('Customer has been deleted in Stripe');
+        }
+        customer = retrieved;
       }
       return ApiResponse.success(
         {
@@ -71,6 +74,12 @@ export class PaymentsService {
 
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
     try {
+      if (!dto.paymentMethodId) {
+        throw new InternalServerErrorException('Payment method ID is required');
+      }
+      if (!dto.customerId) {
+        throw new InternalServerErrorException('Customer ID is required');
+      }
       // Check if payment method is already attached to this customer
       const paymentMethod = await this.stripe.paymentMethods.retrieve(dto.paymentMethodId);
       if (paymentMethod.customer !== dto.customerId) {
