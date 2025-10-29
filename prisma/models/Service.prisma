@@ -4,6 +4,7 @@ model Service {
   user   User   @relation(fields: [userId], references: [id])
 
   title                          String
+  subServices                    String
   description                    String
   location                       String
   budget                         String

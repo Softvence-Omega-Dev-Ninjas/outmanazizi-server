@@ -20,9 +20,16 @@ export class JobService {
       }
       const serviceExists = await this.prisma.services.findFirst({
         where: { id: createJobDto.title },
+        include: { subServices: true },
       });
       if (!serviceExists) {
         throw new NotFoundException('Service does not exist');
+      }
+      const subServiceExists = serviceExists?.subServices.find(
+        (sub) => sub.id === createJobDto.subServices,
+      );
+      if (!subServiceExists) {
+        throw new NotFoundException('Sub-service does not exist under the specified service');
       }
 
       const savedJob = await this.prisma.service.create({
@@ -44,7 +51,6 @@ export class JobService {
     const result = await this.prisma.service.findMany({
       include: { bids: true },
     });
-
     return ApiResponse.success(result, 'Jobs retrieved successfully');
   }
 

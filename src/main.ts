@@ -3,19 +3,18 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './utils/common/all-exception/all-exception-filter';
+import { PrismaService } from './prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? [process.env.FRONTEND_URL]
-        : ['http://localhost:4000', 'http://localhost:3000'],
+    origin: ['*'],
     credentials: true,
   });
   const config = new DocumentBuilder()
-    .setTitle('OutManAzizi Playground 🎉 — Where APIs Party')
+    .setTitle('OutManzizi Playground 🎉 — Where APIs Party')
     .setDescription(
       'Your favorite API playground! Hit the routes, explore the endpoints, and enjoy the ride 😄🎯',
     )
@@ -29,16 +28,25 @@ async function bootstrap() {
       },
       'access-token',
     )
-    .addSecurity('access-token', {
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-    })
     .build();
 
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true })); // to ensure DTO validation works everywhere.
 
   const document = SwaggerModule.createDocument(app, config);
+  document.paths = Object.fromEntries(
+    Object.entries(document.paths).map(([path, ops]) => [
+      path,
+      Object.fromEntries(
+        Object.entries(ops).map(([method, op]) => [
+          method,
+          {
+            ...op,
+            security: [{ 'access-token': [] }],
+          },
+        ]),
+      ),
+    ]),
+  );
 
   SwaggerModule.setup('api', app, document);
 

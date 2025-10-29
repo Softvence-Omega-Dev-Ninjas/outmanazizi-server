@@ -35,9 +35,7 @@ export class JobController {
     @Req() req: Request,
     @UploadedFiles() images: Express.Multer.File[],
   ) {
-    const imageUrls = images.map(
-      (f) => `${process.env.DOMAIN}/uploads/${f.filename}`,
-    );
+    const imageUrls = images.map((f) => `${process.env.DOMAIN}/uploads/${f.filename}`);
 
     createJobDto.images = imageUrls;
     return await this.jobService.create(req['userid'] as string, createJobDto);
@@ -64,9 +62,7 @@ export class JobController {
     @Body() updateJobDto: UpdateJobDto,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const imageUrls = (files ?? []).map(
-      (f) => `${process.env.DOMAIN}/uploads/${f.filename}`,
-    );
+    const imageUrls = (files ?? []).map((f) => `${process.env.DOMAIN}/uploads/${f.filename}`);
 
     if (imageUrls.length) {
       updateJobDto.file = imageUrls;
