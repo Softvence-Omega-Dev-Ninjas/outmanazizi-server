@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAreaDto, CreateServicesDto } from '../dto/areaAndServices.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
+import { CreateSubServicesDto } from '../dto/createSubServices.dto';
 
 @Injectable()
 export class AreaAndservicesService {
@@ -24,7 +25,8 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(areaAndServices, 'Area created successfully');
     } catch (error) {
-      throw new BadRequestException(error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(message);
     }
   }
 
@@ -46,21 +48,38 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(services, 'Service created successfully');
     } catch (error) {
-      throw new BadRequestException(error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(message);
+    }
+  }
+
+  async createSubServices(body: CreateSubServicesDto) {
+    const { serviceId, name } = body;
+    try {
+      const service = await this.prisma.services.findUnique({
+        where: { id: serviceId },
+      });
+      if (!service) {
+        throw new BadRequestException('Service not found');
+      }
+      const subServices = await this.prisma.subServices.create({
+        data: {
+          serviceId,
+          name,
+        },
+      });
+      return ApiResponse.success(subServices, 'Sub-service created successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(message);
     }
   }
 
   async findAllAreaAndService() {
     const area = await this.prisma.area.findMany();
-    const services = await this.prisma.services.findMany();
-    return ApiResponse.success(
-      { area, services },
-      'Area and Services fetched successfully',
-    );
+    const services = await this.prisma.services.findMany({
+      include: { subServices: true },
+    });
+    return ApiResponse.success({ area, services }, 'Area and Services fetched successfully');
   }
-
-  // find all area and services
-  // find one area and services
-  // update area and services
-  // remove area and services
 }

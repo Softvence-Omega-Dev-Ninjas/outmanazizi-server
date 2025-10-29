@@ -68,7 +68,10 @@ export class AuthController {
     if (!images || images.length === 0) {
       throw new BadRequestException('At least one image is required');
     }
-    const domain = process.env.DOMAIN || 'http://localhost:3000';
+    const domain = process.env.DOMAIN;
+    if (!domain) {
+      throw new BadRequestException('DOMAIN must be defined in environment variables');
+    }
     const image = images.map((f) => `${domain}/uploads/${f.filename}`);
 
     return await this.authService.uploadProfilePicture(req['userid'] as string, image);

@@ -7,7 +7,17 @@ model Area {
 }
 
 model Services {
+    id          String        @id @default(uuid())
+    name        String
+    createdAt   DateTime      @default(now())
+    updatedAt   DateTime      @updatedAt
+    subServices SubServices[]
+}
+
+model SubServices {
     id        String   @id @default(uuid())
+    serviceId String
+    service   Services @relation(fields: [serviceId], references: [id])
     name      String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

@@ -1,10 +1,11 @@
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor() {
+  constructor(private readonly prisma: PrismaService) {
     console.log('passport initialized');
     super({
       clientID: process.env.GOOGLE_CLIENT_ID as string,
@@ -14,12 +15,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
-  validate(
+  async validate(
     accessToken: string,
     refreshToken: string,
     profile: Record<string, any>,
     done: VerifyCallback,
-  ): void {
+  ): Promise<void> {
     console.log('profile', profile);
 
     if (!profile) {
@@ -37,6 +38,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       picture: photos[0].value,
       provider: 'GOOGLE',
     };
+    if (!user.email) {
+      return done(new Error('No email associated with this account!'), false);
+    }
+    const userInDb = await this.prisma.user.findUnique({ where: { email: user.email } });
+    console.log(userInDb);
+
     done(null, user);
   }
 }

@@ -1,17 +1,10 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Param,
-  Delete,
-  Body,
-  Post,
-} from '@nestjs/common';
+import { Controller, Get, Patch, Param, Delete, Body, Post } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { Public } from 'src/guards/public.decorator';
 import { AreaAndservicesService } from './area-andservices/area-andservices.service';
 import { CreateAreaDto, CreateServicesDto } from './dto/areaAndServices.dto';
+import { CreateSubServicesDto } from './dto/createSubServices.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -86,5 +79,12 @@ export class AdminController {
   @ApiOperation({ summary: 'Find all serviceProvider  ' })
   async findAllServiceProvider() {
     return await this.adminService.findAllServiceProvider();
+  }
+  // create sub services
+  @Post('create-sub-service')
+  @Public()
+  @ApiOperation({ summary: 'Create sub services  ' })
+  async createSubServices(@Body() body: CreateSubServicesDto) {
+    return await this.areaAndservicesService.createSubServices(body);
   }
 }
