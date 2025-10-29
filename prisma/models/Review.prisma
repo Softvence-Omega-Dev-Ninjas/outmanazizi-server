@@ -1,6 +1,6 @@
 model Review {
     id                String   @id @default(uuid())
-    rating            String
+    rating            Int
     comment           String?
     userId            String
     serviceProviderId String

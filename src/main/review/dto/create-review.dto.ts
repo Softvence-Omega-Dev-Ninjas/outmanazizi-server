@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateReviewDto {
   @ApiProperty({
     example: '31486502-8f52-44a0-8499-46ef1679151a',
-    description: 'service provider id  of the service provider being reviewed',
+    description: 'service provider id of the service provider being reviewed',
   })
   @IsString()
   serviceProviderId: string;
@@ -13,8 +13,10 @@ export class CreateReviewDto {
     example: 5,
     description: 'Rating given to the service provider',
   })
-  @IsString()
-  rating: string;
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating: number;
 
   @ApiProperty({
     example: 'Great service!',

@@ -35,7 +35,7 @@ export class ReviewService {
 
       const review = await this.prisma.review.create({
         data: {
-          rating: createReviewDto.rating,
+          rating: Number(createReviewDto.rating),
           comment: createReviewDto.comment,
           userId: userId,
           serviceProviderId: createReviewDto.serviceProviderId,
