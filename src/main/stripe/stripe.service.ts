@@ -25,7 +25,7 @@ export class StripeService {
       return account;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      ApiResponse.error('Stripe Account Creation Failed', errorMessage);
+      return ApiResponse.error('Stripe Account Creation Failed', errorMessage);
     }
   }
   async createAccountLink(dto: CreateAccountLinkDto) {
@@ -38,8 +38,9 @@ export class StripeService {
       });
       return link;
     } catch (error) {
+      this.logger.error('Stripe account link creation failed', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      ApiResponse.error('Stripe Account Link Creation Failed', errorMessage);
+      return ApiResponse.error('Stripe Account Link Creation Failed', errorMessage);
     }
   }
 
