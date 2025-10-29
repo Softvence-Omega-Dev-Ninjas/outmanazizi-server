@@ -3,12 +3,17 @@ import { StripeService } from './stripe.service';
 import { StripeController } from './stripe.controller';
 import Stripe from 'stripe';
 
-
 export const stripeProvider = {
   provide: 'STRIPE_CLIENT',
-  useValue: new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2025-09-30.clover',
-  }),
+  useFactory: () => {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY environment variable is required');
+    }
+    return new Stripe(secretKey, {
+      apiVersion: '2025-09-30.clover',
+    });
+  },
 };
 
 @Module({
@@ -16,4 +21,4 @@ export const stripeProvider = {
   providers: [StripeService, stripeProvider],
   exports: [StripeService],
 })
-export class StripeModule { }
+export class StripeModule {}

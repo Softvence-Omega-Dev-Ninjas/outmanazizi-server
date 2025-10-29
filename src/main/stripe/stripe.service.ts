@@ -1,11 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { CreateAccountLinkDto } from './dto/create-stripe.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Injectable()
 export class StripeService {
-  constructor(@Inject('STRIPE_CLIENT') private readonly stripe: Stripe) {}
+  constructor(
+    @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
+    private readonly logger: Logger,
+  ) {}
 
   async createExpressAccount(userId: string) {
     try {
@@ -41,7 +44,13 @@ export class StripeService {
   }
 
   async createLoginLink(accountId: string): Promise<Stripe.LoginLink> {
-    const loginLink = await this.stripe.accounts.createLoginLink(accountId);
-    return loginLink;
+    try {
+      const loginLink = await this.stripe.accounts.createLoginLink(accountId);
+      return loginLink;
+    } catch (error) {
+      this.logger.error('Failed to create Stripe login link', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Stripe Login Link Creation Failed: ${errorMessage}`);
+    }
   }
 }

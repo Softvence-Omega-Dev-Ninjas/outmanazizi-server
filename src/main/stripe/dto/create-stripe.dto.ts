@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsUrl } from 'class-validator';
 
 export class CreateAccountLinkDto {
   @ApiProperty({
@@ -16,6 +16,7 @@ export class CreateAccountLinkDto {
     example: 'https://yourapp.com/return',
     required: true,
   })
+  @IsUrl()
   @IsString()
   @IsNotEmpty()
   returnUrl: string;
@@ -25,6 +26,7 @@ export class CreateAccountLinkDto {
     example: 'https://yourapp.com/refresh',
     required: true,
   })
+  @IsUrl()
   @IsString()
   @IsNotEmpty()
   refreshUrl: string;
