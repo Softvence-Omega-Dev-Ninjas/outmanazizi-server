@@ -13,7 +13,7 @@ export class ApiResponse {
     return {
       success: false,
       message,
-      error, // You can include error details if needed for debugging
+      error,
     };
   }
 }
