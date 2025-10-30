@@ -16,6 +16,7 @@ export class ConsumerController {
     return await this.consumerService.getBidedProviders(req['userid'] as string, dto.serviceId);
   }
 
+  // accept bid
   @Post('accept-bid/:serviceId')
   @ApiOperation({ summary: 'Accept a bid for a service request' })
   async acceptBid(
