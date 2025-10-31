@@ -30,15 +30,14 @@ services:
     ports:
       - '3000:3000'
     env_file:
-      - .env # optional, if you keep DB credentials and env vars here
+      - .env
     depends_on:
       - db
     environment:
-      # Prisma DB connection (adjust to your env)
       DATABASE_URL: postgres://postgres:postgres@db:5432/outmanazizi_db
       NODE_ENV: production
     volumes:
-      - ./uploads:/app/uploads # ensure uploads persist locally
+      - ./uploads:/app/uploads
 
 volumes:
   postgres_data:
