@@ -1,4 +1,3 @@
-
 import 'dotenv/config'; // * loads .env file for database connection
 
 import path from 'node:path';

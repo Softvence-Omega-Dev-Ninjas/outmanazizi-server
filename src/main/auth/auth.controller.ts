@@ -25,7 +25,11 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
 import { AuthGuard } from '@nestjs/passport';
+<<<<<<< HEAD
 import { GoogleUser } from './strategy/google.strategy';
+=======
+import { GoogleUser } from './strategy/goggle.strategy';
+>>>>>>> bf199cdc3ac2012d476f1741a4a4be73fef157d4
 
 @ApiTags('Authentication & User Management')
 @Controller('auth')
@@ -57,6 +61,36 @@ export class AuthController {
     return await this.authService.login(loginDto);
   }
 
+<<<<<<< HEAD
+=======
+  @Get('google')
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  googleAuth() {
+    console.log('Google Auth');
+  }
+
+  @Get('google/redirect')
+  @UseGuards(AuthGuard('google'))
+  @Public()
+  googleRedirect(@Req() req: Request) {
+    return this.authService.saveGoogleUser(req.user as GoogleUser);
+  }
+
+  // // ---- Facebook Login ----
+  @Get('facebook')
+  @Public()
+  @UseGuards(AuthGuard('facebook'))
+  async facebookLogin() { }
+
+  @Get('facebook/redirect')
+  @UseGuards(AuthGuard('facebook'))
+  @Public()
+  facebookRedirect(@Req() req: Request) {
+    return this.authService.saveFacebookUser(req.user);
+  }
+
+>>>>>>> bf199cdc3ac2012d476f1741a4a4be73fef157d4
   // reset password send otp to user
   @Post('upload-profile-picture')
   @ApiOperation({ summary: 'Upload profile picture' })
