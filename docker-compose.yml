@@ -23,14 +23,14 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile  # Uses the multistage Dockerfile
-    image: arafat2025/outmanazizi_app:latest
+      dockerfile: Dockerfile # Uses the multistage Dockerfile
+    image: softvence/outmanazizi_app:latest
     platform: linux/amd64
     restart: unless-stopped
     ports:
       - '3000:3000'
     env_file:
-      - .env  # optional, if you keep DB credentials and env vars here
+      - .env # optional, if you keep DB credentials and env vars here
     depends_on:
       - db
     environment:
@@ -38,7 +38,7 @@ services:
       DATABASE_URL: postgres://postgres:postgres@db:5432/outmanazizi_db
       NODE_ENV: production
     volumes:
-      - ./uploads:/app/uploads  # ensure uploads persist locally
+      - ./uploads:/app/uploads # ensure uploads persist locally
 
 volumes:
   postgres_data:
