@@ -12,7 +12,7 @@ async function bootstrap() {
     credentials: true,
   });
   const config = new DocumentBuilder()
-    .setTitle('OutManzizi Playground 🎉 — Where APIs Party')
+    .setTitle('OutManAzizi Playground 🎉 — Where APIs Party')
     .setDescription(
       'Your favorite API playground! Hit the routes, explore the endpoints, and enjoy the ride 😄🎯',
     )
