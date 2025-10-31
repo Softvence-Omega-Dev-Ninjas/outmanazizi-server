@@ -8,7 +8,6 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 @Controller()
 export class AppController {
   @Get('/')
-
   @ApiOperation({
     summary: 'Server says: ‘I got you, boss!’ 😁🟢 Please you check me',
     description:
@@ -65,7 +64,12 @@ export class AppController {
       return res.send(htmlContent);
     }
 
-    return res.status(200).json(ApiResponse.success('🧩 Test route working fine — which means... nothing’s broken yet! 😂 OutManzizi API is happy and so should you be, dev! 🎉'));
-
+    return res
+      .status(200)
+      .json(
+        ApiResponse.success(
+          '🧩 Test route working fine — which means... nothing’s broken yet! 😂 OutManzizi API is happy and so should you be, dev! 🎉',
+        ),
+      );
   }
 }
