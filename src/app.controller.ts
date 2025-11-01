@@ -45,7 +45,7 @@ export class AppController {
 <body>
     <div class="container">
         <div class="logo">🚀</div>
-        <h1>Welcome to OutManzizi API Server</h1>
+        <h1>Welcome to OutManAzizi API Server</h1>
         <p class="subtitle">Your one-stop solution for all things marketplace.</p>
         <div class="status-card">
             <div class="status-item"><span>Status:</span><span class="status-value">✅ Online</span></div>
@@ -68,7 +68,7 @@ export class AppController {
       .status(200)
       .json(
         ApiResponse.success(
-          '🧩 Test route working fine — which means... nothing’s broken yet! 😂 OutManzizi API is happy and so should you be, dev! 🎉',
+          '🧩 Test route working fine — which means... nothing’s broken yet! 😂 OutManAzizi API is happy and so should you be, dev! 🎉',
         ),
       );
   }
