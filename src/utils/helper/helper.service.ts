@@ -14,6 +14,7 @@ export class HelperService {
     }
     return user;
   }
+
   async userExistsByUserid(userId: string) {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
@@ -23,6 +24,7 @@ export class HelperService {
     }
     return user;
   }
+
   async validServiceProvider(userId: string) {
     return await this.prismaService.serviceProvider.findUnique({
       where: { userId },
