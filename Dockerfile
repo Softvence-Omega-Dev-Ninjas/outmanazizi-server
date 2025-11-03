@@ -48,4 +48,4 @@ RUN mkdir -p uploads
 EXPOSE 3000
 
 # Run migrations + start
-CMD ["npm", "run", "start:migrate:prod"]
+CMD ["npm", "run", "start:prod"]

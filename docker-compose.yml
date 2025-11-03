@@ -1,43 +1,21 @@
-version: '3.9'
-
 services:
-  # -------------------------
-  # 🗄️ PostgreSQL Database
-  # -------------------------
-  db:
-    image: postgres
-    container_name: outmanazizi_db
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: outmanazizi_db
-    ports:
-      - '5433:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+ db:
+   image: postgres:16
+   container_name: outmanazizi_container
+   restart: always
+   environment:
+     POSTGRES_USER: postgres
+     POSTGRES_PASSWORD: postgres
+     POSTGRES_DB: outmanazizi_db
+   ports:
+     - '5432:5432'
+   volumes:
+     - postgres_data:/var/lib/postgresql/data
 
-  # -------------------------
-  # ⚙️ NestJS + Prisma App
-  # -------------------------
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile # Uses the multistage Dockerfile
-    image: softvence/outmanazizi_app:latest
-    platform: linux/amd64
-    restart: unless-stopped
-    ports:
-      - '3000:3000'
-    env_file:
-      - .env
-    depends_on:
-      - db
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/outmanazizi_db
-      NODE_ENV: production
-    volumes:
-      - ./uploads:/app/uploads
 
 volumes:
-  postgres_data:
+ postgres_data:
+
+
+
+
