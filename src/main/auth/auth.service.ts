@@ -327,7 +327,6 @@ export class AuthService {
         data,
       });
       return ApiResponse.success(user, 'User updated successfully');
-      // return ApiResponse.success(user, 'User updated successfully');
     } catch (error) {
       console.error('Error updating user:', error);
       throw new UnauthorizedException('Update user failed');
@@ -378,8 +377,16 @@ export class AuthService {
         email: newUser.email,
         role: 'CONSUMER',
       };
+
+      const secret = this.configService.getOrThrow<string>('JWT_SECRET');
+      if (!secret) {
+        throw new UnauthorizedException('JWT secret not found');
+      }
+
+
+
       const token = await this.jwtService.signAsync(payload, {
-        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+        secret,
         expiresIn: '7d',
       });
       return ApiResponse.success(token, 'User created successfully');
