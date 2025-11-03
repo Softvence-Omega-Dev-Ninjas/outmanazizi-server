@@ -119,7 +119,7 @@ export class AuthService {
       }
       const currentTime = new Date(getLocalDateTime(0));
       if (currentTime > new Date(user.otpExpiresAt as string | number | Date)) {
-        throw new UnauthorizedException('OTP expired');
+        throw new BadRequestException('OTP expired');
       }
       const data = await this.prisma.user.update({
         where: { email },
