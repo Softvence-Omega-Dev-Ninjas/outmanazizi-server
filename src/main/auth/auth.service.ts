@@ -25,7 +25,7 @@ export class AuthService {
     private readonly helperService: HelperService,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto) {
     try {
@@ -115,7 +115,7 @@ export class AuthService {
         throw new NotFoundException('User not found');
       }
       if (user.otp !== otp) {
-        throw new UnauthorizedException('Invalid OTP');
+        throw new BadRequestException('Invalid OTP');
       }
       const currentTime = new Date(getLocalDateTime(0));
       if (currentTime > new Date(user.otpExpiresAt as string | number | Date)) {
