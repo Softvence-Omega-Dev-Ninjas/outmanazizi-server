@@ -391,8 +391,8 @@ export class AuthService {
       });
       return ApiResponse.success(token, 'User created successfully');
     } catch (error) {
-      console.error('Error saving Google user:', error);
-      throw new UnauthorizedException('Google user registration failed');
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new UnauthorizedException('Google user registration failed', errorMessage);
     }
   }
 }
