@@ -379,6 +379,7 @@ export class AuthService {
       };
 
       const secret = this.configService.getOrThrow<string>('JWT_SECRET');
+      const expiresIn = this.configService.getOrThrow<string>('JWT_EXPIRES_IN');
       if (!secret) {
         throw new UnauthorizedException('JWT secret not found');
       }
@@ -387,7 +388,7 @@ export class AuthService {
 
       const token = await this.jwtService.signAsync(payload, {
         secret,
-        expiresIn: '7d',
+        expiresIn
       });
       return ApiResponse.success(token, 'User created successfully');
     } catch (error) {
