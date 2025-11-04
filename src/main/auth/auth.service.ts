@@ -171,7 +171,9 @@ export class AuthService {
       if (!userExists.password) {
         throw new UnauthorizedException('Invalid credentials');
       }
-
+      if (userExists.role !== loginDto.role) {
+        throw new UnauthorizedException('User role mismatch');
+      }
       const passwordMatch = await bcrypt.compare(loginDto.password, userExists.password);
 
       if (!passwordMatch) {
