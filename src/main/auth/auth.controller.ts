@@ -129,7 +129,6 @@ export class AuthController {
     return await this.authService.getProfileById(req['userid'] as string);
   }
 
-  // get resend otp
   @Post('resend-otp')
   @ApiOperation({ summary: 'Resend OTP to email' })
   @Public()
