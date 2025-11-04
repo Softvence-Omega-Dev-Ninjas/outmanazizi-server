@@ -380,8 +380,8 @@ export class AuthService {
 
       const secret = this.configService.getOrThrow<string>('JWT_SECRET');
       const expiresIn = this.configService.getOrThrow<string>('JWT_EXPIRES_IN');
-      if (!secret) {
-        throw new UnauthorizedException('JWT secret not found');
+      if (!secret && !expiresIn) {
+        throw new UnauthorizedException('JWT secret or expiration not found');
       }
 
 
