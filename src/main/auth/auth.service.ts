@@ -185,10 +185,11 @@ export class AuthService {
       const serviceProvider = await this.prisma.serviceProvider.findFirst({
         where: { userId: userExists.id },
       });
-      const token = await this.jwtService.signAsync(payload, {
-        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-        expiresIn: '7d',
-      });
+      // const token = await this.jwtService.signAsync(payload, {
+      //   secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      //   expiresIn: '7d',
+      // });
+      const token = await this.helperService.createTokenEntry(userExists.id, payload);
       if (userExists.role === UserRole.SERVICE_PROVIDER) {
         return ApiResponse.success(
           { token, serviceProvider },
@@ -377,19 +378,19 @@ export class AuthService {
         email: newUser.email,
         role: 'CONSUMER',
       };
+      const token = await this.helperService.createTokenEntry(newUser.id, payload);
+      // const secret = this.configService.getOrThrow<string>('JWT_SECRET');
+      // const expiresIn = this.configService.getOrThrow<string>('JWT_EXPIRES_IN');
+      // if (!secret && !expiresIn) {
+      //   throw new UnauthorizedException('JWT secret or expiration not found');
+      // }
 
-      const secret = this.configService.getOrThrow<string>('JWT_SECRET');
-      const expiresIn = this.configService.getOrThrow<string>('JWT_EXPIRES_IN');
-      if (!secret && !expiresIn) {
-        throw new UnauthorizedException('JWT secret or expiration not found');
-      }
 
 
-
-      const token = await this.jwtService.signAsync(payload, {
-        secret,
-        expiresIn
-      });
+      // const token = await this.jwtService.signAsync(payload, {
+      //   secret,
+      //   expiresIn
+      // });
       return ApiResponse.success(token, 'User created successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
