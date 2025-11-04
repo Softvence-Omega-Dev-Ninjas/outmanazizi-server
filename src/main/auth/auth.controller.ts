@@ -137,15 +137,15 @@ export class AuthController {
     return await this.authService.resendOtp(body.email);
   }
 
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  @Public()
-  googleAuth() { }
+  // @Get('google')
+  // @UseGuards(AuthGuard('google'))
+  // @Public()
+  // googleAuth() { }
 
-  @Get('google/redirect')
-  @UseGuards(AuthGuard('google'))
-  @Public()
-  async googleRedirect(@Req() req: Request) {
-    return await this.authService.saveGoogleUser(req.user as GoogleUser);
-  }
+  // @Get('google/redirect')
+  // @UseGuards(AuthGuard('google'))
+  // @Public()
+  // async googleRedirect(@Req() req: Request) {
+  //   return await this.authService.saveGoogleUser(req.user as GoogleUser);
+  // }
 }
