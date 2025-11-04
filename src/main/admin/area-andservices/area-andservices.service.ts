@@ -6,10 +6,11 @@ import { CreateSubServicesDto } from '../dto/createSubServices.dto';
 
 @Injectable()
 export class AreaAndservicesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
   // create area and services
 
   async createArea(body: CreateAreaDto) {
+
     try {
       const areaExists = await this.prisma.area.findFirst({
         where: { area: body.area },

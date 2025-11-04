@@ -7,6 +7,7 @@ model User {
   phone                String
   role                 Role             @default(CONSUMER)
   isActive             Boolean          @default(true)
+  address              String?
   isDeleted            Boolean          @default(false)
   isBlocked            Boolean          @default(false)
   provider             String?

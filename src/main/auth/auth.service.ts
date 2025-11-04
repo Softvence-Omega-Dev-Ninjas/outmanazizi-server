@@ -171,7 +171,9 @@ export class AuthService {
       if (!userExists.password) {
         throw new UnauthorizedException('Invalid credentials');
       }
-
+      if (userExists.role !== loginDto.role) {
+        throw new UnauthorizedException('User role mismatch');
+      }
       const passwordMatch = await bcrypt.compare(loginDto.password, userExists.password);
 
       if (!passwordMatch) {
@@ -185,10 +187,11 @@ export class AuthService {
       const serviceProvider = await this.prisma.serviceProvider.findFirst({
         where: { userId: userExists.id },
       });
-      const token = await this.jwtService.signAsync(payload, {
-        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-        expiresIn: '7d',
-      });
+      // const token = await this.jwtService.signAsync(payload, {
+      //   secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      //   expiresIn: '7d',
+      // });
+      const token = await this.helperService.createTokenEntry(userExists.id, payload);
       if (userExists.role === UserRole.SERVICE_PROVIDER) {
         return ApiResponse.success(
           { token, serviceProvider },
@@ -201,7 +204,29 @@ export class AuthService {
       return ApiResponse.error('Login failed', errorMessage);
     }
   }
-
+  // get profile by id
+  async getProfileById(id: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        include: { serviceProvider: true },
+      });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      // if (user.role === UserRole.SERVICE_PROVIDER) {
+      //   const serviceProvider = await this.prisma.serviceProvider.findFirst({
+      //     where: { userId: user.id },
+      //   });
+      //   return ApiResponse.success(user, 'User profile fetched successfully');
+      // }
+      return ApiResponse.success(user, 'User profile fetched successfully');
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return ApiResponse.error('Get user profile failed', errorMessage);
+    }
+  }
   // forget password
   async forgotPassword(email: string) {
     try {
@@ -321,10 +346,15 @@ export class AuthService {
   }
   // user update
   async updateUser(id: string, data: UpdateUserDto) {
+    console.log(data);
     try {
       const user = await this.prisma.user.update({
         where: { id },
-        data,
+        data: {
+          address: data.address,
+          name: data.name,
+          phone: data.phone,
+        }
       });
       return ApiResponse.success(user, 'User updated successfully');
     } catch (error) {
@@ -377,19 +407,7 @@ export class AuthService {
         email: newUser.email,
         role: 'CONSUMER',
       };
-
-      const secret = this.configService.getOrThrow<string>('JWT_SECRET');
-      const expiresIn = this.configService.getOrThrow<string>('JWT_EXPIRES_IN');
-      if (!secret && !expiresIn) {
-        throw new UnauthorizedException('JWT secret or expiration not found');
-      }
-
-
-
-      const token = await this.jwtService.signAsync(payload, {
-        secret,
-        expiresIn
-      });
+      const token = await this.helperService.createTokenEntry(newUser.id, payload);
       return ApiResponse.success(token, 'User created successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';

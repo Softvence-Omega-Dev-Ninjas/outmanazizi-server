@@ -21,5 +21,7 @@ export class UpdateUserDto {
     description: 'Profile picture URL',
     example: 'https://example.com/profile.jpg',
   })
-  profile?: string;
+  @IsString({ message: 'Address must be a string' })
+  @IsNotEmpty({ message: 'Adress provided' })
+  address?: string;
 }

@@ -24,13 +24,13 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { GoogleUser } from './strategy/google.strategy';
+// import { AuthGuard } from '@nestjs/passport';
+// import { GoogleUser } from './strategy/google.strategy';
 
 @ApiTags('Authentication & User Management')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -121,8 +121,14 @@ export class AuthController {
   async updateUser(@Body() updateUserDto: UpdateUserDto, @Req() req: Request) {
     return await this.authService.updateUser(req['userid'] as string, updateUserDto);
   }
+  // get user profile
+  @Get('profile')
+  @ApiOperation({ summary: 'Get user profile' })
+  @UseGuards(AuthenticationGuard)
+  async getProfile(@Req() req: Request) {
+    return await this.authService.getProfileById(req['userid'] as string);
+  }
 
-  // get resend otp
   @Post('resend-otp')
   @ApiOperation({ summary: 'Resend OTP to email' })
   @Public()
@@ -131,15 +137,15 @@ export class AuthController {
     return await this.authService.resendOtp(body.email);
   }
 
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  @Public()
-  googleAuth() {}
+  // @Get('google')
+  // @UseGuards(AuthGuard('google'))
+  // @Public()
+  // googleAuth() { }
 
-  @Get('google/redirect')
-  @UseGuards(AuthGuard('google'))
-  @Public()
-  async googleRedirect(@Req() req: Request) {
-    return await this.authService.saveGoogleUser(req.user as GoogleUser);
-  }
+  // @Get('google/redirect')
+  // @UseGuards(AuthGuard('google'))
+  // @Public()
+  // async googleRedirect(@Req() req: Request) {
+  //   return await this.authService.saveGoogleUser(req.user as GoogleUser);
+  // }
 }
