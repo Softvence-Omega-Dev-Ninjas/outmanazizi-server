@@ -204,7 +204,22 @@ export class AuthService {
       return ApiResponse.error('Login failed', errorMessage);
     }
   }
-
+  // get profile by id
+  async getProfileById(id: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id }
+      });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return ApiResponse.success(user, 'User profile fetched successfully');
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return ApiResponse.error('Get user profile failed', errorMessage);
+    }
+  }
   // forget password
   async forgotPassword(email: string) {
     try {
