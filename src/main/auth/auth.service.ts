@@ -327,7 +327,6 @@ export class AuthService {
         data,
       });
       return ApiResponse.success(user, 'User updated successfully');
-      // return ApiResponse.success(user, 'User updated successfully');
     } catch (error) {
       console.error('Error updating user:', error);
       throw new UnauthorizedException('Update user failed');
@@ -378,14 +377,23 @@ export class AuthService {
         email: newUser.email,
         role: 'CONSUMER',
       };
+
+      const secret = this.configService.getOrThrow<string>('JWT_SECRET');
+      const expiresIn = this.configService.getOrThrow<string>('JWT_EXPIRES_IN');
+      if (!secret && !expiresIn) {
+        throw new UnauthorizedException('JWT secret or expiration not found');
+      }
+
+
+
       const token = await this.jwtService.signAsync(payload, {
-        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-        expiresIn: '7d',
+        secret,
+        expiresIn
       });
       return ApiResponse.success(token, 'User created successfully');
     } catch (error) {
-      console.error('Error saving Google user:', error);
-      throw new UnauthorizedException('Google user registration failed');
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new UnauthorizedException('Google user registration failed', errorMessage);
     }
   }
 }
