@@ -51,12 +51,8 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   async handleConnection(client: Socket) {
     const cookieHeader = client.handshake.headers.cookie as string;
-    const token = cookieHeader
-      ?.split(';')
-      .find((c) => c.trim().startsWith('jwt='))
-      ?.split('=')[1];
 
-    if (!token) {
+    if (!cookieHeader) {
       client.emit('error', { message: 'Authentication token is required' });
       client.disconnect();
       return;
@@ -67,9 +63,12 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
 
     try {
-      const decoded: Awaited<Record<string, any>> = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-      });
+      const decoded: Awaited<Record<string, any>> = await this.jwtService.verifyAsync(
+        cookieHeader,
+        {
+          secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+        },
+      );
       if (!decoded || !decoded.sub) {
         client.emit('error', { message: 'Invalid token payload' });
         client.disconnect();
@@ -86,6 +85,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       this.connectedUsers.set(user.id, client.id);
       this.cache.set(client.id, user.id);
+
       this.cache.set(user.id, client.id);
       this.allUsers.set('online', {
         socketId: client.id,
@@ -95,7 +95,6 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       // client.join(`${this.userIdSocketId.get(user.id)}-${this.socketIdUserId.get(client.id)}`);
     } catch (error) {
       console.error('Authentication error:', error);
-      client.emit('error', { message: 'Invalid or expired token' });
       client.disconnect();
     }
   }
@@ -116,7 +115,13 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('send_message')
   async sendMessage(@MessageBody() dto: SendMessageSimpleDto, @ConnectedSocket() client: Socket) {
     const receiveSocketId: string = this.cache.get(dto.receiverId) as string;
+
     if (!receiveSocketId) return console.error('Receiver not connected');
+    if (!dto?.receiverId) {
+      this.logger.error('Receiver ID missing in message DTO:', dto);
+      return;
+    }
+
     const senderId = this.cache.get(client.id) as string;
     await this.messagesService.sendMessage(senderId, { ...dto });
     this.server.to(receiveSocketId).emit('receive_message', {
