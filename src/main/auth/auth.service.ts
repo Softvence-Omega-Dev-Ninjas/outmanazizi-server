@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { GoogleAuthDto } from './dto/google.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -417,24 +419,53 @@ export class AuthService {
   // }
   async googleAuth(googleAuthDto: GoogleAuthDto) {
     console.log(googleAuthDto);
+    this.logger.log('Google Auth request received');
+    this.logger.debug(`Payload: ${JSON.stringify(googleAuthDto)}`);
     try {
       const { email, name, picture, role } = googleAuthDto;
+      this.logger.log(`Checking if user exists with email: ${email}`);
 
-      const newUser = await this.prisma.user.upsert({
+      const userExists = await this.prisma.user.findUnique({
         where: { email },
-        update: { name, picture, role },
-        create: { email, name, picture, role, phone: '' },
       });
-      const payload = {
-        sub: newUser.id,
-        email: newUser.email,
-        role: newUser.role,
-      };
-      const token = await this.helperService.createTokenEntry(newUser.id, payload);
-      return ApiResponse.success(token, 'User created successfully');
+      if (!userExists) {
+        const newUser = await this.prisma.user.create({
+          data: {
+            email,
+            name,
+            picture,
+            role,
+            phone: '',
+          },
+        });
+        const payload = {
+          sub: newUser.id,
+          email: newUser.email,
+          role: newUser.role,
+        };
+        this.logger.log(`New user created successfully: ${email}`);
+        const token = await this.helperService.createTokenEntry(newUser.id, payload);
+        return ApiResponse.success(token, 'User created successfully');
+      }
+
+
+      if (userExists && userExists.role !== role) {
+        this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${userExists.role}`);
+        throw new BadRequestException('User role mismatch. Please use the correct login method.');
+      }
+      if (userExists) {
+        const payload = {
+          sub: userExists.id,
+          email: userExists.email,
+          role: userExists.role,
+        };
+        const token = await this.helperService.createTokenEntry(userExists.id, payload);
+        return ApiResponse.success(token, 'User logged in successfully');
+      }
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new UnauthorizedException('Google user registration failed', errorMessage);
+      throw new BadRequestException(errorMessage);
     }
   }
 }
