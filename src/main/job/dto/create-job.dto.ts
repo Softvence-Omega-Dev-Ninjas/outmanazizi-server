@@ -68,17 +68,4 @@ export class CreateJobDto {
     required: true,
   })
   images: string[];
-
-  @ApiProperty({
-    description: 'Latitude of the job location',
-    example: '23.8103',
-  })
-  @IsString()
-  latitude?: string;
-  @ApiProperty({
-    description: 'Longitude of the job location',
-    example: '90.4125',
-  })
-  @IsString()
-  longitude?: string;
 }
