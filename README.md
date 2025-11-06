@@ -1,4 +1,4 @@
-# Outmanazizi Server
+# OutmanAzizi Server
 
 A NestJS-based backend server with PostgreSQL database integration, JWT authentication, and Swagger API documentation.
 

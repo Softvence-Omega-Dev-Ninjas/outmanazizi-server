@@ -9,6 +9,7 @@ export class JobService {
   constructor(private readonly prisma: PrismaService) {}
   // Create a job
   async create(userId: string, createJobDto: CreateJobDto) {
+    console.log(createJobDto);
     try {
       const { images, ...rest } = createJobDto;
 
@@ -42,6 +43,7 @@ export class JobService {
       return ApiResponse.success(savedJob, 'Job created successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.log(message);
       throw new BadRequestException(message);
     }
   }
