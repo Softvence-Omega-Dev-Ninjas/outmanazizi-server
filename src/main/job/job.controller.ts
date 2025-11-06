@@ -22,7 +22,7 @@ import { storageConfig } from 'src/utils/common/file/fileUploads';
 
 @Controller('job')
 export class JobController {
-  constructor(private readonly jobService: JobService) {}
+  constructor(private readonly jobService: JobService) { }
 
   // Create a new job
   @Post('create-job')
@@ -45,6 +45,12 @@ export class JobController {
   @UseGuards(AuthenticationGuard)
   async findAll() {
     return await this.jobService.findAll();
+  }
+
+  @Get('user-jobs')
+  @UseGuards(AuthenticationGuard)
+  async userJobs(@Req() req: Request) {
+    return await this.jobService.userJobs(req['userid'] as string);
   }
 
   @Get(':id')

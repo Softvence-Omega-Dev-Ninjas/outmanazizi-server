@@ -54,6 +54,14 @@ export class JobService {
     }
   }
 
+  // specific user jobs
+  async userJobs(userId: string) {
+    const result = await this.prisma.service.findMany({
+      where: { userId },
+    });
+    return ApiResponse.success(result, 'User jobs retrieved successfully');
+  }
+
   // find all job
   async findAll() {
     const result = await this.prisma.service.findMany({
