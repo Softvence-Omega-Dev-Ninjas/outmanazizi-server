@@ -418,7 +418,6 @@ export class AuthService {
   //   }
   // }
   async googleAuth(googleAuthDto: GoogleAuthDto) {
-    console.log(googleAuthDto);
     this.logger.log('Google Auth request received');
     this.logger.debug(`Payload: ${JSON.stringify(googleAuthDto)}`);
     try {
