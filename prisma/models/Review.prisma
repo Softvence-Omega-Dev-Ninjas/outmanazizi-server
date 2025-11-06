@@ -5,8 +5,10 @@ model Review {
     userId            String
     serviceProviderId String
     createdAt         DateTime @default(now())
+    serviceId         String
     updatedAt         DateTime @updatedAt
 
     user            User            @relation(fields: [userId], references: [id])
     serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+    service         Service         @relation(fields: [serviceId], references: [id])
 }
