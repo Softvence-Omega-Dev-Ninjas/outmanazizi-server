@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
   UnauthorizedException,
@@ -241,12 +242,12 @@ export class AuthService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      // if (user.role === UserRole.SERVICE_PROVIDER) {
-      //   const serviceProvider = await this.prisma.serviceProvider.findFirst({
-      //     where: { userId: user.id },
-      //   });
-      //   return ApiResponse.success(user, 'User profile fetched successfully');
-      // }
+      if (user.role === UserRole.SERVICE_PROVIDER) {
+        const serviceProvider = await this.prisma.serviceProvider.findFirst({
+          where: { userId: user.id },
+        });
+        return ApiResponse.success({ user, serviceProvider }, 'User profile fetched successfully');
+      }
       return ApiResponse.success(user, 'User profile fetched successfully');
     }
     catch (error) {
@@ -435,43 +436,20 @@ export class AuthService {
     }
   }
 
-  // Google OAuth Save information
-  // async saveGoogleUser(user: GoogleUserDto) {
-  //   try {
-  //     const { email, firstName, picture, provider } = user;
 
-  //     const newUser = await this.prisma.user.upsert({
-  //       where: { email },
-  //       update: { name: firstName, picture, provider },
-  //       create: { email, name: firstName, picture, provider, phone: '' },
-  //     });
-  //     const payload = {
-  //       sub: newUser.id,
-  //       email: newUser.email,
-  //       role: 'CONSUMER',
-  //     };
-  //     const token = await this.helperService.createTokenEntry(newUser.id, payload);
-  //     return ApiResponse.success(token, 'User created successfully');
-  //   } catch (error) {
-  //     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-  //     throw new UnauthorizedException('Google user registration failed', errorMessage);
-  //   }
-  // }
   async googleAuth(googleAuthDto: GoogleAuthDto) {
     this.logger.log('Google Auth request received');
     this.logger.debug(`Payload: ${JSON.stringify(googleAuthDto)}`);
+
     try {
       const { email, name, picture, role } = googleAuthDto;
-      this.logger.log(`Checking if user exists with email: ${email}`);
 
-      const userExists = await this.prisma.user.findUnique({
-        where: { email },
-      });
-      if (!userExists) {
-        const newUser = await this.prisma.user.upsert({
-          where: { email },
-          update: { name, picture, isEmailVerified: true },
-          create: {
+      const user = await this.prisma.user.findUnique({ where: { email } });
+
+      if (!user) {
+        // Create new user
+        const newUser = await this.prisma.user.create({
+          data: {
             email,
             name,
             picture,
@@ -481,34 +459,48 @@ export class AuthService {
             isEmailVerified: true,
           },
         });
-        const payload = {
-          sub: newUser.id,
-          email: newUser.email,
-          role: newUser.role,
-        };
+
+        if (!newUser || !newUser.id) {
+          this.logger.error(`User creation failed for email: ${email}`);
+          throw new InternalServerErrorException('User creation failed');
+        }
+
+        // If service provider, create related record
+        if (role === UserRole.SERVICE_PROVIDER as UserRole) {
+          try {
+            await this.prisma.serviceProvider.create({
+              data: { userId: newUser.id, isProfileCompleted: false, address: '' },
+            });
+            this.logger.log(`ServiceProvider record created for user: ${email}`);
+          } catch (err) {
+            this.logger.error(`ServiceProvider creation failed for user: ${email}`, err);
+            // Optional: Rollback user creation or continue depending on business logic
+          }
+        }
+
         this.logger.log(`New user created successfully: ${email}`);
+
+        const payload = { sub: newUser.id, email: newUser.email, role: newUser.role };
         const token = await this.helperService.createTokenEntry(newUser.id, payload);
         return ApiResponse.success(token, 'User created successfully');
       }
 
-
-      if (userExists && userExists.role !== role) {
-        this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${userExists.role}`);
+      // Existing user
+      if (user.role !== role) {
+        this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${user.role}`);
         throw new BadRequestException('User role mismatch. Please use the correct login method.');
       }
-      if (userExists) {
-        const payload = {
-          sub: userExists.id,
-          email: userExists.email,
-          role: userExists.role,
-        };
-        const token = await this.helperService.createTokenEntry(userExists.id, payload);
-        return ApiResponse.success(token, 'User logged in successfully');
-      }
+
+      const payload = { sub: user.id, email: user.email, role: user.role };
+      const token = await this.helperService.createTokenEntry(user.id, payload);
+      this.logger.log(`User logged in successfully: ${email}`);
+      return ApiResponse.success(token, 'User logged in successfully');
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException(errorMessage);
+      this.logger.error('Google Auth failed', error instanceof Error ? error.stack : error);
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(error instanceof Error ? error.message : 'An unknown error occurred');
     }
   }
+
 }
