@@ -389,7 +389,7 @@ export class AuthService {
   }
   // user update
   async updateUser(id: string, data: UpdateUserDto) {
-    console.log(data);
+
     try {
       const user = await this.prisma.user.update({
         where: { id },
@@ -468,8 +468,10 @@ export class AuthService {
         where: { email },
       });
       if (!userExists) {
-        const newUser = await this.prisma.user.create({
-          data: {
+        const newUser = await this.prisma.user.upsert({
+          where: { email },
+          update: { name, picture, isEmailVerified: true },
+          create: {
             email,
             name,
             picture,
