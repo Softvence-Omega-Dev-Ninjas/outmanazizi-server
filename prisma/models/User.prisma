@@ -1,29 +1,31 @@
 model User {
-  id                   String           @id @default(uuid())
-  email                String           @unique
-  password             String?
-  picture              String?
-  name                 String
-  phone                String
-  role                 Role             @default(CONSUMER)
-  isActive             Boolean          @default(true)
-  address              String?
-  isDeleted            Boolean          @default(false)
-  isBlocked            Boolean          @default(false)
-  provider             String?
-  otp                  String?
-  otpExpiresAt         String?
-  isEmailVerified      Boolean          @default(false)
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-  customerId           String?
-  serviceProvider      ServiceProvider?
-  services             Service[]
-  reviews              Review[]
-  sentMessages         Message[]        @relation("SentMessages")
-  receivedMessages     Message[]        @relation("ReceivedMessages")
-  conversationsAsUser1 Conversation[]   @relation("User1Conversations")
-  conversationsAsUser2 Conversation[]   @relation("User2Conversations")
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String?
+  picture         String?
+  name            String
+  phone           String
+  role            Role             @default(CONSUMER)
+  isActive        Boolean          @default(true)
+  address         String?
+  isDeleted       Boolean          @default(false)
+  isBlocked       Boolean          @default(false)
+  provider        String?
+  otp             String?
+  otpExpiresAt    String?
+  isEmailVerified Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  customerId      String?
+  serviceProvider ServiceProvider?
+  services        Service[]
+
+  sentMessages         Message[]      @relation("SentMessages")
+  receivedMessages     Message[]      @relation("ReceivedMessages")
+  conversationsAsUser1 Conversation[] @relation("User1Conversations")
+  conversationsAsUser2 Conversation[] @relation("User2Conversations")
+  fromReviews          Review[]       @relation("FromReviews")
+  toReviews            Review[]       @relation("ToReviews")
 }
 
 enum Role {

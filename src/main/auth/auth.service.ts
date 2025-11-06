@@ -237,7 +237,7 @@ export class AuthService {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
-        include: { serviceProvider: true, reviews: true },
+        include: { serviceProvider: true, toReviews: true },
       });
       if (!user) {
         throw new NotFoundException('User not found');
