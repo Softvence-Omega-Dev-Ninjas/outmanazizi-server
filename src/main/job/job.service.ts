@@ -43,6 +43,7 @@ export class JobService {
           userId,
           ...rest,
           file: images,
+          serviceName: serviceExists.name,
         },
       });
       this.logger.log(`Job created successfully: ${JSON.stringify(savedJob)}`);
@@ -52,6 +53,14 @@ export class JobService {
       this.logger.error(`Job creation failed: ${message}`);
       throw new BadRequestException(message);
     }
+  }
+
+  // specific user jobs
+  async userJobs(userId: string) {
+    const result = await this.prisma.service.findMany({
+      where: { userId },
+    });
+    return ApiResponse.success(result, 'User jobs retrieved successfully');
   }
 
   // find all job

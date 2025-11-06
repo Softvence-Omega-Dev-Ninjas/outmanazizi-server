@@ -5,7 +5,7 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Injectable()
 export class ReviewService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
   async create(createReviewDto: CreateReviewDto, userId: string) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -39,6 +39,7 @@ export class ReviewService {
           comment: createReviewDto.comment,
           userId: userId,
           serviceProviderId: createReviewDto.serviceProviderId,
+          serviceId: createReviewDto.serviceId,
         },
       });
       await this.prisma.serviceProvider.update({
@@ -55,6 +56,6 @@ export class ReviewService {
   }
 
   findAll() {
-    return `This action returns all review`;
+    return this.prisma.review.findMany();
   }
 }
