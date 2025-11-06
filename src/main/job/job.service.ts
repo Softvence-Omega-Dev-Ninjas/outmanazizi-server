@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -6,10 +6,12 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Injectable()
 export class JobService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(JobService.name);
+  constructor(private readonly prisma: PrismaService) { }
   // Create a job
   async create(userId: string, createJobDto: CreateJobDto) {
-    console.log(createJobDto);
+    this.logger.log(`Create job request received for user: ${userId}`);
+    this.logger.debug(`Payload: ${JSON.stringify(createJobDto)}`);
     try {
       const { images, ...rest } = createJobDto;
 
@@ -17,6 +19,7 @@ export class JobService {
         where: { id: createJobDto.location },
       });
       if (!areaExists) {
+        this.logger.warn(`Area not found: ${createJobDto.location}`);
         throw new NotFoundException('Area does not exist');
       }
       const serviceExists = await this.prisma.services.findFirst({
@@ -24,12 +27,14 @@ export class JobService {
         include: { subServices: true },
       });
       if (!serviceExists) {
+        this.logger.warn(`Service not found: ${createJobDto.title}`);
         throw new NotFoundException('Service does not exist');
       }
       const subServiceExists = serviceExists?.subServices.find(
         (sub) => sub.id === createJobDto.subServices,
       );
       if (!subServiceExists) {
+        this.logger.warn(`Sub-service not found: ${createJobDto.subServices} under service: ${createJobDto.title}`);
         throw new NotFoundException('Sub-service does not exist under the specified service');
       }
 
@@ -40,10 +45,11 @@ export class JobService {
           file: images,
         },
       });
+      this.logger.log(`Job created successfully: ${JSON.stringify(savedJob)}`);
       return ApiResponse.success(savedJob, 'Job created successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.log(message);
+      this.logger.error(`Job creation failed: ${message}`);
       throw new BadRequestException(message);
     }
   }

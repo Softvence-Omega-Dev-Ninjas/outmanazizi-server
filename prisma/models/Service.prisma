@@ -1,8 +1,8 @@
 model Service {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
+  id                             String           @id @default(uuid())
+  userId                         String
+  user                           User             @relation(fields: [userId], references: [id])
+  serviceName                    String
   title                          String
   subServices                    String
   description                    String
