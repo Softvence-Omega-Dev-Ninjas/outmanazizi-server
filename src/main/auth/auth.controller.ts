@@ -24,6 +24,7 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
+import { GoogleAuthDto } from './dto/google.dto';
 // import { AuthGuard } from '@nestjs/passport';
 // import { GoogleUser } from './strategy/google.strategy';
 
@@ -139,12 +140,10 @@ export class AuthController {
 
   @Post('google')
   @Public()
-  googleAuth() { }
+  @ApiBody({ type: GoogleAuthDto })
+  async googleAuth(@Body() googleAuthDto: GoogleAuthDto) {
+    return await this.authService.googleAuth(googleAuthDto);
+  }
 
-  // @Get('google/redirect')
-  // @UseGuards(AuthGuard('google'))
-  // @Public()
-  // async googleRedirect(@Req() req: Request) {
-  //   return await this.authService.saveGoogleUser(req.user as GoogleUser);
-  // }
+
 }

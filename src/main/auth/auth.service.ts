@@ -16,6 +16,7 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { EmailAndOtpDto } from './dto/emailAndOtp.dto';
 import { UserRole } from './role.enum';
 import { ConfigService } from '@nestjs/config';
+import { GoogleAuthDto } from './dto/google.dto';
 
 @Injectable()
 export class AuthService {
@@ -393,19 +394,41 @@ export class AuthService {
   }
 
   // Google OAuth Save information
-  async saveGoogleUser(user: GoogleUserDto) {
+  // async saveGoogleUser(user: GoogleUserDto) {
+  //   try {
+  //     const { email, firstName, picture, provider } = user;
+
+  //     const newUser = await this.prisma.user.upsert({
+  //       where: { email },
+  //       update: { name: firstName, picture, provider },
+  //       create: { email, name: firstName, picture, provider, phone: '' },
+  //     });
+  //     const payload = {
+  //       sub: newUser.id,
+  //       email: newUser.email,
+  //       role: 'CONSUMER',
+  //     };
+  //     const token = await this.helperService.createTokenEntry(newUser.id, payload);
+  //     return ApiResponse.success(token, 'User created successfully');
+  //   } catch (error) {
+  //     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+  //     throw new UnauthorizedException('Google user registration failed', errorMessage);
+  //   }
+  // }
+  async googleAuth(googleAuthDto: GoogleAuthDto) {
+    console.log(googleAuthDto);
     try {
-      const { email, firstName, picture, provider } = user;
+      const { email, name, picture, role } = googleAuthDto;
 
       const newUser = await this.prisma.user.upsert({
         where: { email },
-        update: { name: firstName, picture, provider },
-        create: { email, name: firstName, picture, provider, phone: '' },
+        update: { name, picture, role },
+        create: { email, name, picture, role, phone: '' },
       });
       const payload = {
         sub: newUser.id,
         email: newUser.email,
-        role: 'CONSUMER',
+        role: newUser.role,
       };
       const token = await this.helperService.createTokenEntry(newUser.id, payload);
       return ApiResponse.success(token, 'User created successfully');
@@ -414,10 +437,4 @@ export class AuthService {
       throw new UnauthorizedException('Google user registration failed', errorMessage);
     }
   }
-}
-interface GoogleUserDto {
-  email: string;
-  firstName: string;
-  picture?: string;
-  provider: string;
 }
