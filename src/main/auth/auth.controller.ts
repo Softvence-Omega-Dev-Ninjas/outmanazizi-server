@@ -137,10 +137,9 @@ export class AuthController {
     return await this.authService.resendOtp(body.email);
   }
 
-  // @Get('google')
-  // @UseGuards(AuthGuard('google'))
-  // @Public()
-  // googleAuth() { }
+  @Post('google')
+  @Public()
+  googleAuth() { }
 
   // @Get('google/redirect')
   // @UseGuards(AuthGuard('google'))
