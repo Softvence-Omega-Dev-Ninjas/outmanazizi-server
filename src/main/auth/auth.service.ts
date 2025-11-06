@@ -32,11 +32,17 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     try {
+      this.logger.log(`Registering user: ${registerDto.email}`);
       const userExists = await this.prisma.user.findUnique({
         where: { email: registerDto.email },
       });
 
+      if (userExists?.provider === 'GOOGLE') {
+        this.logger.warn(`User ${registerDto.email} attempted to register with Google account`);
+        throw new BadRequestException('Please log in using Google authentication');
+      }
       if (userExists) {
+        this.logger.warn(`User registration failed: ${registerDto.email} already exists`);
         throw new BadRequestException('You are already registered. Please log in.');
       }
 
@@ -58,6 +64,7 @@ export class AuthService {
           },
         });
         const data = { ...user, otp };
+        this.logger.log(`User registered successfully: ${registerDto.email}`);
         return ApiResponse.success(
           data,
           'User registered successfully. Please verify OTP sent to your email.',
@@ -75,8 +82,9 @@ export class AuthService {
             otp,
             otpExpiresAt,
           },
-        });
 
+        });
+        this.logger.log(`Service Provider user created: ${registerDto.email}`);
         const serviceProvider = await this.prisma.serviceProvider.create({
           data: {
             userId: user.id,
@@ -88,6 +96,7 @@ export class AuthService {
           ...serviceProvider,
           otp,
         };
+        this.logger.log(`Service Provider registered successfully: ${registerDto.email}`);
         return ApiResponse.success(
           data,
           'Service Provider registered successfully. Please verify OTP sent to your email.',
@@ -100,6 +109,9 @@ export class AuthService {
         'Account Verification OTP',
         `<p>Your OTP code is: <strong>${otp}</strong></p>`,
       );
+      this.logger.log(`OTP sent to email: ${registerDto.email}`);
+      return ApiResponse.success(null, 'Registration successful. Please verify OTP sent to your email.');
+
     } catch (error: any) {
       const errorMessage =
         typeof error === 'object' && error !== null && 'message' in error
@@ -114,20 +126,28 @@ export class AuthService {
       const user = await this.prisma.user.findUnique({
         where: { email },
       });
+      if (user?.provider === 'GOOGLE') {
+        this.logger.warn(`User ${email} attempted to register with Google account`);
+        throw new BadRequestException('Please log in using Google authentication');
+      }
       if (!user) {
+        this.logger.warn(`User ${email} not found`);
         throw new NotFoundException('User not found');
       }
       if (user.otp !== otp) {
+        this.logger.warn(`Invalid OTP attempt for user ${email}`);
         throw new BadRequestException('Invalid OTP');
       }
       const currentTime = new Date(getLocalDateTime(0));
       if (currentTime > new Date(user.otpExpiresAt as string | number | Date)) {
+        this.logger.warn(`OTP expired for user ${email}`);
         throw new BadRequestException('OTP expired');
       }
       const data = await this.prisma.user.update({
         where: { email },
         data: { otp: null, otpExpiresAt: null, isEmailVerified: true },
       });
+      this.logger.log(`OTP verified and user created: ${email}`);
       return ApiResponse.success(data, 'OTP verified successfully and user created');
     } catch (error) {
       const errorMessage =
@@ -163,7 +183,14 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     try {
       const userExists = await this.helperService.userExistsByEmail(loginDto.email);
+      this.logger.debug(`User existence check for email ${loginDto.email}: ${userExists ? 'found' : 'not found'}`);
+
+      if (userExists.provider === 'GOOGLE') {
+        this.logger.warn(`Attempted login with email ${loginDto.email} using non-Google method`);
+        throw new BadRequestException('Please log in using Google authentication');
+      }
       if (!userExists?.isEmailVerified) {
+        this.logger.warn(`Email not verified for user: ${loginDto.email}`);
         throw new BadRequestException('Please verify your email first');
       }
 
@@ -190,10 +217,7 @@ export class AuthService {
       const serviceProvider = await this.prisma.serviceProvider.findFirst({
         where: { userId: userExists.id },
       });
-      // const token = await this.jwtService.signAsync(payload, {
-      //   secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-      //   expiresIn: '7d',
-      // });
+
       const token = await this.helperService.createTokenEntry(userExists.id, payload);
       if (userExists.role === UserRole.SERVICE_PROVIDER) {
         return ApiResponse.success(
@@ -234,24 +258,32 @@ export class AuthService {
   async forgotPassword(email: string) {
     try {
       const userExists = await this.helperService.userExistsByEmail(email);
-
+      if (userExists?.provider === 'GOOGLE') {
+        this.logger.warn(`User ${email} attempted to register with Google account`);
+        throw new BadRequestException('Please log in using Google authentication');
+      }
       if (!userExists) {
+        this.logger.warn(`User ${email} not found`);
         throw new NotFoundException('User not found');
       }
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = getLocalDateTime(10);
 
+      this.logger.log(`Sending OTP to email: ${email}`);
       await this.prisma.user.update({
         where: { email },
         data: { otp, otpExpiresAt },
       });
+      this.logger.log(`OTP generated for user ${email}, sending email now.`);
       await this.mailService.sendMail(
         email,
         'Password Reset OTP',
         `<p>Your OTP code is: <strong>${otp}</strong></p>`,
       );
+      this.logger.log(`OTP sent to email: ${email}`);
       return ApiResponse.success(null, 'OTP sent to email for password reset');
     } catch (error) {
+      this.logger.error(`Error in forgot password for email ${email}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw new UnauthorizedException('Forgot password failed', error as UnauthorizedException);
     }
   }
@@ -301,19 +333,27 @@ export class AuthService {
   async resetPassword(email: string, newPassword: string) {
     try {
       const userExists = await this.helperService.userExistsByEmail(email);
+      if (userExists?.provider === 'GOOGLE') {
+        this.logger.warn(`User ${email} attempted to register with Google account`);
+        throw new BadRequestException('Please log in using Google authentication');
+      }
       if (!userExists) {
+        this.logger.warn(`User ${email} not found`);
         throw new NotFoundException('User not found');
       }
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
+      this.logger.log(`Resetting password for user ${email}`);
       await this.prisma.user.update({
         where: { email },
         data: { password: hashedPassword },
       });
+      this.logger.log(`Password reset successfully for user ${email}`);
       return ApiResponse.success(null, 'Password reset successfully');
     } catch (error) {
-      console.error('Error resetting password:', error);
-      throw new UnauthorizedException('Reset password failed');
+      this.logger.error(`Error resetting password for email ${email}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new UnauthorizedException(errorMessage);
     }
   }
 
@@ -435,6 +475,8 @@ export class AuthService {
             picture,
             role,
             phone: '',
+            provider: 'GOOGLE',
+            isEmailVerified: true,
           },
         });
         const payload = {

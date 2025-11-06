@@ -3,6 +3,12 @@ import { IsString, IsBoolean, IsNotEmpty, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateJobDto {
+
+  @ApiProperty({
+    description: 'Service name for the job',
+    example: 'Plumbing in Gardern City',
+  })
+  serviceName: string;
   @ApiProperty({
     description: 'Title of the job',
     example: 'e8c510cf-fe09-4d17-bafb-f8994820a4cd',
