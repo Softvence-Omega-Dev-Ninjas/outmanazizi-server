@@ -43,6 +43,7 @@ export class JobService {
           userId,
           ...rest,
           file: images,
+          serviceName: serviceExists.name,
         },
       });
       this.logger.log(`Job created successfully: ${JSON.stringify(savedJob)}`);
