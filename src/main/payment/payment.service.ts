@@ -77,7 +77,6 @@ export class PaymentsService {
   //   }
   // }
   async makeCustomer(userId: string, makeCustomerDto: MakeCustomerDto) {
-
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
