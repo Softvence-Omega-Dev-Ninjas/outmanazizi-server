@@ -9,11 +9,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateConversationDto } from './dto/create-conversation-simple.dto';
 import { SendMessageSimpleDto } from './dto/send-message-simple.dto';
 import { GetMessagesSimpleDto } from './dto/get-messages-simple.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MessagesService {
   private readonly logger = new Logger(MessagesService.name);
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService,
+    private eventEmitter: EventEmitter2
+  ) { }
 
   // ============ Conversation Management ============
 

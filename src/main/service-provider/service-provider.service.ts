@@ -4,12 +4,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { HelperService } from 'src/utils/helper/helper.service';
 import { ServiceProviderBidDto } from './dto/service-provider-bid.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ServiceProviderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly helperService: HelperService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     if (!this.prisma) {
       throw new Error('PrismaService not initialized');
@@ -184,6 +186,10 @@ export class ServiceProviderService {
       where: { id: serviceId },
       data: { isCompletedFromServiceProvider: true },
     });
+    this.eventEmitter.emit(
+      'Notification',
+      { fromNotification: userid, jobId: updatedService.id, toNotification: service.userId },
+    );
     return ApiResponse.success(
       updatedService,
       'Service marked as completed from service provider, and waiting for consumer confirmation',

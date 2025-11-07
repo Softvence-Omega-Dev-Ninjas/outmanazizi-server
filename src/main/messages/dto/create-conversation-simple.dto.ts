@@ -7,3 +7,10 @@ export class CreateConversationDto {
   @IsNotEmpty()
   otherUserId: string;
 }
+
+
+export class EventPayload {
+  fromNotification: string;
+  jobId: string;
+  toNotification: string;
+}
