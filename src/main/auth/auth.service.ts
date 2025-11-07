@@ -39,11 +39,11 @@ export class AuthService {
       });
 
       if (userExists?.provider === 'GOOGLE') {
-        this.logger.warn(`User ${registerDto.email} attempted to register with Google account`);
+        this.logger.error(`User ${registerDto.email} attempted to register with Google account`);
         throw new BadRequestException('Please log in using Google authentication');
       }
       if (userExists) {
-        this.logger.warn(`User registration failed: ${registerDto.email} already exists`);
+        this.logger.error(`User registration failed: ${registerDto.email} already exists`);
         throw new BadRequestException('You are already registered. Please log in.');
       }
 
