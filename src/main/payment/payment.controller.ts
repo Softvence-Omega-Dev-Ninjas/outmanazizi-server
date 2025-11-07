@@ -3,16 +3,17 @@ import { PaymentsService } from './payment.service';
 import { CreatePaymentIntentDto, CreateTransferDto, RefundDto } from './dto/create-payment.dto';
 
 import { AuthenticationGuard } from 'src/guards/auth.guard';
+import { MakeCustomerDto } from './dto/makeCustomer.dto';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(private readonly paymentsService: PaymentsService) { }
 
   // post make a customer
   @Post('make-customer')
   @UseGuards(AuthenticationGuard)
-  async makeCustomer(@Req() req: Request) {
-    const customer = await this.paymentsService.makeCustomer(req['userid'] as string);
+  async makeCustomer(@Req() req: Request, @Body() makeCustomerDto: MakeCustomerDto) {
+    const customer = await this.paymentsService.makeCustomer(req['userid'] as string, makeCustomerDto);
     return customer;
   }
 

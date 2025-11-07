@@ -59,6 +59,7 @@ export class JobService {
   async userJobs(userId: string) {
     const result = await this.prisma.service.findMany({
       where: { userId },
+      include: { bids: true },
     });
     return ApiResponse.success(result, 'User jobs retrieved successfully');
   }

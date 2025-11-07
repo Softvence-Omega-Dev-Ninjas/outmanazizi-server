@@ -1,14 +1,21 @@
 model Review {
-    id                String   @id @default(uuid())
-    rating            Int
-    comment           String?
-    userId            String
-    serviceProviderId String
-    createdAt         DateTime @default(now())
-    serviceId         String
-    updatedAt         DateTime @updatedAt
+    id      String  @id @default(uuid())
+    rating  Int
+    comment String?
 
-    user            User            @relation(fields: [userId], references: [id])
-    serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id])
-    service         Service         @relation(fields: [serviceId], references: [id])
+    serviceId String?
+
+    fromReviewId String // Reviewer user ID
+    toReviewId   String // Reviewee user ID
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+
+    service Service? @relation(fields: [serviceId], references: [id])
+
+    // Reviewer / Reviewee relations
+    fromReview User @relation("FromReviews", fields: [fromReviewId], references: [id])
+    toReview   User @relation("ToReviews", fields: [toReviewId], references: [id])
 }

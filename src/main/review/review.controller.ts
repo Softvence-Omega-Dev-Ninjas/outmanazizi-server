@@ -6,15 +6,16 @@ import type { Request } from 'express';
 @Controller('review')
 @UseGuards(AuthenticationGuard)
 export class ReviewController {
-  constructor(private readonly reviewService: ReviewService) {}
+  constructor(private readonly reviewService: ReviewService) { }
 
   @Post('create-review')
-  create(@Body() createReviewDto: CreateReviewDto, @Req() req: Request) {
-    return this.reviewService.create(createReviewDto, req['userid'] as string);
+
+  async create(@Body() createReviewDto: CreateReviewDto, @Req() req: Request) {
+    return await this.reviewService.create(createReviewDto, req['userid'] as string);
   }
 
   @Get('all-reviews')
-  findAll() {
-    return this.reviewService.findAll();
+  async findAll(@Req() req: Request) {
+    return await this.reviewService.findAll(req['userid'] as string);
   }
 }

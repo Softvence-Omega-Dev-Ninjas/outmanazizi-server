@@ -2,13 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateReviewDto {
+
   @ApiProperty({
     example: '31486502-8f52-44a0-8499-46ef1679151a',
     description: 'service provider id of the service provider being reviewed',
   })
   @IsString()
-  serviceProviderId: string;
-
+  toReviewId: string;
 
   @ApiProperty({
     example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
@@ -16,8 +16,6 @@ export class CreateReviewDto {
   })
   @IsString()
   serviceId: string;
-
-
 
   @ApiProperty({
     example: 5,
