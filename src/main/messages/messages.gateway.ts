@@ -145,6 +145,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     });
 
     this.logger.log(`Emitted job.completed event to user ${payload.toNotification}`);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     await this.prisma.notification.create({
       data: {
         fromNotification: payload.fromNotification,
