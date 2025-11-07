@@ -1,11 +1,12 @@
 import {
-  WebSocketGateway,
+  // WebSocketGateway,
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
+  WebSocketGateway,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { MessagesService } from './messages.service';
 import NodeCache from 'node-cache';
 import { ConfigService } from '@nestjs/config';
 
+@Injectable()
 @WebSocketGateway({
   cors: {
     origin: process.env.ALLOWED_ORIGINS?.split(',') || 'http://localhost:3000',
@@ -23,7 +25,6 @@ import { ConfigService } from '@nestjs/config';
     credentials: true,
   },
 })
-@Injectable()
 export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -132,10 +133,23 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     });
   }
 
+
   sendMessageToUser(userId: string, message: any) {
     this.logger.log(`Sending message to user ${userId}`);
 
     if (!this.server) return;
     this.server.to(`user:${userId}`).emit('new_message', message);
+  }
+  // 7. Notifications
+  // Job done → ask customer to approve
+  // Job rejected → alert admin + worker
+  // Dispute resolved → alert both users
+  // Payment released → confirm to worker
+
+  sendNotificationToUser(userId: string, notification: any) {
+    this.logger.log(`Sending notification to user ${userId}`);
+
+    if (!this.server) return;
+    this.server.to(`user:${userId}`).emit('new_notification', notification);
   }
 }
