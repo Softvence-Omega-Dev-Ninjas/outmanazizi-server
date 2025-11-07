@@ -57,17 +57,20 @@ export class ConsumerService {
         where: { id: serviceRequest.id },
         data: { status: 'ACCEPTED' },
       });
+
       const assingedServiceRequest = await this.prisma.service.update({
         where: { id: serviceId },
         data: {
           assignedServiceProviderId: createConsumerDto.serviceProviderId,
         },
       });
+      this.logger.log(`Bid for service ${serviceId} accepted by user ${userid}`);
       return {
         message: 'Bid accepted successfully',
         data: { updatedBid, assingedServiceRequest },
       };
     } catch (error) {
+      this.logger.error(`Failed to accept bid for service ${serviceId} by user ${userid}`, error);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       throw new BadRequestException(message);
     }
