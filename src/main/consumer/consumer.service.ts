@@ -10,27 +10,32 @@ export class ConsumerService {
 
   // bidded providers for a service request
   async getBidedProviders(userid: string, serviceId: string) {
+    this.logger.log(`Fetching bided providers for user: ${userid}, service: ${serviceId}`);
     try {
       const bidedProviders = await this.prisma.bid.findMany({
         where: { consumerId: userid, serviceId: serviceId },
         include: { serviceProvider: { include: { user: true } } },
         orderBy: { serviceProvider: { myCurrentRating: 'desc' } },
       });
-
+      this.logger.log(`Fetched ${bidedProviders.length} bided providers for service: ${serviceId}`);
       return ApiResponse.success(bidedProviders, 'Bided providers fetched successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error(`Failed to fetch bided providers for service: ${serviceId}`, error);
       return ApiResponse.error('Failed to fetch bided providers', message);
     }
   }
 
   async acceptBid(userid: string, serviceId: string, createConsumerDto: AcceptBid) {
+    this.logger.log(`User ${userid} is accepting a bid for service ${serviceId}`);
     try {
       // check if the user is the owner of the service request
       const validConsumer = await this.prisma.service.findFirst({
         where: { id: serviceId, userId: userid },
       });
+
       if (!validConsumer) {
+        this.logger.error(`User ${userid} is not the owner of service ${serviceId}`);
         throw new BadRequestException('You are not the owner of this service');
       }
       const serviceRequest = await this.prisma.bid.findFirst({
@@ -39,11 +44,13 @@ export class ConsumerService {
         },
       });
       if (!serviceRequest) {
+        this.logger.error(`Service request not found for user ${userid} and service ${serviceId}`);
         throw new BadRequestException('Service request not with this service provider id ');
       }
       // check if the bid is already accepted
       if (serviceRequest.status === 'ACCEPTED') {
-        throw new BadRequestException('Bid is already accepted');
+        this.logger.error(`Bid for service ${serviceId} is already accepted`);
+        throw new BadRequestException('Bid is already accepted by another provider');
       }
       // update the bid status to accepted
       const updatedBid = await this.prisma.bid.update({
