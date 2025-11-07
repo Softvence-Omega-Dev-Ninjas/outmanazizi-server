@@ -5,7 +5,7 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Injectable()
 export class ConsumerService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // bidded providers for a service request
   async getBidedProviders(userid: string, serviceId: string) {
@@ -91,6 +91,19 @@ export class ConsumerService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       throw new BadRequestException(message);
+    }
+  }
+
+  async myNotifications(userid: string) {
+    try {
+      const notifications = await this.prisma.notification.findMany({
+        where: { toNotification: userid },
+        orderBy: { createdAt: 'desc' },
+      });
+      return ApiResponse.success(notifications, 'Notifications fetched successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      return ApiResponse.error('Failed to fetch notifications', message);
     }
   }
 }
