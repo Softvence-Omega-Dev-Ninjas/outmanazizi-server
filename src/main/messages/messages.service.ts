@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateConversationDto } from './dto/create-conversation-simple.dto';
@@ -11,45 +12,36 @@ import { GetMessagesSimpleDto } from './dto/get-messages-simple.dto';
 
 @Injectable()
 export class MessagesService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(MessagesService.name);
+  constructor(private readonly prisma: PrismaService) { }
 
   // ============ Conversation Management ============
 
   async getOrCreateConversation(userId: string, dto: CreateConversationDto) {
-    const otherUser = await this.prisma.user.findUnique({
-      where: { id: dto.otherUserId },
-    });
+    this.logger.log(`Getting or creating conversation between ${userId} and ${dto.otherUserId}`);
+    try {
+      const otherUser = await this.prisma.user.findUnique({
+        where: { id: dto.otherUserId },
+      });
 
-    if (!otherUser) {
-      throw new NotFoundException('User not found');
-    }
+      if (!otherUser) {
+        this.logger.error(`User not found: ${dto.otherUserId}`);
+        throw new NotFoundException('User not found');
+      }
 
-    if (userId === dto.otherUserId) {
-      throw new BadRequestException('Cannot create conversation with yourself');
-    }
+      if (userId === dto.otherUserId) {
+        this.logger.error(`User ${userId} attempted to create a conversation with themselves`);
+        throw new BadRequestException('Cannot create conversation with yourself');
+      }
 
-    // Ensure consistent ordering for unique constraint
-    const [user1Id, user2Id] = [userId, dto.otherUserId].sort();
+      // Ensure consistent ordering for unique constraint
+      const [user1Id, user2Id] = [userId, dto.otherUserId].sort();
 
-    // Check if conversation already exists
-    let conversation = await this.prisma.conversation.findUnique({
-      where: {
-        user1Id_user2Id: { user1Id, user2Id },
-      },
-      include: {
-        user1: {
-          select: { id: true, name: true, email: true, picture: true },
+      // Check if conversation already exists
+      let conversation = await this.prisma.conversation.findUnique({
+        where: {
+          user1Id_user2Id: { user1Id, user2Id },
         },
-        user2: {
-          select: { id: true, name: true, email: true, picture: true },
-        },
-      },
-    });
-
-    // Create conversation if it doesn't exist
-    if (!conversation) {
-      conversation = await this.prisma.conversation.create({
-        data: { user1Id, user2Id },
         include: {
           user1: {
             select: { id: true, name: true, email: true, picture: true },
@@ -59,12 +51,33 @@ export class MessagesService {
           },
         },
       });
-    }
 
-    return conversation;
+      // Create conversation if it doesn't exist
+      if (!conversation) {
+        this.logger.log(`Creating conversation between ${userId} and ${dto.otherUserId}`);
+        conversation = await this.prisma.conversation.create({
+          data: { user1Id, user2Id },
+          include: {
+            user1: {
+              select: { id: true, name: true, email: true, picture: true },
+            },
+            user2: {
+              select: { id: true, name: true, email: true, picture: true },
+            },
+          },
+        });
+      }
+      this.logger.log(`Conversation retrieved/created between ${userId} and ${dto.otherUserId}`);
+      return conversation;
+    } catch (error) {
+      this.logger.error(`Failed to get or create conversation between ${userId} and ${dto.otherUserId}`, error instanceof Error ? error.stack : '');
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new InternalServerErrorException('Failed to get or create conversation', message);
+    }
   }
 
   async getConversations(userId: string) {
+    this.logger.log(`Retrieving conversations for user ${userId}`);
     const conversations = await this.prisma.conversation.findMany({
       where: {
         OR: [{ user1Id: userId }, { user2Id: userId }],
@@ -101,7 +114,7 @@ export class MessagesService {
       },
       orderBy: { updatedAt: 'desc' },
     });
-
+    this.logger.log(`Found ${conversations.length} conversations for user ${userId}`);
     // Transform to include the other user and unread count
     return conversations.map((conv) => ({
       id: conv.id,
@@ -116,12 +129,14 @@ export class MessagesService {
   // ============ Message Management ============
 
   async sendMessage(userId: string, dto: SendMessageSimpleDto) {
+    this.logger.log(`Sending message from ${userId} to ${dto.receiverId}`);
     try {
       const receiver = await this.prisma.user.findUnique({
         where: { id: dto.receiverId },
       });
 
       if (!receiver) {
+        this.logger.error(`Receiver not found: ${dto.receiverId}`);
         throw new NotFoundException('Receiver not found');
       }
 
@@ -132,14 +147,14 @@ export class MessagesService {
 
       // Create message
       const message = await this.prisma.$transaction(async (tx) => {
-        // Create message
+
         const newMessage = await tx.message.create({
           data: {
             conversationId: conversation.id,
             senderId: userId,
             receiverId: dto.receiverId,
             content: dto.content,
-            messageType: dto.messageType || 'TEXT',
+            messageType: dto.messageType,
             fileUrl: dto.fileUrl,
             fileName: dto.fileName,
             fileSize: dto.fileSize,
@@ -154,6 +169,7 @@ export class MessagesService {
           },
         });
 
+        this.logger.log(`Message sent from ${userId} to ${dto.receiverId}`);
         // Update conversation timestamp
         await tx.conversation.update({
           where: { id: conversation.id },
@@ -165,12 +181,14 @@ export class MessagesService {
 
       return message;
     } catch (error) {
+      this.logger.error(`Failed to send message from ${userId} to ${dto.receiverId}`, error instanceof Error ? error.stack : '');
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       throw new InternalServerErrorException('Failed to send message', message);
     }
   }
 
   async getMessages(userId: string, dto: GetMessagesSimpleDto) {
+    this.logger.log(`Retrieving messages for user ${userId} in conversation with ${dto.otherUserId}`);
     try {
       // Get or create conversation
       const conversation = await this.getOrCreateConversation(userId, {
@@ -191,6 +209,7 @@ export class MessagesService {
 
       // Cursor-based pagination
       if (dto.beforeMessageId) {
+        this.logger.log(`Applying cursor-based pagination for user ${userId} in conversation with ${dto.otherUserId}`);
         const beforeMessage = await this.prisma.message.findUnique({
           where: { id: dto.beforeMessageId },
         });
@@ -226,6 +245,7 @@ export class MessagesService {
         conversationId: conversation.id,
       };
     } catch (error) {
+      this.logger.error(`Failed to retrieve messages for user ${userId} in conversation with ${dto.otherUserId}`, error instanceof Error ? error.stack : '');
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       throw new InternalServerErrorException('Failed to retrieve messages', message);
     }
