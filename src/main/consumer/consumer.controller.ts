@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Patch, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, Req, UseGuards, Get } from '@nestjs/common';
 
 import { ConsumerService } from './consumer.service';
 import { ApiOperation } from '@nestjs/swagger';
@@ -8,7 +8,7 @@ import { MyJobBidDto } from './dto/my-job-bid.dto';
 
 @Controller('consumer')
 export class ConsumerController {
-  constructor(private readonly consumerService: ConsumerService) {}
+  constructor(private readonly consumerService: ConsumerService) { }
 
   @Post('bided-providers')
   @ApiOperation({ summary: 'Get all bided service providers for a service request' })
@@ -32,5 +32,12 @@ export class ConsumerController {
   @ApiOperation({ summary: 'Work Complete from consumer..' })
   async updateBid(@Param('serviceId') serviceId: string, @Req() req: Request) {
     return await this.consumerService.serviceComplete(req['userid'] as string, serviceId);
+  }
+  // my notifications
+  @Get('my-notifications')
+  @ApiOperation({ summary: 'Get my notifications' })
+  @UseGuards(AuthenticationGuard)
+  async myNotifications(@Req() req: Request) {
+    return await this.consumerService.myNotifications(req['userid'] as string);
   }
 }

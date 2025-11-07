@@ -28,6 +28,9 @@ model User {
   toReviews                 Review[]       @relation("ToReviews")
   customerIdFromStripe      String?
   paymentMethodIdFromStripe String?
+
+  sentNotifications     Notification[] @relation("SentNotifications")
+  receivedNotifications Notification[] @relation("ReceivedNotifications")
 }
 
 enum Role {

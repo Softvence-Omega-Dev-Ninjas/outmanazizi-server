@@ -1,0 +1,10 @@
+model Notification {
+  id               String   @id @default(cuid())
+  fromNotification String
+  toNotification   String
+  message          String
+  createdAt        DateTime @default(now())
+
+  fromUser User @relation("SentNotifications", fields: [fromNotification], references: [id])
+  toUser   User @relation("ReceivedNotifications", fields: [toNotification], references: [id])
+}

@@ -16,6 +16,8 @@ import { SendMessageSimpleDto } from './dto/send-message-simple.dto';
 import { MessagesService } from './messages.service';
 import NodeCache from 'node-cache';
 import { ConfigService } from '@nestjs/config';
+import { OnEvent } from '@nestjs/event-emitter';
+import { EventPayload } from './dto/create-conversation-simple.dto';
 
 @Injectable()
 @WebSocketGateway({
@@ -133,23 +135,52 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     });
   }
 
+  @OnEvent('Notification')
+  async handleJobCompletedEvent(payload: EventPayload) {
+    const receiverSocketId: string = this.cache.get(payload.toNotification) as string;
+    const message = this.getMessage('JOB_DONE', payload);
+    this.server.to(receiverSocketId).emit('new_notification', {
+      jobId: payload.jobId,
+      message: `  ${message}`,
+    });
 
-  sendMessageToUser(userId: string, message: any) {
-    this.logger.log(`Sending message to user ${userId}`);
+    this.logger.log(`Emitted job.completed event to user ${payload.toNotification}`);
 
-    if (!this.server) return;
-    this.server.to(`user:${userId}`).emit('new_message', message);
+
+    await this.prisma.notification.create({
+      data: {
+        fromNotification: payload.fromNotification,
+        toNotification: payload.toNotification,
+        message
+      },
+    });
   }
+
+  private getMessage(type: string, payload: EventPayload): string {
+    switch (type) {
+      case 'JOB_DONE':
+        return `Job ${payload.jobId} has been completed! Please review and confirm.`;
+      case 'JOB_REJECTED':
+        return `Job ${payload.jobId} was rejected.`;
+      case 'PAYMENT_RELEASED':
+        return `Your payment for job ${payload.jobId} has been released.`;
+      default:
+        return 'You have a new notification.';
+    }
+  }
+
+
   // 7. Notifications
   // Job done → ask customer to approve
   // Job rejected → alert admin + worker
   // Dispute resolved → alert both users
   // Payment released → confirm to worker
 
-  sendNotificationToUser(userId: string, notification: any) {
-    this.logger.log(`Sending notification to user ${userId}`);
+  // sendNotificationToUser(userId: string, notification: any) {
+  //   this.logger.log(`Sending notification to user ${userId}`);
 
-    if (!this.server) return;
-    this.server.to(`user:${userId}`).emit('new_notification', notification);
-  }
+  //   if (!this.server) return;
+  //   this.server.to(`user:${userId}`).emit('new_notification', notification);
+  // }
+
 }

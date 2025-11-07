@@ -15,9 +15,11 @@ import { StripeModule } from './main/stripe/stripe.module';
 import { PaymentModule } from './main/payment/payment.module';
 import { ReviewModule } from './main/review/review.module';
 import { PassportModule } from '@nestjs/passport';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
@@ -50,4 +52,4 @@ import { PassportModule } from '@nestjs/passport';
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
 })
-export class AppModule {}
+export class AppModule { }
