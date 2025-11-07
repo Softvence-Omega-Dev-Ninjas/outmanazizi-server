@@ -218,7 +218,10 @@ export class AuthService {
       const serviceProvider = await this.prisma.serviceProvider.findFirst({
         where: { userId: userExists.id },
       });
-
+      if (!serviceProvider?.isVerifiedFromAdmin) {
+        this.logger.log(`Service provider ${loginDto.email} is verified by admin`);
+        throw new UnauthorizedException('Your account is not verified by admin yet, Provide valid documents and try again later');
+      }
       const token = await this.helperService.createTokenEntry(userExists.id, payload);
       if (userExists.role === UserRole.SERVICE_PROVIDER) {
         return ApiResponse.success(
