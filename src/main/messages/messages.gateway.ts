@@ -34,7 +34,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     private readonly prisma: PrismaService,
     private readonly messagesService: MessagesService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   // Map to track connected users
   private connectedUsers = new Map<string, string>();
@@ -114,9 +114,10 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   @SubscribeMessage('send_message')
   async sendMessage(@MessageBody() dto: SendMessageSimpleDto, @ConnectedSocket() client: Socket) {
+    this.logger.log(`Received message from ${client.id} to ${dto.receiverId}`);
     const receiveSocketId: string = this.cache.get(dto.receiverId) as string;
 
-    if (!receiveSocketId) return console.error('Receiver not connected');
+    // if (!receiveSocketId) return console.error('Receiver not connected');
     if (!dto?.receiverId) {
       this.logger.error('Receiver ID missing in message DTO:', dto);
       return;
@@ -132,6 +133,8 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   sendMessageToUser(userId: string, message: any) {
+    this.logger.log(`Sending message to user ${userId}`);
+
     if (!this.server) return;
     this.server.to(`user:${userId}`).emit('new_message', message);
   }
