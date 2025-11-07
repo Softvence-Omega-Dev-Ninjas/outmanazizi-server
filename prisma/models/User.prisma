@@ -20,12 +20,14 @@ model User {
   serviceProvider ServiceProvider?
   services        Service[]
 
-  sentMessages         Message[]      @relation("SentMessages")
-  receivedMessages     Message[]      @relation("ReceivedMessages")
-  conversationsAsUser1 Conversation[] @relation("User1Conversations")
-  conversationsAsUser2 Conversation[] @relation("User2Conversations")
-  fromReviews          Review[]       @relation("FromReviews")
-  toReviews            Review[]       @relation("ToReviews")
+  sentMessages              Message[]      @relation("SentMessages")
+  receivedMessages          Message[]      @relation("ReceivedMessages")
+  conversationsAsUser1      Conversation[] @relation("User1Conversations")
+  conversationsAsUser2      Conversation[] @relation("User2Conversations")
+  fromReviews               Review[]       @relation("FromReviews")
+  toReviews                 Review[]       @relation("ToReviews")
+  customerIdFromStripe      String?
+  paymentMethodIdFromStripe String?
 }
 
 enum Role {
