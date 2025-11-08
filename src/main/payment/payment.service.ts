@@ -151,19 +151,29 @@ export class PaymentsService {
   }
 
   async createTransfer(dto: CreateTransferDto) {
-    const transfer = await this.stripe.transfers.create({
-      amount: dto.amountCents,
-      currency: dto.currency || 'usd',
-      destination: dto.destinationAcctId,
-    });
-    return transfer;
+    this.logger.log(`Creating transfer for amount: ${dto.amountCents}`);
+    try {
+      const transfer = await this.stripe.transfers.create({
+        amount: dto.amountCents,
+        currency: dto.currency || 'usd',
+        destination: dto.destinationAcctId,
+      });
+      this.logger.log(`Transfer created successfully for amount: ${dto.amountCents}`);
+      return ApiResponse.success(transfer, 'Transfer created successfully');
+    } catch (error) {
+      this.logger.error(`Failed to create transfer for amount: ${dto.amountCents}`, error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(`Failed to create transfer: ${message}`);
+    }
   }
 
   async refundCharge(dto: RefundDto) {
+    this.logger.log(`Processing refund for chargeId: ${dto.chargeId} with amount: ${dto.amountCents}`);
     const refund = await this.stripe.refunds.create({
       charge: dto.chargeId,
       amount: dto.amountCents,
     });
-    return refund;
+    this.logger.log(`Refund processed successfully for chargeId: ${dto.chargeId}`);
+    return ApiResponse.success(refund, 'Refund processed successfully');
   }
 }
