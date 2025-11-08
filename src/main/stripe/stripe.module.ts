@@ -11,7 +11,7 @@ export const stripeProvider = {
       throw new Error("STRIPE_SECRET_KEY environment variable is required");
     }
     return new Stripe(secretKey, {
-      apiVersion: "2025-10-29.clover",
+      apiVersion: "2025-09-30.clover" as Stripe.LatestApiVersion,
     });
   },
 };
@@ -21,4 +21,4 @@ export const stripeProvider = {
   providers: [stripeProvider, StripeService],
   exports: [stripeProvider, StripeService],
 })
-export class StripeModule {}
+export class StripeModule { }
