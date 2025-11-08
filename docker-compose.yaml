@@ -1,0 +1,98 @@
+services:
+  app:
+    profiles:
+      - prod
+    platform: linux/amd64
+    build:
+      context: .
+    image: softvence/outmanazizi-server:latest
+    container_name: outmanazizi-server
+    ports:
+      - '${PORT}:${PORT}'
+    env_file:
+      - .env
+    command: >
+      sh -c "
+        echo '🏁 Waiting for DB...';
+        sleep 5;
+        npx prisma migrate deploy;
+        echo '🚀 Starting app...';
+        npm run start:docker
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    volumes:
+      - files-data:/app/uploads
+
+  db:
+    image: postgres:17
+    restart: always
+    profiles:
+      - dev
+      - prod
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_SHARED_PRELOAD_LIBRARIES: pg_stat_statements
+    ports:
+      - '${DB_PORT}:5430'
+    volumes:
+      - pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', '${DB_USER}', '-d', '${DB_NAME}']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    profiles:
+      - dev
+      - prod
+    ports:
+      - '${REDIS_PORT}:6379'
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  caddy:
+    image: caddy:latest
+    profiles:
+      - prod
+    container_name: caddy_server
+    restart: unless-stopped
+    depends_on:
+      - app
+      - db
+      - redis
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /var/www:/var/www
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pg:
+  redis:
+  caddy_data:
+  caddy_config:
+  files-data:
+
+networks:
+  default:
