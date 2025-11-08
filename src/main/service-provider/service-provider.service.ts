@@ -128,16 +128,19 @@ export class ServiceProviderService {
     }
   }
   async findAll() {
+    this.logger.log('Fetching all service providers');
     try {
       const result = await this.prisma.serviceProvider.findMany({});
       return ApiResponse.success(result, 'Service providers retrieved successfully');
     } catch (error) {
+      this.logger.error(`Error fetching service providers - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       throw new BadRequestException('Failed to retrieve service providers', message);
     }
   }
 
   async makeBid(userid: string, serviceRequestId: string, body: ServiceProviderBidDto) {
+    this.logger.log(`Service provider ${userid} is making a bid for service request ${serviceRequestId}`);
     const bidExists = await this.prisma.bid.findFirst({
       where: {
         serviceId: serviceRequestId,
@@ -147,16 +150,19 @@ export class ServiceProviderService {
       },
     });
     if (bidExists) {
+      this.logger.error(`Bid already exists for service provider ${userid} on service request ${serviceRequestId}`);
       throw new NotFoundException('You have already placed a bid');
     }
     const validSerivceProvider = await this.helperService.validServiceProvider(userid);
     if (!validSerivceProvider) {
+      this.logger.error(`Invalid service provider: ${userid}`);
       throw new NotFoundException('Invalid service provider id');
     }
     const serviceRequest = await this.prisma.service.findUnique({
       where: { id: serviceRequestId },
     });
     if (!serviceRequest) {
+      this.logger.error(`Service request not found: ${serviceRequestId}`);
       throw new NotFoundException('Service request not found');
     }
     const bid = await this.prisma.bid.create({
@@ -168,6 +174,7 @@ export class ServiceProviderService {
         serviceProviderProposal: body.serviceProviderProposal ?? '',
       },
     });
+    this.logger.log(`Bid placed successfully by service provider ${userid} for service request ${serviceRequestId}`);
     return ApiResponse.success(bid, 'Bid placed successfully');
   }
 
