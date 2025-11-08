@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
@@ -8,6 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ServiceProviderService {
+  logger = new Logger(ServiceProviderService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly helperService: HelperService,
@@ -19,17 +20,20 @@ export class ServiceProviderService {
   }
 
   async create(userid: string, createServiceProviderDto: CreateServiceProviderDto) {
+    this.logger.log(`Creating service provider profile for user: ${userid}`);
     try {
       // user exists check
       const user = await this.helperService.userExistsByUserid(userid);
 
       if (!user) {
+        this.logger.error(`User not found: ${userid}`);
         throw new NotFoundException('You need to register first');
       }
       const serviceProviderExists = await this.prisma.serviceProvider.findFirst({
         where: { userId: user.id },
       });
       if (!serviceProviderExists) {
+        this.logger.error(`Service provider not found for user: ${userid}`);
         throw new NotFoundException('Service provider not found');
       }
 
@@ -41,6 +45,7 @@ export class ServiceProviderService {
       });
 
       if (serviceAreas.length !== createServiceProviderDto.serviceArea.length) {
+        this.logger.error(`One or more service areas are invalid for user: ${userid}`);
         throw new NotFoundException('One or more service areas are invalid');
       }
       const serviceCategories: { id: string }[] = await this.prisma.services.findMany({
@@ -51,6 +56,7 @@ export class ServiceProviderService {
       });
 
       if (serviceCategories.length !== createServiceProviderDto.serviceCategories.length) {
+        this.logger.error(`One or more service categories are invalid for user: ${userid}`);
         throw new NotFoundException('One or more service categories are invalid');
       }
 
@@ -66,11 +72,13 @@ export class ServiceProviderService {
           },
         },
       });
+      this.logger.log(`Service provider profile created successfully for user: ${userid}`);
       return ApiResponse.success(
         newServiceProvider,
         'Service provider profile created successfully',
       );
     } catch (error) {
+      this.logger.error(`Error creating service provider profile for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
