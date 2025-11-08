@@ -106,9 +106,11 @@ export class ServiceProviderService {
   }
   // patch document upload
   async uploadDocuments(userid: string, documents: string) {
+    this.logger.log(`Uploading documents for user: ${userid}`);
     try {
       const validServiceProvider = await this.helperService.validServiceProvider(userid);
       if (!validServiceProvider) {
+        this.logger.error(`Service provider not found for user: ${userid}`);
         throw new NotFoundException('Invalid service provider');
       }
       const updatedServiceProvider = await this.prisma.serviceProvider.update({
@@ -117,8 +119,10 @@ export class ServiceProviderService {
           documents: documents,
         },
       });
+      this.logger.log(`Documents uploaded successfully for user: ${userid}`);
       return ApiResponse.success(updatedServiceProvider, 'Documents uploaded  successfully');
     } catch (error) {
+      this.logger.error(`Error uploading documents for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       throw new BadRequestException('Document upload failed', message);
     }
