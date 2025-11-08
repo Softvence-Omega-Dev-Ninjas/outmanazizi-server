@@ -144,6 +144,7 @@ export class PaymentsService {
       this.logger.log(`Payment intent created successfully for userId: ${userId}`);
       return ApiResponse.success(paymentIntent, 'Payment intent created successfully');
     } catch (error) {
+      this.logger.error(`Failed to create payment intent for userId: ${userId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(`Failed to create payment intent: ${message}`);
     }
