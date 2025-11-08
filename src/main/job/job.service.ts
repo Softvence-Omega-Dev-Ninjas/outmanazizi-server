@@ -66,20 +66,35 @@ export class JobService {
 
   // find all job
   async findAll() {
-    const result = await this.prisma.service.findMany({
-      include: { bids: true },
-    });
-    return ApiResponse.success(result, 'Jobs retrieved successfully');
+    try {
+      const result = await this.prisma.service.findMany({
+        include: { bids: true },
+      });
+      return ApiResponse.success(result, 'Jobs retrieved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error(`Error retrieving jobs: ${message}`);
+      throw new BadRequestException(message);
+    }
   }
 
   // find one job in details
   async findOne(id: string) {
-    const result = await this.prisma.service.findUnique({ where: { id } });
-    return ApiResponse.success(result, 'Job retrieved successfully');
+    try {
+      const result = await this.prisma.service.findUnique({ where: { id } });
+      return ApiResponse.success(result, 'Job retrieved successfully');
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error(`Error retrieving job ${id}: ${message}`);
+      throw new BadRequestException(message);
+    }
   }
 
   // update a job
   async update(id: string, updateJobDto: UpdateJobDto) {
+    this.logger.log(`Update job request received for job: ${id}`);
+    this.logger.debug(`Payload: ${JSON.stringify(updateJobDto)}`);
     try {
       const { file, ...rest } = updateJobDto;
       const updatedJob = await this.prisma.service.update({
@@ -91,6 +106,7 @@ export class JobService {
       });
       return ApiResponse.success(updatedJob, 'Job updated successfully');
     } catch (error) {
+      this.logger.error(`Error updating job ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       throw new BadRequestException('Update failed ', message);
     }
@@ -98,13 +114,16 @@ export class JobService {
 
   // Send Delete Request to admin
   async remove(id: string) {
+    this.logger.log(`Delete job request received for job: ${id}`);
     try {
       const deletedJob = await this.prisma.service.update({
         where: { id },
         data: { isDeleteRequestToAdmin: true },
       });
+      this.logger.log(`Job removal requested to admin successfully for job: ${id}`);
       return ApiResponse.success(deletedJob, 'Job removal requested to admin successfully');
     } catch (error) {
+      this.logger.error(`Error requesting job deletion for job ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       throw new BadRequestException('Delete request failed', message);
     }

@@ -6,7 +6,6 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto, LoginDto } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -17,7 +16,6 @@ import { MailService } from 'src/utils/mail/mail.service';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { EmailAndOtpDto } from './dto/emailAndOtp.dto';
 import { UserRole } from './role.enum';
-import { ConfigService } from '@nestjs/config';
 import { GoogleAuthDto } from './dto/google.dto';
 
 @Injectable()
@@ -25,10 +23,8 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService,
     private readonly helperService: HelperService,
     private readonly mailService: MailService,
-    private readonly configService: ConfigService,
   ) { }
 
   async register(registerDto: RegisterDto) {
