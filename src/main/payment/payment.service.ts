@@ -174,6 +174,6 @@ export class PaymentsService {
       amount: dto.amountCents,
     });
     this.logger.log(`Refund processed successfully for chargeId: ${dto.chargeId}`);
-    return ApiResponse.success(refund, 'Refund processed successfully');
+    return refund;
   }
 }
