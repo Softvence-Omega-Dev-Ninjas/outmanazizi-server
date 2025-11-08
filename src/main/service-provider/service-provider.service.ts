@@ -86,16 +86,20 @@ export class ServiceProviderService {
     }
   }
   async currentServiceProvider(userid: string) {
+    this.logger.log(`Fetching current service provider for user: ${userid}`);
     try {
       const validServiceProvider = await this.helperService.validServiceProvider(userid);
       if (!validServiceProvider) {
+        this.logger.error(`Service provider not found for user: ${userid}`);
         throw new NotFoundException('Service provider not found');
       }
+      this.logger.log(`Current service provider retrieved successfully for user: ${userid}`);
       return ApiResponse.success(
         validServiceProvider,
         'Current service provider retrieved successfully',
       );
     } catch (error) {
+      this.logger.error(`Error fetching current service provider for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       throw new BadRequestException(message);
     }
