@@ -1,50 +1,37 @@
-FROM node:22 as builder
+# Stage 1: Build
+FROM node:20 AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
-COPY prisma ./prisma 
 
-RUN npm install 
+# Install deps
+RUN npm i -g pnpm@latest && pnpm i
+
+COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 COPY . .
 
-RUN npm run build 
+RUN pnpm prisma:generate
 
-RUN npm prune --production 
+RUN pnpm build
 
-# stage runtime
-FROM node:22-alpine as production
+# Stage 2: Run
+FROM node:20-alpine
 
-RUN apk add --no-cache openssl 
+WORKDIR /app
 
-# Create non-root user
-RUN addgroup -S app && adduser -S -G app app
+# Copy build output & dependencies
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
-WORKDIR /usr/src/app
-
-COPY --from=builder /usr/src/app/package*.json ./
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/prisma ./prisma
-
-COPY scripts/wait-for-it.sh .
-COPY scripts/entrypoint.sh .
-
-RUN mkdir -p /usr/src/app/public/uploads
-RUN chown -R app:app /usr/src/app/node_modules/@prisma/engines 
-
-RUN chmod +x wait-for-it.sh
-
-
-RUN npx prisma generate
-
-RUN chmod +x entrypoint.sh
-
-# use crated non-root user 
-USER app
-
+# Set production env
 ENV NODE_ENV=production
+EXPOSE 3000
 
-EXPOSE 6969
-ENTRYPOINT ["./entrypoint.sh"]
+CMD ["npm", "run", "start:docker"]

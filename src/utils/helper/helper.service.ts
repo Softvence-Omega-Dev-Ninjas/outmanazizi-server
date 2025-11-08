@@ -2,13 +2,15 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
+import ms from 'ms';
 
 @Injectable()
 export class HelperService {
-  constructor(private readonly prismaService: PrismaService,
+  constructor(
+    private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
-    private readonly jwtService: JwtService
-  ) { }
+    private readonly jwtService: JwtService,
+  ) {}
 
   async userExistsByEmail(email: string) {
     const user = await this.prismaService.user.findUnique({
@@ -38,16 +40,15 @@ export class HelperService {
 
   async createTokenEntry(userId: string, payload: any) {
     const secret = this.configService.getOrThrow<string>('JWT_SECRET');
-    const expiresIn = this.configService.getOrThrow<string>('JWT_EXPIRES_IN');
+    const expiresIn = this.configService.getOrThrow<string>('JWT_EXPIRES_IN') || '7d';
+
     if (!secret && !expiresIn) {
       throw new UnauthorizedException('JWT secret or expiration not found');
     }
     const token = await this.jwtService.signAsync(payload, {
       secret,
-      expiresIn
+      expiresIn: expiresIn as ms.StringValue,
     });
     return token;
   }
-
-
 }

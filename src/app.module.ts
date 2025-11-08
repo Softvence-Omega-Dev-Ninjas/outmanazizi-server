@@ -1,21 +1,22 @@
-import { BadRequestException, Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './main/auth/auth.module';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtModule } from '@nestjs/jwt';
-import { AuthenticationGuard } from './guards/auth.guard';
-import { JobModule } from './main/job/job.module';
-import { ServiceProviderModule } from './main/service-provider/service-provider.module';
-import { AdminModule } from './main/admin/admin.module';
-import { ConsumerModule } from './main/consumer/consumer.module';
-import { MessagesModule } from './main/messages/messages.module';
-import { StripeModule } from './main/stripe/stripe.module';
-import { PaymentModule } from './main/payment/payment.module';
-import { ReviewModule } from './main/review/review.module';
-import { PassportModule } from '@nestjs/passport';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { BadRequestException, Module } from "@nestjs/common";
+import { AppController } from "./app.controller";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { PrismaModule } from "./prisma/prisma.module";
+import { AuthModule } from "./main/auth/auth.module";
+import { APP_GUARD } from "@nestjs/core";
+import { JwtModule } from "@nestjs/jwt";
+import { AuthenticationGuard } from "./guards/auth.guard";
+import { JobModule } from "./main/job/job.module";
+import { ServiceProviderModule } from "./main/service-provider/service-provider.module";
+import { AdminModule } from "./main/admin/admin.module";
+import { ConsumerModule } from "./main/consumer/consumer.module";
+import { MessagesModule } from "./main/messages/messages.module";
+import { StripeModule } from "./main/stripe/stripe.module";
+import { PaymentModule } from "./main/payment/payment.module";
+import { ReviewModule } from "./main/review/review.module";
+import { PassportModule } from "@nestjs/passport";
+import { EventEmitterModule } from "@nestjs/event-emitter";
+import ms from "ms";
 
 @Module({
   imports: [
@@ -31,19 +32,20 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     StripeModule,
     PaymentModule,
     ReviewModule,
-    PassportModule.register({ defaultStrategy: 'jwt', session: false }),
+    PassportModule.register({ defaultStrategy: "jwt", session: false }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const secret = configService.get<string>('JWT_SECRET');
+        const secret = configService.get<string>("JWT_SECRET");
+        const expiresIn = configService.get<string>("JWT_EXPIRES_IN") || "7d";
         if (!secret) {
-          throw new BadRequestException('JWT_SECRET must be defined in environment variables');
+          throw new BadRequestException("JWT_SECRET must be defined in environment variables");
         }
         return {
           secret,
           signOptions: {
-            expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d',
+            expiresIn: expiresIn as ms.StringValue,
           },
         };
       },
@@ -52,4 +54,4 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
 })
-export class AppModule { }
+export class AppModule {}
