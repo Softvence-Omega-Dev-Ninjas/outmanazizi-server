@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
@@ -193,32 +193,41 @@ export class ServiceProviderService {
   }
 
   async workComplete(userid: string, serviceId: string) {
-    const validSerivceProvider = await this.helperService.validServiceProvider(userid);
-    if (!validSerivceProvider) {
-      throw new NotFoundException('Invalid service provider');
+    try {
+      this.logger.log(`Service provider ${userid} is marking work complete for service ${serviceId}`);
+      const validSerivceProvider = await this.helperService.validServiceProvider(userid);
+      if (!validSerivceProvider) {
+        this.logger.error(`Invalid service provider: ${userid}`);
+        throw new NotFoundException('Invalid service provider');
+      }
+      const service = await this.prisma.service.findFirst({
+        where: {
+          AND: [{ assignedServiceProviderId: validSerivceProvider.id }, { id: serviceId }],
+        },
+      });
+      if (!service) {
+        this.logger.error(`Service not found or not assigned to service provider ${userid}: ${serviceId}`);
+        throw new NotFoundException('Service not found or not assigned to you');
+      }
+      const updatedService = await this.prisma.service.update({
+        where: { id: serviceId },
+        data: { isCompletedFromServiceProvider: true },
+      });
+      this.logger.log(`Service ${serviceId} marked as completed by service provider ${userid}`);
+      this.eventEmitter.emit(
+        'Notification',
+        { fromNotification: userid, jobId: updatedService.id, toNotification: service.userId },
+      );
+      return ApiResponse.success(
+        updatedService,
+        'Service marked as completed from service provider, and waiting for consumer confirmation',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error(`Error marking service ${serviceId} as complete: ${message}`);
+      throw new InternalServerErrorException('Error marking service as complete');
     }
-    const service = await this.prisma.service.findFirst({
-      where: {
-        AND: [{ assignedServiceProviderId: validSerivceProvider.id }, { id: serviceId }],
-      },
-    });
-    if (!service) {
-      throw new NotFoundException('Service not found or not assigned to you');
-    }
-    const updatedService = await this.prisma.service.update({
-      where: { id: serviceId },
-      data: { isCompletedFromServiceProvider: true },
-    });
-    this.eventEmitter.emit(
-      'Notification',
-      { fromNotification: userid, jobId: updatedService.id, toNotification: service.userId },
-    );
-    return ApiResponse.success(
-      updatedService,
-      'Service marked as completed from service provider, and waiting for consumer confirmation',
-    );
   }
-
   async myAllBids(userid: string) {
     const validSerivceProvider = await this.helperService.validServiceProvider(userid);
     if (!validSerivceProvider) {
