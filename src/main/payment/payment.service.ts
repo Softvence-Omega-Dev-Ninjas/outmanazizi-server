@@ -104,11 +104,14 @@ export class PaymentsService {
     }
   }
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
+    this.logger.log(`Creating payment intent for userId: ${userId}`);
     try {
       if (!dto.paymentMethodId) {
+        this.logger.warn(`Payment method ID is required for userId: ${userId}`);
         throw new BadRequestException('Payment method ID is required');
       }
       if (!dto.customerId) {
+        this.logger.warn(`Customer ID is required for userId: ${userId}`);
         throw new BadRequestException('Customer ID is required');
       }
       // Check if payment method is already attached to this customer
@@ -123,6 +126,7 @@ export class PaymentsService {
         }
       }
       if (!process.env.ADMIN_ACCOUNT) {
+        this.logger.error('ADMIN_ACCOUNT environment variable is not configured');
         throw new NotFoundException('ADMIN_ACCOUNT environment variable not configured');
       }
       const paymentIntent = await this.stripe.paymentIntents.create({
@@ -137,6 +141,7 @@ export class PaymentsService {
           destination: process.env.ADMIN_ACCOUNT,
         },
       });
+      this.logger.log(`Payment intent created successfully for userId: ${userId}`);
       return ApiResponse.success(paymentIntent, 'Payment intent created successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
