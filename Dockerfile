@@ -1,51 +1,50 @@
-# -------------------------
-# 1️⃣ Build Stage
-# -------------------------
-FROM node:20.11.1-alpine AS builder
+FROM node:22 as builder
 
-# Install build dependencies
-RUN apk add --no-cache python3 make g++ gcc && ln -sf python3 /usr/bin/python
+WORKDIR /usr/src/app
 
-WORKDIR /app
-
-# Copy dependency files
 COPY package*.json ./
+COPY prisma ./prisma 
 
-# Install all dependencies (build deps included)
 RUN npm install 
 
-# Copy source code
 COPY . .
 
-# Generate Prisma client for build
+RUN npm run build 
+
+RUN npm prune --production 
+
+# stage runtime
+FROM node:22-alpine as production
+
+RUN apk add --no-cache openssl 
+
+# Create non-root user
+RUN addgroup -S app && adduser -S -G app app
+
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/package*.json ./
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/prisma ./prisma
+
+COPY scripts/wait-for-it.sh .
+COPY scripts/entrypoint.sh .
+
+RUN mkdir -p /usr/src/app/public/uploads
+RUN chown -R app:app /usr/src/app/node_modules/@prisma/engines 
+
+RUN chmod +x wait-for-it.sh
+
+
 RUN npx prisma generate
 
-# Build the NestJS app (output: dist/)
-RUN npm run build
+RUN chmod +x entrypoint.sh
 
+# use crated non-root user 
+USER app
 
-# -------------------------
-# Production Stage
-# -------------------------
-FROM node:20.11.1-alpine AS production
+ENV NODE_ENV=production
 
-WORKDIR /app
-
-# Copy only package.json + node_modules first
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-
-# Copy built code
-COPY --from=builder /app/dist ./dist
-
-# ✅ Copy Prisma schema folder
-COPY --from=builder /app/prisma ./prisma
-
-# Create uploads folder
-RUN mkdir -p uploads
-
-# Expose port
-EXPOSE 3000
-
-# Run migrations + start
-CMD ["npm", "run", "start:prod"]
+EXPOSE 6969
+ENTRYPOINT ["./entrypoint.sh"]
