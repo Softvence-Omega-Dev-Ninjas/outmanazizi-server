@@ -51,8 +51,10 @@ export class StripeService {
   }
 
   async createLoginLink(accountId: string): Promise<Stripe.LoginLink> {
+    this.logger.log(`Creating Stripe login link for account: ${accountId}`);
     try {
       const loginLink = await this.stripe.accounts.createLoginLink(accountId);
+      this.logger.log(`Stripe login link created successfully for account: ${accountId}`);
       return loginLink;
     } catch (error) {
       this.logger.error('Failed to create Stripe login link', error);
