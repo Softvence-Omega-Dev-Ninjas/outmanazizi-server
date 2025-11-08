@@ -9,9 +9,10 @@ export class StripeService {
   constructor(
     @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
     // private readonly logger: Logger,
-  ) {}
+  ) { }
 
   async createExpressAccount(userId: string) {
+    this.logger.log(`Creating Stripe Express account for user: ${userId}`);
     try {
       const account = await this.stripe.accounts.create({
         type: 'express',
@@ -23,8 +24,10 @@ export class StripeService {
         business_type: 'individual',
         metadata: { userId },
       });
+      this.logger.log(`Stripe Express account created successfully for user: ${userId}`);
       return account;
     } catch (error) {
+      this.logger.error('Stripe account creation failed', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return ApiResponse.error('Stripe Account Creation Failed', errorMessage);
     }
