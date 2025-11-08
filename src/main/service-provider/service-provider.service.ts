@@ -229,9 +229,11 @@ export class ServiceProviderService {
     }
   }
   async myAllBids(userid: string) {
+    this.logger.log(`Fetching all bids for service provider: ${userid}`);
     try {
       const validSerivceProvider = await this.helperService.validServiceProvider(userid);
       if (!validSerivceProvider) {
+        this.logger.error(`Invalid service provider: ${userid}`);
         throw new NotFoundException('Invalid service provider');
       }
       const bids = await this.prisma.bid.findMany({
@@ -247,8 +249,10 @@ export class ServiceProviderService {
 
   // my accepted bids
   async myAcceptedBids(userid: string) {
+    this.logger.log(`Fetching accepted bids for service provider: ${userid}`);
     const validSerivceProvider = await this.helperService.validServiceProvider(userid);
     if (!validSerivceProvider) {
+      this.logger.error(`Invalid service provider: ${userid}`);
       throw new NotFoundException('Invalid service provider');
     }
     const bids = await this.prisma.bid.findMany({
@@ -264,6 +268,7 @@ export class ServiceProviderService {
         service: true,
       },
     });
+    this.logger.log(`Accepted bids retrieved successfully for service provider: ${userid}`);
     return ApiResponse.success(bids, 'Accepted bids retrieved successfully');
   }
 }
