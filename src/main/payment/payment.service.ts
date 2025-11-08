@@ -8,10 +8,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import Stripe from 'stripe';
-import { CreatePaymentIntentDto, CreateTransferDto, RefundDto } from './dto/create-payment.dto';
+import { CreatePaymentIntentDto, CreateTransferDto } from './dto/create-payment.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { MakeCustomerDto } from './dto/makeCustomer.dto';
+import { RefundDto } from './dto/refund.dto';
 export interface CustomerResponse {
   id: string;
   email: string | null;
@@ -118,7 +119,7 @@ export class PaymentsService {
         }
       }
       if (!process.env.ADMIN_ACCOUNT) {
-        throw new InternalServerErrorException('ADMIN_ACCOUNT environment variable not configured');
+        throw new NotFoundException('ADMIN_ACCOUNT environment variable not configured');
       }
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: dto.amountCents,
