@@ -78,11 +78,13 @@ export class PaymentsService {
   //   }
   // }
   async makeCustomer(userId: string, makeCustomerDto: MakeCustomerDto) {
+    this.logger.log(`Making customer for userId: ${userId}`);
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
       if (!user) {
+        this.logger.warn(`User not found: ${userId}`);
         throw new NotFoundException('User not found');
       }
       // Update user with provided customerId and paymentMethodId
@@ -93,8 +95,10 @@ export class PaymentsService {
           paymentMethodIdFromStripe: makeCustomerDto.paymentMethodIdFromStripe,
         },
       });
+      this.logger.log(`Customer information updated successfully for userId: ${userId}`);
       return ApiResponse.success(res, 'Customer information updated successfully');
     } catch (error) {
+      this.logger.error(`Failed to create customer for userId: ${userId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(`Failed to create customer: ${message}`);
     }
