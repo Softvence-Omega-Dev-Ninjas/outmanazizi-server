@@ -179,6 +179,23 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     try {
+      if (loginDto.role === UserRole.ADMIN) {
+        // Admin login logic
+        const adminUser = await this.prisma.user.findUnique({
+          where: { email: loginDto.email },
+        });
+        if (!adminUser) {
+          this.logger.warn(`Admin user not found: ${loginDto.email}`);
+          throw new NotFoundException('Admin user not found');
+        }
+        const payload = {
+          sub: adminUser?.id,
+          email: adminUser?.email,
+          role: adminUser?.role,
+        };
+        const token = await this.helperService.createTokenEntry(adminUser.id, payload);
+        return ApiResponse.success(token, 'Admin logged in successfully');
+      }
       const userExists = await this.helperService.userExistsByEmail(loginDto.email);
       this.logger.debug(`User existence check for email ${loginDto.email}: ${userExists ? 'found' : 'not found'}`);
 
