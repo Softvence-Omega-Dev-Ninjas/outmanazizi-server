@@ -33,6 +33,7 @@ export class StripeService {
     }
   }
   async createAccountLink(dto: CreateAccountLinkDto) {
+    this.logger.log(`Creating Stripe account link for account: ${dto.stripeAccountId}`);
     try {
       const link = await this.stripe.accountLinks.create({
         account: dto.stripeAccountId,
@@ -40,6 +41,7 @@ export class StripeService {
         return_url: dto.returnUrl,
         type: 'account_onboarding',
       });
+      this.logger.log(`Stripe account link created successfully for account: ${dto.stripeAccountId}`);
       return { url: link.url, expires_at: link.expires_at };
     } catch (error) {
       this.logger.error('Stripe account link creation failed', error);
