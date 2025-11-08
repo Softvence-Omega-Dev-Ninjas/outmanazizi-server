@@ -9,9 +9,10 @@ export class StripeService {
   constructor(
     @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
     // private readonly logger: Logger,
-  ) {}
+  ) { }
 
   async createExpressAccount(userId: string) {
+    this.logger.log(`Creating Stripe Express account for user: ${userId}`);
     try {
       const account = await this.stripe.accounts.create({
         type: 'express',
@@ -23,13 +24,16 @@ export class StripeService {
         business_type: 'individual',
         metadata: { userId },
       });
+      this.logger.log(`Stripe Express account created successfully for user: ${userId}`);
       return account;
     } catch (error) {
+      this.logger.error('Stripe account creation failed', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return ApiResponse.error('Stripe Account Creation Failed', errorMessage);
     }
   }
   async createAccountLink(dto: CreateAccountLinkDto) {
+    this.logger.log(`Creating Stripe account link for account: ${dto.stripeAccountId}`);
     try {
       const link = await this.stripe.accountLinks.create({
         account: dto.stripeAccountId,
@@ -37,6 +41,7 @@ export class StripeService {
         return_url: dto.returnUrl,
         type: 'account_onboarding',
       });
+      this.logger.log(`Stripe account link created successfully for account: ${dto.stripeAccountId}`);
       return { url: link.url, expires_at: link.expires_at };
     } catch (error) {
       this.logger.error('Stripe account link creation failed', error);
@@ -46,8 +51,10 @@ export class StripeService {
   }
 
   async createLoginLink(accountId: string): Promise<Stripe.LoginLink> {
+    this.logger.log(`Creating Stripe login link for account: ${accountId}`);
     try {
       const loginLink = await this.stripe.accounts.createLoginLink(accountId);
+      this.logger.log(`Stripe login link created successfully for account: ${accountId}`);
       return loginLink;
     } catch (error) {
       this.logger.error('Failed to create Stripe login link', error);

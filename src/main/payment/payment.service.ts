@@ -78,11 +78,13 @@ export class PaymentsService {
   //   }
   // }
   async makeCustomer(userId: string, makeCustomerDto: MakeCustomerDto) {
+    this.logger.log(`Making customer for userId: ${userId}`);
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
       if (!user) {
+        this.logger.warn(`User not found: ${userId}`);
         throw new NotFoundException('User not found');
       }
       // Update user with provided customerId and paymentMethodId
@@ -93,18 +95,23 @@ export class PaymentsService {
           paymentMethodIdFromStripe: makeCustomerDto.paymentMethodIdFromStripe,
         },
       });
+      this.logger.log(`Customer information updated successfully for userId: ${userId}`);
       return ApiResponse.success(res, 'Customer information updated successfully');
     } catch (error) {
+      this.logger.error(`Failed to create customer for userId: ${userId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(`Failed to create customer: ${message}`);
     }
   }
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
+    this.logger.log(`Creating payment intent for userId: ${userId}`);
     try {
       if (!dto.paymentMethodId) {
+        this.logger.warn(`Payment method ID is required for userId: ${userId}`);
         throw new BadRequestException('Payment method ID is required');
       }
       if (!dto.customerId) {
+        this.logger.warn(`Customer ID is required for userId: ${userId}`);
         throw new BadRequestException('Customer ID is required');
       }
       // Check if payment method is already attached to this customer
@@ -119,6 +126,7 @@ export class PaymentsService {
         }
       }
       if (!process.env.ADMIN_ACCOUNT) {
+        this.logger.error('ADMIN_ACCOUNT environment variable is not configured');
         throw new NotFoundException('ADMIN_ACCOUNT environment variable not configured');
       }
       const paymentIntent = await this.stripe.paymentIntents.create({
@@ -133,27 +141,39 @@ export class PaymentsService {
           destination: process.env.ADMIN_ACCOUNT,
         },
       });
+      this.logger.log(`Payment intent created successfully for userId: ${userId}`);
       return ApiResponse.success(paymentIntent, 'Payment intent created successfully');
     } catch (error) {
+      this.logger.error(`Failed to create payment intent for userId: ${userId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(`Failed to create payment intent: ${message}`);
     }
   }
 
   async createTransfer(dto: CreateTransferDto) {
-    const transfer = await this.stripe.transfers.create({
-      amount: dto.amountCents,
-      currency: dto.currency || 'usd',
-      destination: dto.destinationAcctId,
-    });
-    return transfer;
+    this.logger.log(`Creating transfer for amount: ${dto.amountCents}`);
+    try {
+      const transfer = await this.stripe.transfers.create({
+        amount: dto.amountCents,
+        currency: dto.currency || 'usd',
+        destination: dto.destinationAcctId,
+      });
+      this.logger.log(`Transfer created successfully for amount: ${dto.amountCents}`);
+      return ApiResponse.success(transfer, 'Transfer created successfully');
+    } catch (error) {
+      this.logger.error(`Failed to create transfer for amount: ${dto.amountCents}`, error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(`Failed to create transfer: ${message}`);
+    }
   }
 
   async refundCharge(dto: RefundDto) {
+    this.logger.log(`Processing refund for chargeId: ${dto.chargeId} with amount: ${dto.amountCents}`);
     const refund = await this.stripe.refunds.create({
       charge: dto.chargeId,
       amount: dto.amountCents,
     });
+    this.logger.log(`Refund processed successfully for chargeId: ${dto.chargeId}`);
     return refund;
   }
 }
