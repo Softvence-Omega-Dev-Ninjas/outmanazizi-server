@@ -66,10 +66,16 @@ export class JobService {
 
   // find all job
   async findAll() {
-    const result = await this.prisma.service.findMany({
-      include: { bids: true },
-    });
-    return ApiResponse.success(result, 'Jobs retrieved successfully');
+    try {
+      const result = await this.prisma.service.findMany({
+        include: { bids: true },
+      });
+      return ApiResponse.success(result, 'Jobs retrieved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error(`Error retrieving jobs: ${message}`);
+      throw new BadRequestException(message);
+    }
   }
 
   // find one job in details
