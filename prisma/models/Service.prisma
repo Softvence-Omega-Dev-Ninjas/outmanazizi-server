@@ -14,6 +14,7 @@ model Service {
   file                           String[]
   isCompletedFromServiceProvider Boolean          @default(false)
   isCompleteFromConsumer         Boolean          @default(false)
+  isCompletedFromAdmin           Boolean          @default(false)
   isDeleteRequestToAdmin         Boolean          @default(false)
   isDeleted                      Boolean          @default(false)
   createdAt                      DateTime         @default(now())
