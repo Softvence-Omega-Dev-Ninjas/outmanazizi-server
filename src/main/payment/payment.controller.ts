@@ -1,9 +1,10 @@
 import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { PaymentsService } from './payment.service';
-import { CreatePaymentIntentDto, CreateTransferDto, RefundDto } from './dto/create-payment.dto';
+import { CreatePaymentIntentDto, CreateTransferDto } from './dto/create-payment.dto';
 
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { MakeCustomerDto } from './dto/makeCustomer.dto';
+import { RefundDto } from './dto/refund.dto';
 
 @Controller('payments')
 export class PaymentsController {
