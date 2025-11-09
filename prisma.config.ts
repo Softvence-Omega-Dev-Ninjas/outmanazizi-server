@@ -1,26 +1,21 @@
-import { config } from 'dotenv';
-import { expand } from 'dotenv-expand';
-import path from 'path';
-import type { PrismaConfig } from 'prisma';
+import { config } from "dotenv";
+import { expand } from "dotenv-expand";
+import path from "path";
+import type { PrismaConfig } from "prisma";
 
 // Explicitly load environment variables
-expand(config({ path: path.resolve(process.cwd(), '.env') }));
+expand(config({ path: path.resolve(process.cwd(), ".env") }));
 
 export default {
-  schema: path.join('prisma', 'models'),
+  schema: path.join("prisma", "models"),
   migrations: {
-    path: path.join('prisma', 'migrations'),
-    seed: 'ts-node prisma/seed.ts',
+    path: path.join("prisma", "migrations"),
+    seed: "tsx prisma/seed.ts",
   },
   views: {
-    path: path.join('prisma', 'views'),
+    path: path.join("prisma", "views"),
   },
   typedSql: {
-    path: path.join('prisma', 'queries'),
-  },
-  experimental: {
-    studio: true,
-    adapter: true,
-    externalTables: true,
+    path: path.join("prisma", "queries"),
   },
 } satisfies PrismaConfig;

@@ -8,7 +8,7 @@ services:
     image: softvence/outmanazizi-server:latest
     container_name: outmanazizi-server
     ports:
-      - '${PORT}:${PORT}'
+      - "${PORT}:${PORT}"
     env_file:
       - .env
     command: >
@@ -40,11 +40,11 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_SHARED_PRELOAD_LIBRARIES: pg_stat_statements
     ports:
-      - '${DB_PORT}:5430'
+      - "${DB_PORT}:5430"
     volumes:
       - pg:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD', 'pg_isready', '-U', '${DB_USER}', '-d', '${DB_NAME}']
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -58,11 +58,11 @@ services:
       - dev
       - prod
     ports:
-      - '${REDIS_PORT}:6379'
+      - "${REDIS_PORT}:6379"
     volumes:
       - redis:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -79,8 +79,8 @@ services:
       - db
       - redis
     ports:
-      - '80:80'
-      - '443:443'
+      - "80:80"
+      - "443:443"
     volumes:
       - /var/www:/var/www
       - ./Caddyfile:/etc/caddy/Caddyfile
