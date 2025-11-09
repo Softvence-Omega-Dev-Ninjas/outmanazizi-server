@@ -7,6 +7,7 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 async function main() {
+  console.info("🌱 Starting database seeding...");
   const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
   const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
 
