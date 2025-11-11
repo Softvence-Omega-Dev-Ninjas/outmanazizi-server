@@ -116,7 +116,6 @@ export class ConsumerService {
       throw new BadRequestException(message);
     }
   }
-
   async serviceComplete(userid: string, serviceId: string) {
     this.logger.log(`Consumer ${userid} is marking service ${serviceId} as complete`);
     try {
@@ -152,7 +151,6 @@ export class ConsumerService {
       throw new BadRequestException(message);
     }
   }
-
   // my notifications
   async myNotifications(userid: string) {
     this.logger.log(`Fetching notifications for user: ${userid}`);
