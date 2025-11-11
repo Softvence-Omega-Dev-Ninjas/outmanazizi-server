@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { StripeService } from "./stripe.service";
 import { StripeController } from "./stripe.controller";
 import Stripe from "stripe";
+import { JwtModule } from "@nestjs/jwt";
 
 export const stripeProvider = {
   provide: "STRIPE_CLIENT",
@@ -17,7 +18,8 @@ export const stripeProvider = {
 };
 
 @Module({
-  controllers: [StripeController],
+  imports: [JwtModule],
+  controllers: [StripeController,],
   providers: [stripeProvider, StripeService],
   exports: [stripeProvider, StripeService],
 })

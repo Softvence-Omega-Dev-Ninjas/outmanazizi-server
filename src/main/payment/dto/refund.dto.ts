@@ -21,5 +21,5 @@ export class RefundDto {
   })
   @IsOptional()
   @IsString()
-  orderId?: string; // optional to attach refund to order in DB
+  orderId?: string;
 }

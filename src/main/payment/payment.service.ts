@@ -5,7 +5,6 @@ import {
   Logger,
   InternalServerErrorException,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDto, CreateTransferDto } from './dto/create-payment.dto';
@@ -26,57 +25,6 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
   ) { }
 
-
-
-
-  // make a customer payment intent
-  // async makeCustomer(userId: string) {
-  //   // 1️⃣ Fetch user from DB
-  //   const user = await this.prisma.user.findUnique({
-  //     where: { id: userId },
-  //   });
-
-  //   if (!user) {
-  //     throw new NotFoundException('User not found');
-  //   }
-
-  //   try {
-  //     let customer: Stripe.Customer;
-
-  //     if (!user.customerId) {
-  //       // 2️⃣ Create Stripe Customer if not exists
-  //       customer = await this.stripe.customers.create({
-  //         metadata: { userId },
-  //         email: user.email ?? undefined,
-  //         name: user.name ?? undefined,
-  //       });
-
-  //       // 3️⃣ Save customerId in DB
-  //       await this.prisma.user.update({
-  //         where: { id: userId },
-  //         data: { customerId: customer.id },
-  //       });
-  //     } else {
-  //       const retrieved = await this.stripe.customers.retrieve(user.customerId);
-  //       if (retrieved.deleted) {
-  //         throw new InternalServerErrorException('Customer has been deleted in Stripe');
-  //       }
-  //       customer = retrieved;
-  //     }
-  //     return ApiResponse.success(
-  //       {
-  //         id: customer.id,
-  //         email: customer.email ?? null,
-  //         name: customer.name ?? null,
-  //       },
-  //       'Customer retrieved successfully',
-  //     );
-  //   } catch (error: unknown) {
-  //     // Proper error handling
-  //     const message = error instanceof Error ? error.message : 'Unknown error';
-  //     throw new InternalServerErrorException(`Failed to create or retrieve customer: ${message}`);
-  //   }
-  // }
   async makeCustomer(userId: string, makeCustomerDto: MakeCustomerDto) {
     this.logger.log(`Making customer for userId: ${userId}`);
     try {
@@ -106,40 +54,28 @@ export class PaymentsService {
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
     this.logger.log(`Creating payment intent for userId: ${userId}`);
     try {
-      if (!dto.paymentMethodId) {
-        this.logger.warn(`Payment method ID is required for userId: ${userId}`);
-        throw new BadRequestException('Payment method ID is required');
+      const userExistsByUserid = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!userExistsByUserid || !userExistsByUserid.customerIdFromStripe || !userExistsByUserid.paymentMethodIdFromStripe) {
+        this.logger.warn(`User not found: ${userId}`);
+        throw new NotFoundException('User not found');
       }
-      if (!dto.customerId) {
-        this.logger.warn(`Customer ID is required for userId: ${userId}`);
-        throw new BadRequestException('Customer ID is required');
+      const adminAccount = process.env.ADMIN_ACCOUNT;
+      if (!adminAccount) {
+        this.logger.error('ADMIN_ACCOUNT not configured in environment');
+        throw new NotFoundException('Admin account not configured');
       }
-      // Check if payment method is already attached to this customer
-      const paymentMethod = await this.stripe.paymentMethods.retrieve(dto.paymentMethodId);
-      if (paymentMethod.customer !== dto.customerId) {
-        // Check if payment method is already attached to this customer
-        const paymentMethod = await this.stripe.paymentMethods.retrieve(dto.paymentMethodId);
-        if (paymentMethod.customer !== dto.customerId) {
-          await this.stripe.paymentMethods.attach(dto.paymentMethodId, {
-            customer: dto.customerId,
-          });
-        }
-      }
-      if (!process.env.ADMIN_ACCOUNT) {
-        this.logger.error('ADMIN_ACCOUNT environment variable is not configured');
-        throw new NotFoundException('ADMIN_ACCOUNT environment variable not configured');
-      }
+
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: dto.amountCents,
         currency: dto.currency || 'usd',
         metadata: { userId },
         payment_method_types: ['card'],
-        customer: dto.customerId,
-        payment_method: dto.paymentMethodId,
+        customer: userExistsByUserid.customerIdFromStripe,
+        payment_method: userExistsByUserid.paymentMethodIdFromStripe,
         confirm: true,
-        transfer_data: {
-          destination: process.env.ADMIN_ACCOUNT,
-        },
+
       });
       this.logger.log(`Payment intent created successfully for userId: ${userId}`);
       return ApiResponse.success(paymentIntent, 'Payment intent created successfully');
@@ -153,6 +89,14 @@ export class PaymentsService {
   async createTransfer(dto: CreateTransferDto) {
     this.logger.log(`Creating transfer for amount: ${dto.amountCents}`);
     try {
+      const sellerAccount = await this.stripe.accounts.retrieve(dto.destinationAcctId);
+      if (!sellerAccount) {
+        this.logger.warn(`Seller account not found: ${dto.destinationAcctId}`);
+        throw new NotFoundException('Seller account not found');
+      }
+      if (sellerAccount?.capabilities?.transfers !== 'active') {
+        throw new Error('Seller account is not ready for transfers');
+      }
       const transfer = await this.stripe.transfers.create({
         amount: dto.amountCents,
         currency: dto.currency || 'usd',
@@ -168,12 +112,29 @@ export class PaymentsService {
   }
 
   async refundCharge(dto: RefundDto) {
-    this.logger.log(`Processing refund for chargeId: ${dto.chargeId} with amount: ${dto.amountCents}`);
-    const refund = await this.stripe.refunds.create({
-      charge: dto.chargeId,
-      amount: dto.amountCents,
-    });
-    this.logger.log(`Refund processed successfully for chargeId: ${dto.chargeId}`);
-    return refund;
+    try {
+      const userExistsByUserid = await this.prisma.user.findFirst({
+        where: {
+          id: dto.chargeId
+        }
+      })
+      if (!userExistsByUserid) {
+        throw new NotFoundException('User not found');
+      }
+      const charges = await this.stripe.charges.list({
+        limit: 3,
+      });
+      this.logger.log(`Processing refund for chargeId: ${dto.chargeId} with amount: ${dto.amountCents}`);
+      const refund = await this.stripe.refunds.create({
+        charge: charges.data[0].id,
+        amount: dto.amountCents,
+      });
+      this.logger.log(`Refund processed successfully for chargeId: ${dto.chargeId}`);
+      return refund;
+    } catch (error) {
+      this.logger.error(`Failed to process refund for chargeId: ${dto.chargeId}`, error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(`Failed to process refund: ${message}`);
+    }
   }
 }

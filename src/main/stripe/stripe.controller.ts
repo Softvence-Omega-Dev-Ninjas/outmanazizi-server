@@ -1,36 +1,47 @@
-import { BadRequestException, Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { StripeService } from './stripe.service';
 import { Public } from 'src/guards/public.decorator';
-import { CreateAccountLinkDto, CreateLoginLinkDto } from './dto/create-stripe.dto';
+import { CreateLoginLinkDto } from './dto/create-stripe.dto';
 import { ApiBody } from '@nestjs/swagger';
+import { Stripe } from 'stripe';
+import { AuthenticationGuard } from 'src/guards/auth.guard';
 
 @Controller('stripe')
 export class StripeController {
-  constructor(private readonly stripeService: StripeService) {}
+  constructor(private readonly stripeService: StripeService) { }
   @Post('create-express-account')
+  @UseGuards(AuthenticationGuard)
   async createExpressAccount(@Req() req: Request) {
     const account = await this.stripeService.createExpressAccount(req['userid'] as string);
     return account;
   }
 
+  //Get Account Link
+  @Post('generate-account-link')
   @Public()
-  @Post('create-account-link')
-  @ApiBody({ type: CreateAccountLinkDto })
-  async createAccountLink(@Body() body: CreateAccountLinkDto) {
-    const link = await this.stripeService.createAccountLink(body);
-    if (!link) {
-      throw new BadRequestException('Failed to create account link');
-    }
-    return link;
+  @ApiBody({ type: CreateLoginLinkDto })
+  async generateAccountLink(
+    @Body() body: CreateLoginLinkDto,
+  ): Promise<Stripe.AccountLink> {
+    const accountLink = await this.stripeService.generateAccountLink(body.stripeAccountId);
+    return accountLink;
   }
 
+  // account retrieval can be added here
+  @Post('retrieve-account')
+  @Public()
   @ApiBody({ type: CreateLoginLinkDto })
-  @Post('create-login-link')
-  @ApiBody({ type: CreateLoginLinkDto })
-  async createLoginLink(
+  async retrieveAccount(
     @Body() body: CreateLoginLinkDto,
-  ): Promise<{ url: string; created: number }> {
-    const loginLink = await this.stripeService.createLoginLink(body.stripeAccountId);
-    return { url: loginLink.url, created: loginLink.created };
+  ): Promise<Stripe.Account> {
+    const account = await this.stripeService.retrieveAccount(body.stripeAccountId);
+    return account;
+  }
+
+  @Get('/admin/stripe-info')
+  @Public()
+  async getStripeInfo(@Req() req: Request) {
+    const info = await this.stripeService.getStripeInfo(req['userid'] as string);
+    return info;
   }
 }
