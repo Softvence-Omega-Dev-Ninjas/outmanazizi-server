@@ -271,4 +271,40 @@ export class ServiceProviderService {
     this.logger.log(`Accepted bids retrieved successfully for service provider: ${userid}`);
     return ApiResponse.success(bids, 'Accepted bids retrieved successfully');
   }
+  // specific consumer  info
+  async getConsumerInfo(id: string) {
+    this.logger.log(`Fetching service provider info for ID: ${id}`);
+    try {
+      const consumer = await this.prisma.user.findUnique({
+        where: { id, },
+        select: {
+          id: true,
+          name: true,
+          picture: true,
+          toReviews: {
+            include: {
+              fromReview: {
+                select: {
+                  id: true,
+                  name: true,
+                  picture: true,
+                }
+              }
+            }
+          }
+        },
+      });
+
+      if (!consumer) {
+        this.logger.error(`Service provider not found for ID: ${id}`);
+        throw new BadRequestException('Service provider not found');
+      }
+      this.logger.log(`Fetched service provider info for ID: ${id}`);
+      return ApiResponse.success(consumer, 'Consumer info fetched successfully');
+    } catch (error) {
+      this.logger.error(`Failed to fetch service provider info for ID: ${id}`, error);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException(message);
+    }
+  }
 }

@@ -122,4 +122,10 @@ export class ServiceProviderController {
   async myCompletedBids(@Req() req: Request) {
     return await this.serviceProviderService.myAcceptedBids(req['userid'] as string);
   }
+  // get service provider by id
+  @Get(':id')
+  @ApiOperation({ summary: 'Get service provider by id' })
+  async getServiceProviderById(@Param('id') id: string) {
+    return await this.serviceProviderService.getConsumerInfo(id);
+  }
 }
