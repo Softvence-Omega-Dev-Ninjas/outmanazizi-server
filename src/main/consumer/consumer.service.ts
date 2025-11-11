@@ -169,4 +169,39 @@ export class ConsumerService {
       return ApiResponse.error('Failed to fetch notifications', message);
     }
   }
+  // get specific service provider information
+  async getServiceProviderInfo(serviceProviderId: string) {
+    this.logger.log(`Fetching service provider info for ID: ${serviceProviderId}`);
+    try {
+      const serviceProvider = await this.prisma.serviceProvider.findUnique({
+        where: { id: serviceProviderId },
+        include: {
+          user: {
+            select: {
+              name: true,
+              picture: true,
+              email: true,
+              toReviews: {
+                include: {
+                  fromReview: { select: { name: true, picture: true } }
+                }
+              }
+
+            },
+
+          },
+        },
+      });
+      if (!serviceProvider) {
+        this.logger.error(`Service provider not found for ID: ${serviceProviderId}`);
+        throw new BadRequestException('Service provider not found');
+      }
+      this.logger.log(`Fetched service provider info for ID: ${serviceProviderId}`);
+      return ApiResponse.success(serviceProvider, 'Service provider info fetched successfully');
+    } catch (error) {
+      this.logger.error(`Failed to fetch service provider info for ID: ${serviceProviderId}`, error);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      return ApiResponse.error('Failed to fetch service provider info', message);
+    }
+  }
 }

@@ -50,4 +50,11 @@ export class ConsumerController {
   async myNotifications(@Req() req: Request) {
     return await this.consumerService.myNotifications(req['userid'] as string);
   }
+  // get specific service provider info
+  @Get('service-provider-info/:serviceProviderId')
+  @ApiOperation({ summary: 'Get specific service provider info' })
+  @UseGuards(AuthenticationGuard)
+  async serviceProviderInfo(@Param('serviceProviderId') serviceProviderId: string) {
+    return await this.consumerService.getServiceProviderInfo(serviceProviderId);
+  }
 }
