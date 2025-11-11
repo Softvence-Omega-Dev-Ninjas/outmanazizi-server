@@ -113,6 +113,16 @@ export class JobService {
   async update(id: string, updateJobDto: UpdateJobDto) {
     this.logger.log(`Update job request received for job: ${id}`);
     this.logger.debug(`Payload: ${JSON.stringify(updateJobDto)}`);
+    const existingJob = await this.prisma.service.findUnique({ where: { id } });
+    if (!existingJob) {
+      this.logger.warn(`Job not found: ${id}`);
+      throw new NotFoundException('Job does not exist');
+    }
+    const existingArea = await this.prisma.area.findUnique({ where: { id: updateJobDto.location } })
+    if (!existingArea) {
+      this.logger.warn(`Area not found: ${updateJobDto.location}`);
+      throw new NotFoundException('Area does not exist');
+    }
     try {
       const { file, ...rest } = updateJobDto;
       const updatedJob = await this.prisma.service.update({
