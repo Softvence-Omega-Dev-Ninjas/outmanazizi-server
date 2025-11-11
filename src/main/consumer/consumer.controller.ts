@@ -26,6 +26,16 @@ export class ConsumerController {
   ) {
     return await this.consumerService.acceptBid(req['userid'] as string, serviceId, acceptBidDto);
   }
+  //remove bid
+  @Patch('remove-bid/:serviceId/:serviceProviderId')
+  @ApiOperation({ summary: 'Remove a bid for a service request' })
+  async removeBid(
+    @Param('serviceId') serviceId: string,
+    @Param('serviceProviderId') serviceProviderId: string,
+    @Req() req: Request,
+  ) {
+    return await this.consumerService.removeBid(req['userid'] as string, serviceId, serviceProviderId);
+  }
   @Patch('service-complete/:serviceId')
   @ApiOperation({ summary: 'Work Complete from consumer..' })
   @UseGuards(AuthenticationGuard)

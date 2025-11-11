@@ -16,6 +16,7 @@ export class ConsumerService {
         include: {
           serviceProvider: {
             select: {
+              id: true,
               myCurrentRating: true,
               ratingGetFromUsers: true,
               user: {
@@ -37,7 +38,35 @@ export class ConsumerService {
       return ApiResponse.error('Failed to fetch bided providers', message);
     }
   }
+  // remove bid
+  async removeBid(userid: string, serviceId: string, serviceProviderId: string) {
+    this.logger.log(`User ${userid} is removing a bid for service ${serviceId}`);
 
+    try {
+      const bidToRemove = await this.prisma.bid.findFirst({
+        where: {
+          AND: [
+            { serviceId },
+            { serviceProviderId },
+            { consumerId: userid },
+          ],
+        },
+      });
+      if (!bidToRemove) {
+        this.logger.error(`Bid not found for user ${userid}, service ${serviceId}, provider ${serviceProviderId}`);
+        throw new BadRequestException('Bid not found');
+      }
+      await this.prisma.bid.delete({
+        where: { id: bidToRemove.id },
+      });
+      this.logger.log(`Bid for service ${serviceId} removed by user ${userid}`);
+      return { message: 'Bid removed successfully' };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error(`Failed to remove bid for service ${serviceId} by user ${userid}`, error);
+      throw new BadRequestException(message);
+    }
+  }
   async acceptBid(userid: string, serviceId: string, createConsumerDto: AcceptBid) {
     this.logger.log(`User ${userid} is accepting a bid for service ${serviceId}`);
     try {
