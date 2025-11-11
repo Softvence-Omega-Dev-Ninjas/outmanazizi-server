@@ -4,7 +4,7 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
   async serviceProviderVerification(userid: string) {
     const userExits = await this.prisma.user.findUnique({
       where: { id: userid },
@@ -25,15 +25,18 @@ export class AdminService {
     if (userExits.isActive === false) {
       throw new UnauthorizedException('User account is  not active');
     }
-    if (userExits.serviceProvider?.isVerifiedFromAdmin === true) {
-      throw new UnauthorizedException('User is already verified');
+
+    if (!userExits.serviceProvider) {
+      throw new UnauthorizedException('Service provider details not found for this user');
     }
+
     const verifiedUser = await this.prisma.user.update({
       where: { id: userid },
       data: {
         serviceProvider: {
-          update: { isVerifiedFromAdmin: true },
+          update: { isVerifiedFromAdmin: !userExits.serviceProvider.isVerifiedFromAdmin },
         },
+
       },
     });
     return ApiResponse.success(verifiedUser, 'User is verified successfully');
