@@ -8,6 +8,8 @@ export class CreateJobDto {
     description: 'Service name for the job',
     example: 'Plumbing in Gardern City',
   })
+  @IsNotEmpty()
+  @IsString()
   serviceName: string;
   @ApiProperty({
     description: 'Title of the job',

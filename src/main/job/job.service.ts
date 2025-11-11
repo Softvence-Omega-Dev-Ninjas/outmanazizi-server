@@ -3,6 +3,7 @@ import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
+import { userInfo } from 'os';
 
 @Injectable()
 export class JobService {
@@ -37,13 +38,13 @@ export class JobService {
         this.logger.warn(`Sub-service not found: ${createJobDto.subServices} under service: ${createJobDto.title}`);
         throw new NotFoundException('Sub-service does not exist under the specified service');
       }
-
+      console.log({ createJobDto });
       const savedJob = await this.prisma.service.create({
         data: {
           userId,
           ...rest,
           file: images,
-          serviceName: serviceExists.name,
+          serviceName: createJobDto.serviceName,
         },
       });
       this.logger.log(`Job created successfully: ${JSON.stringify(savedJob)}`);
@@ -59,7 +60,25 @@ export class JobService {
   async userJobs(userId: string) {
     const result = await this.prisma.service.findMany({
       where: { userId },
-      include: { bids: true },
+      include: {
+        bids: {
+          include: {
+            serviceProvider: {
+              select: {
+                myCurrentRating: true,
+                ratingGetFromUsers: true,
+                user: {
+                  select: {
+                    name: true,
+                    picture: true,
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+
     });
     return ApiResponse.success(result, 'User jobs retrieved successfully');
   }

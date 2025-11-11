@@ -8,14 +8,26 @@ export class ConsumerService {
   private readonly logger = new Logger(ConsumerService.name);
   constructor(private readonly prisma: PrismaService) { }
 
-  // bidded providers for a service request
   async getBidedProviders(userid: string, serviceId: string) {
     this.logger.log(`Fetching bided providers for user: ${userid}, service: ${serviceId}`);
     try {
       const bidedProviders = await this.prisma.bid.findMany({
         where: { consumerId: userid, serviceId: serviceId },
-        include: { serviceProvider: { include: { user: true } } },
-        orderBy: { serviceProvider: { myCurrentRating: 'desc' } },
+        include: {
+          serviceProvider: {
+            select: {
+              myCurrentRating: true,
+              ratingGetFromUsers: true,
+              user: {
+                select: {
+                  name: true,
+                  picture: true,
+                },
+              },
+            },
+          },
+        },
+        // orderBy: { serviceProvider: { myCurrentRating: 'desc' } },
       });
       this.logger.log(`Fetched ${bidedProviders.length} bided providers for service: ${serviceId}`);
       return ApiResponse.success(bidedProviders, 'Bided providers fetched successfully');
