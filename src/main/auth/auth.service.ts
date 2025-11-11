@@ -262,6 +262,7 @@ export class AuthService {
       if (user.role === UserRole.SERVICE_PROVIDER) {
         const serviceProvider = await this.prisma.serviceProvider.findFirst({
           where: { userId: user.id },
+
         });
         return ApiResponse.success({ user, serviceProvider }, 'User profile fetched successfully');
       }
