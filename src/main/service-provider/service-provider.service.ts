@@ -117,6 +117,7 @@ export class ServiceProviderService {
         where: { id: validServiceProvider.id },
         data: {
           documents: documents,
+          isProfileCompleted: true,
         },
       });
       this.logger.log(`Documents uploaded successfully for user: ${userid}`);
