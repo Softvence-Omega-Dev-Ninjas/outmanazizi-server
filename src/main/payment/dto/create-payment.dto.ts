@@ -10,21 +10,7 @@ export class CreatePaymentIntentDto {
   @ApiProperty({ description: 'Amount in cents to be charged', example: 1000 })
   @IsNumber()
   @IsPositive()
-  amountCents: number;
-
-  @ApiProperty({ description: 'Currency for the payment', example: 'usd' })
-  @IsOptional()
-  @IsString()
-  currency?: string;
-  @ApiProperty({ description: 'Payment method ID', example: 'pm_12345' })
-  @IsOptional()
-  @IsString()
-  paymentMethodId?: string;
-
-  @ApiProperty({ description: 'Stripe Customer ID', example: 'cus_12345' })
-  @IsOptional()
-  @IsString()
-  customerId?: string;
+  amount: number;
 }
 
 export class CreateTransferDto {

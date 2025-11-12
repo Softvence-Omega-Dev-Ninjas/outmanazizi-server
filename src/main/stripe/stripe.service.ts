@@ -72,10 +72,9 @@ export class StripeService {
   async getStripeInfo(userId: string) {
     this.logger.log(`Getting Stripe info for user: ${userId}`);
     try {
-      const [account, balance, payouts, payments, transfers, accountsList] = await Promise.all([
+      const [account, balance, payments, transfers, accountsList] = await Promise.all([
         this.stripe.accounts.retrieve(),
         this.stripe.balance.retrieve(),
-        this.stripe.payouts.list({ limit: 5 }),
         this.stripe.paymentIntents.list({ limit: 10 }),
         this.stripe.transfers.list({ limit: 10 }),
         this.stripe.accounts.list({ limit: 3 }),
@@ -84,7 +83,6 @@ export class StripeService {
         account: { id: account.id, email: account.email },
 
         balance: { available: balance.available[0].amount, pending: balance.pending[0].amount },
-        recentPayouts: payouts.data,
         recentPaymentsIntents: payments.data.map(pi => ({
           id: pi.id,
           amount: pi.amount,

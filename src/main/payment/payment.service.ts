@@ -40,6 +40,7 @@ export class PaymentsService {
         where: { id: userId },
         data: {
           customerIdFromStripe: makeCustomerDto.customerIdFromStripe,
+          paymentMethodIdFromStripe: makeCustomerDto.paymentMethodIdFromStripe,
         },
       });
       this.logger.log(`Customer information updated successfully for userId: ${userId}`);
@@ -67,8 +68,8 @@ export class PaymentsService {
       }
 
       const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: dto.amountCents,
-        currency: dto.currency || 'usd',
+        amount: dto.amount,
+        currency: 'usd',
         metadata: { userId },
         payment_method_types: ['card'],
         customer: userExistsByUserid.customerIdFromStripe,
@@ -112,26 +113,14 @@ export class PaymentsService {
 
   async refundCharge(dto: RefundDto) {
     try {
-      const userExistsByUserid = await this.prisma.user.findFirst({
-        where: {
-          id: dto.chargeId
-        }
-      })
-      if (!userExistsByUserid) {
-        throw new NotFoundException('User not found');
-      }
-      const charges = await this.stripe.charges.list({
-        limit: 3,
-      });
-      this.logger.log(`Processing refund for chargeId: ${dto.chargeId} with amount: ${dto.amountCents}`);
       const refund = await this.stripe.refunds.create({
-        charge: charges.data[0].id,
-        amount: dto.amountCents,
+        payment_intent: dto.paymentIntentId,
+        amount: dto.amount,
       });
-      this.logger.log(`Refund processed successfully for chargeId: ${dto.chargeId}`);
+      // this.logger.log(`Refund processed successfully for chargeId: ${dto.chargeId}`);
       return refund;
     } catch (error) {
-      this.logger.error(`Failed to process refund for chargeId: ${dto.chargeId}`, error);
+      // this.logger.error(`Failed to process refund for chargeId: ${dto.chargeId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(`Failed to process refund: ${message}`);
     }
