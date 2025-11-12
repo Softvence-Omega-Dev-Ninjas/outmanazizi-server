@@ -22,7 +22,7 @@ export class StripeController {
   @ApiBody({ type: CreateLoginLinkDto })
   async generateAccountLink(
     @Body() body: CreateLoginLinkDto,
-  ): Promise<Stripe.AccountLink> {
+  ) {
     const accountLink = await this.stripeService.generateAccountLink(body.stripeAccountId);
     return accountLink;
   }

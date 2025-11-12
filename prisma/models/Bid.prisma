@@ -12,6 +12,7 @@ model Bid {
   status                  Status   @default(PENDING)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
+  order                   Order[]
 }
 
 enum Status {

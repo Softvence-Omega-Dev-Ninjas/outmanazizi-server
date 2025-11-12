@@ -32,6 +32,7 @@ model User {
 
   sentNotifications     Notification[] @relation("SentNotifications")
   receivedNotifications Notification[] @relation("ReceivedNotifications")
+  order                 Order[]
 }
 
 enum Role {

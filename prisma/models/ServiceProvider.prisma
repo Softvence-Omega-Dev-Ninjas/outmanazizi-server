@@ -15,4 +15,5 @@ model ServiceProvider {
   ratingGetFromUsers  Int           @default(0)
   noteServices        NoteService[]
   services            Service[]
+  order               Order[]
 }

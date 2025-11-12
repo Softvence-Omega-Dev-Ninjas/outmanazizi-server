@@ -1,0 +1,20 @@
+model Order {
+  id                String          @id @default(uuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  consumerId        String
+  consumer          User            @relation(fields: [consumerId], references: [id])
+  bidId             String
+  bid               Bid             @relation(fields: [bidId], references: [id])
+  status            OrderStatus     @default(PENDING)
+  scheduledDate     DateTime
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}

@@ -40,7 +40,6 @@ export class PaymentsService {
         where: { id: userId },
         data: {
           customerIdFromStripe: makeCustomerDto.customerIdFromStripe,
-          paymentMethodIdFromStripe: makeCustomerDto.paymentMethodIdFromStripe,
         },
       });
       this.logger.log(`Customer information updated successfully for userId: ${userId}`);
@@ -75,8 +74,8 @@ export class PaymentsService {
         customer: userExistsByUserid.customerIdFromStripe,
         payment_method: userExistsByUserid.paymentMethodIdFromStripe,
         confirm: true,
-
       });
+
       this.logger.log(`Payment intent created successfully for userId: ${userId}`);
       return ApiResponse.success(paymentIntent, 'Payment intent created successfully');
     } catch (error) {

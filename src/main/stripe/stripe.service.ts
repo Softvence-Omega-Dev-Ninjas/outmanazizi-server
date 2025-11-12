@@ -48,12 +48,7 @@ export class StripeService {
   async generateAccountLink(accountId: string) {
     this.logger.log(`Generating account link for Stripe account ID: ${accountId}`);
     try {
-      const accountLink = await this.stripe.accountLinks.create({
-        account: 'acct_1SS1OcB0QArOvVru', // তোমার account ID
-        refresh_url: 'https://outmanaziz.com/refresh',
-        return_url: 'https://outmanaziz.com/return',
-        type: 'account_onboarding',           // existing account update
-      });
+      const accountLink = await this.stripe.accounts.createLoginLink(accountId);
       return accountLink;
     } catch (error) {
       this.logger.error('Failed to generate account link', error);
