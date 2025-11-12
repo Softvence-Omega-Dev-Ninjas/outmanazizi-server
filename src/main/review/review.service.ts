@@ -72,8 +72,21 @@ export class ReviewService {
     this.logger.log(`Fetch all reviews request received from user: ${userId}`);
     try {
       const reviews = await this.prisma.review.findMany({
-        where: { fromReviewId: userId },
-        orderBy: { createdAt: 'desc' },
+        where: {
+          toReviewId: userId
+        },
+        select: {
+          rating: true,
+          comment: true,
+          createdAt: true,
+          fromReview: {
+            select: {
+              name: true,
+              picture: true
+            }
+          }
+        },
+
       });
       return ApiResponse.success(reviews, 'Reviews retrieved successfully');
     } catch (error) {
