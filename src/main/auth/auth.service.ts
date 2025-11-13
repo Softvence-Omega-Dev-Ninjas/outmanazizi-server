@@ -215,7 +215,7 @@ export class AuthService {
       if (!userExists.password) {
         throw new UnauthorizedException('Invalid credentials');
       }
-      if (userExists.role !== loginDto.role) {
+      if (String(userExists.role) !== String(loginDto.role)) {
         throw new UnauthorizedException('User role mismatch');
       }
       const passwordMatch = await bcrypt.compare(loginDto.password, userExists.password);
@@ -233,11 +233,11 @@ export class AuthService {
       });
 
       const token = await this.helperService.createTokenEntry(userExists.id, payload);
-      if (userExists.role === UserRole.SERVICE_PROVIDER) {
-        // if (!serviceProvider?.isVerifiedFromAdmin) {
-        //   this.logger.log(`Service provider ${loginDto.email} is verified by admin`);
-        //   throw new UnauthorizedException('Your account is not verified by admin yet, Provide valid documents and try again later');
-        // }
+      if (String(userExists.role) === String(UserRole.SERVICE_PROVIDER)) {
+        if (!serviceProvider?.isVerifiedFromAdmin) {
+          this.logger.log(`Service provider ${loginDto.email} is verified by admin`);
+          throw new UnauthorizedException('Your account is not verified by admin yet, Provide valid documents and try again later');
+        }
         return ApiResponse.success(
           { token, serviceProvider },
           'Service provider logged in successfully',
@@ -259,7 +259,7 @@ export class AuthService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      if (user.role === UserRole.SERVICE_PROVIDER) {
+      if ((user.role as UserRole) === UserRole.SERVICE_PROVIDER) {
         const serviceProvider = await this.prisma.serviceProvider.findFirst({
           where: { userId: user.id },
 

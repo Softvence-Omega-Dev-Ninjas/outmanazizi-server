@@ -10,7 +10,7 @@ export class HelperService {
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async userExistsByEmail(email: string) {
     const user = await this.prismaService.user.findUnique({
@@ -26,6 +26,7 @@ export class HelperService {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
     });
+
     if (!user) {
       throw new NotFoundException('User not found');
     }

@@ -1,10 +1,14 @@
 model Dispute {
-  id                String      @id @default(uuid())
-  bidId             String
-  bid               Bid         @relation(fields: [id], references: [id])
-  details         String   
-  isSolved            String
-  pictures          String[]?
-  createdAt         DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id        String   @id @default(uuid())
+  bidId     String
+  bid       Bid      @relation(fields: [bidId], references: [id])
+  userId    String
+  user      User     @relation("DisputeBy", fields: [userId], references: [id])
+  againstId String
+  against   User     @relation("DisputeAgainst", fields: [againstId], references: [id])
+  details   String
+  isSolved  Boolean  @default(false)
+  pictures  String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
