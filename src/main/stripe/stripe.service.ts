@@ -38,7 +38,7 @@ export class StripeService {
         type: 'account_onboarding',
       });
       this.logger.log(`Stripe Express account created successfully for user: ${userId}`);
-      return { accountId: account.id, url: link.url };
+      return { url: link.url };
     } catch (error) {
       this.logger.error('Stripe account creation failed', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
