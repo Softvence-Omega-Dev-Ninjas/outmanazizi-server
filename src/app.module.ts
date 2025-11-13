@@ -16,6 +16,7 @@ import { PaymentModule } from "./main/payment/payment.module";
 import { ReviewModule } from "./main/review/review.module";
 import { PassportModule } from "@nestjs/passport";
 import { EventEmitterModule } from "@nestjs/event-emitter";
+import { DisputeModule } from './main/dispute/dispute.module';
 import ms from "ms";
 
 @Module({
@@ -50,6 +51,7 @@ import ms from "ms";
         };
       },
     }),
+    DisputeModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
