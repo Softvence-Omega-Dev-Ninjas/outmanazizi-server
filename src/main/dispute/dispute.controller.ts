@@ -1,15 +1,31 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFiles, Req, BadRequestException } from '@nestjs/common';
 import { DisputeService } from './dispute.service';
 import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { UpdateDisputeDto } from './dto/update-dispute.dto';
+import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
+import { AuthenticationGuard } from 'src/guards/auth.guard';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { storageConfig } from 'src/utils/common/file/fileUploads';
 
 @Controller('dispute')
 export class DisputeController {
-  constructor(private readonly disputeService: DisputeService) {}
+  constructor(private readonly disputeService: DisputeService) { }
 
   @Post()
-  create(@Body() createDisputeDto: CreateDisputeDto) {
-    return this.disputeService.create(createDisputeDto);
+  @ApiOperation({ summary: 'Upload  dispute data' })
+  @UseGuards(AuthenticationGuard)
+  @ApiBody({ type: CreateDisputeDto })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('images', 10, { storage: storageConfig() }))
+  async create(@Body() createDisputeDto: CreateDisputeDto, @UploadedFiles() images: Express.Multer.File[], @Req() req: Request) {
+
+
+    const domain = process.env.DOMAIN;
+    if (!domain) {
+      throw new BadRequestException('DOMAIN must be defined in environment variables');
+    }
+    const image = images.map((f) => `${domain}/uploads/${f.filename}`);
+    return await this.disputeService.create(createDisputeDto, req['userid'] as string, image);
   }
 
   @Get()

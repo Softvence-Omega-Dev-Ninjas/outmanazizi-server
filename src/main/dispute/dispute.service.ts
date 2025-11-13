@@ -4,8 +4,12 @@ import { UpdateDisputeDto } from './dto/update-dispute.dto';
 
 @Injectable()
 export class DisputeService {
-  create(createDisputeDto: CreateDisputeDto) {
-    return 'This action adds a new dispute';
+  async create(createDisputeDto: CreateDisputeDto, userId: string, images: string[]) {
+    return {
+      ...createDisputeDto,
+      userId,
+      pictures: images,
+    }
   }
 
   findAll() {
