@@ -81,7 +81,6 @@ export class StripeService {
       ]);
       return {
         account: { id: account.id, email: account.email },
-
         balance: { available: balance.available[0].amount, pending: balance.pending[0].amount },
         recentPaymentsIntents: payments.data.map(pi => ({
           id: pi.id,
