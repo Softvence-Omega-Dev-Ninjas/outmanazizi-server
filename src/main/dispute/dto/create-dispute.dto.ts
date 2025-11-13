@@ -11,7 +11,7 @@ export class CreateDisputeDto {
 
   @ApiProperty({
     example: 'The product was not as described',
-    description: ""
+    description: "Reason for the dispute"
   })
   reason: string;
 
