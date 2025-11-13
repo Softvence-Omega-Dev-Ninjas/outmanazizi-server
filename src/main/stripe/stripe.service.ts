@@ -31,6 +31,8 @@ export class StripeService {
         where: { id: userId },
         data: { stripeAccountId: account.id },
       });
+
+
       const link = await this.stripe.accountLinks.create({
         account: account.id,
         refresh_url: 'https://example.com/refresh',
