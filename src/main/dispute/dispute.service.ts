@@ -38,6 +38,19 @@ export class DisputeService {
         this.logger.warn(`Bid with ID ${createDisputeDto.bidId} does not exist`);
         throw new NotFoundException('Bid not found');
       }
+      const disputeExists = await this.prisma.dispute.findFirst({
+        where: {
+          AND: [
+            { bidId: createDisputeDto.bidId },
+            { againstId: createDisputeDto.againstDisputId },
+          ]
+
+        },
+      });
+      if (disputeExists) {
+        this.logger.warn(` You have already raised a dispute for bid ID ${createDisputeDto.bidId} against user ID ${createDisputeDto.againstDisputId}`);
+        return ApiResponse.error(' You have already raised a dispute for this bid against the specified user');
+      }
       const result = await this.prisma.dispute.create({
         data: {
           bidId: createDisputeDto.bidId,
