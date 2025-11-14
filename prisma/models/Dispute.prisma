@@ -11,6 +11,4 @@ model Dispute {
   pictures  String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  bid       Bid?     @relation(fields: [bidId], references: [id])
-  bidId     String?
 }

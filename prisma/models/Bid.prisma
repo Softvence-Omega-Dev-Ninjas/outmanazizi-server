@@ -9,11 +9,10 @@ model Bid {
   price                   String
   consumerId              String
   serviceProviderProposal String
-  status                  Status    @default(PENDING)
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  status                  Status   @default(PENDING)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
   order                   Order[]
-  disputes                Dispute[]
 }
 
 enum Status {
