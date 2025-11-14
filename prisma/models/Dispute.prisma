@@ -1,7 +1,7 @@
 model Dispute {
   id        String   @id @default(uuid())
-  bidId     String
-  bid       Bid      @relation(fields: [bidId], references: [id])
+  serviceid String
+  service   Service  @relation(fields: [serviceid], references: [id])
   userId    String
   user      User     @relation("DisputeBy", fields: [userId], references: [id])
   againstId String
@@ -11,4 +11,6 @@ model Dispute {
   pictures  String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  bid       Bid?     @relation(fields: [bidId], references: [id])
+  bidId     String?
 }

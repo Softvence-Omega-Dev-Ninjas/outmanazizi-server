@@ -166,7 +166,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       case 'PAYMENT_RELEASED':
         return `Your payment for job ${payload.jobId} has been released.`;
       case 'DISPUTE_RESOLVED':
-        return `Dispute for job ${payload.jobId} has been resolved.`;
+        return `Dispute for Bid ${payload.jobId} has been resolved.`;
       default:
         return 'You have a new notification.';
     }

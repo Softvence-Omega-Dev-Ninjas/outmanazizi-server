@@ -16,7 +16,7 @@ export class DisputeService {
   ) { }
 
   async create(createDisputeDto: CreateDisputeDto, userId: string, images: string[]) {
-    this.logger.log(`Creating dispute for user ${userId} with bid ID ${createDisputeDto.bidId}`);
+    this.logger.log(`Creating dispute for user ${userId} with service ID ${createDisputeDto.serviceid}`);
 
     try {
       const userExists = await this.prisma.user.findUnique({
@@ -27,37 +27,37 @@ export class DisputeService {
         throw new NotFoundException('UserId not found');
       }
 
-      const againstDisputId = await this.helperService.userExistsByUserid(createDisputeDto.againstDisputId);
 
-      if (!againstDisputId) {
-        this.logger.warn(`Against user with ID ${createDisputeDto.againstDisputId} does not exist`);
-        throw new NotFoundException('Against userId not found');
-      }
-      const bidExists = await this.prisma.bid.findUnique({
-        where: { id: createDisputeDto.bidId },
+      const jobExists = await this.prisma.service.findUnique({
+        where: { id: createDisputeDto.serviceid },
+        include: {
+          assignedServiceProvider: {
+            select: { userId: true }
+          }
+        },
       });
-      if (!bidExists) {
-        this.logger.warn(`Bid with ID ${createDisputeDto.bidId} does not exist`);
-        throw new NotFoundException('Bid not found');
+      const againstId = jobExists?.assignedServiceProvider?.userId;
+      if (!jobExists) {
+        this.logger.warn(`Job with ID ${createDisputeDto.serviceid} does not exist`);
+        throw new NotFoundException('Job not found');
       }
       const disputeExists = await this.prisma.dispute.findFirst({
         where: {
           AND: [
-            { bidId: createDisputeDto.bidId },
-            { againstId: createDisputeDto.againstDisputId },
+            { serviceid: createDisputeDto.serviceid },
+            { againstId },
           ]
-
         },
       });
       if (disputeExists) {
-        this.logger.warn(` You have already raised a dispute for bid ID ${createDisputeDto.bidId} against user ID ${createDisputeDto.againstDisputId}`);
-        return ApiResponse.error(' You have already raised a dispute for this bid against the specified user');
+        this.logger.warn(` You have already raised a dispute for service ID ${createDisputeDto.serviceid} against user ID ${jobExists.assignedServiceProvider?.userId}`);
+        return ApiResponse.error(' You have already raised a dispute for this service against the specified user');
       }
       const result = await this.prisma.dispute.create({
         data: {
-          bidId: createDisputeDto.bidId,
+          serviceid: createDisputeDto.serviceid,
           userId: userId,
-          againstId: createDisputeDto.againstDisputId,
+          againstId: againstId || '',
           details: createDisputeDto.details,
           pictures: images,
           isSolved: false,
@@ -66,7 +66,7 @@ export class DisputeService {
       return ApiResponse.success(result, 'Dispute created successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to create dispute for user ${userId} with bid ID ${createDisputeDto.bidId}: ${message}`, message);
+      this.logger.error(`Failed to create dispute for user ${userId} with service ID ${createDisputeDto.serviceid}: ${message}`, message);
       return ApiResponse.error(message);
     }
   }
@@ -163,7 +163,7 @@ export class DisputeService {
       });
       if (disputeExists?.isSolved) {
         this.logger.warn(`Dispute with ID ${id} is already resolved`);
-        return ApiResponse.success(disputeExists, 'Dispute is already resolved');
+        // return ApiResponse.success(disputeExists, 'Dispute is already resolved');
       }
       if (!disputeExists) {
         this.logger.warn(`Dispute with ID ${id} does not exist`);
@@ -173,6 +173,7 @@ export class DisputeService {
         where: { id: id },
         data: { isSolved: true },
       });
+      console.log(disputeExists);
       this.logger.log(`Dispute with ID ${id} has been resolved`);
       this.eventEmitter.emit(
         'Notification',
@@ -180,9 +181,16 @@ export class DisputeService {
           toNotification: disputeExists.userId,
           fromNotification: userid,
           type: 'DISPUTE_RESOLVED',
-          data: {
-            jobId: disputeExists.bidId,
-          },
+          jobId: disputeExists.id,
+        },
+      );
+      this.eventEmitter.emit(
+        'Notification',
+        {
+          toNotification: disputeExists.againstId,
+          fromNotification: userid,
+          type: 'DISPUTE_RESOLVED',
+          jobId: disputeExists.id,
         },
       );
       return ApiResponse.success(resolvedDispute, 'Dispute resolved successfully');

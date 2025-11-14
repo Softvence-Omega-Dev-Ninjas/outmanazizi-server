@@ -23,4 +23,5 @@ model Service {
   assignedServiceProviderId      String?
   assignedServiceProvider        ServiceProvider? @relation(fields: [assignedServiceProviderId], references: [id])
   reviews                        Review[]
+  disputes                       Dispute[]
 }

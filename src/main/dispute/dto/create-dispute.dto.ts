@@ -8,16 +8,7 @@ export class CreateDisputeDto {
   })
   @IsUUID()
   @IsNotEmpty()
-  bidId: string;
-
-
-  @ApiProperty({
-    description: 'The ID of the user associated with the dispute',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  againstDisputId: string;
+  serviceid: string;
 
 
   @ApiProperty({
