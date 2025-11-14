@@ -20,13 +20,11 @@ export class DisputeService {
       const userExists = await this.prisma.user.findUnique({
         where: { id: userId },
       });
-      // console.log(userExists);
       if (!userExists) {
         this.logger.warn(`User with ID ${userId} does not exist`);
         throw new NotFoundException('UserId not found');
       }
 
-      // console.log(userExists);
       const againstDisputId = await this.helperService.userExistsByUserid(createDisputeDto.againstDisputId);
 
       if (!againstDisputId) {
