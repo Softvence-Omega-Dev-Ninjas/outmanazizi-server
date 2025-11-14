@@ -43,10 +43,7 @@ export class DisputeService {
       }
       const disputeExists = await this.prisma.dispute.findFirst({
         where: {
-          AND: [
-            { serviceid: createDisputeDto.serviceid },
-            { againstId },
-          ]
+          serviceid: createDisputeDto.serviceid
         },
       });
       if (disputeExists) {
