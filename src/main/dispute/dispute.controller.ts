@@ -66,7 +66,7 @@ export class DisputeController {
   @Patch('resolve/:id')
   @ApiOperation({ summary: 'Resolve a dispute (admin functionality)' })
   @UseGuards(AuthenticationGuard)
-  async resolveDispute(@Param('id') id: string) {
-    return await this.disputeService.resolveDispute(id);
+  async resolveDispute(@Param('id') id: string, @Req() req: Request) {
+    return await this.disputeService.resolveDispute(id, req['userid'] as string);
   }
 }

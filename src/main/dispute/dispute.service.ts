@@ -4,13 +4,15 @@ import { UpdateDisputeDto } from './dto/update-dispute.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { HelperService } from 'src/utils/helper/helper.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class DisputeService {
-  logger = new Logger(DisputeService.name);
+  private readonly logger = new Logger(DisputeService.name);
   constructor(
     private readonly prisma: PrismaService,
-    private readonly helperService: HelperService
+    private readonly helperService: HelperService,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   async create(createDisputeDto: CreateDisputeDto, userId: string, images: string[]) {
@@ -68,8 +70,6 @@ export class DisputeService {
       return ApiResponse.error(message);
     }
   }
-
-
 
   async findAll() {
     try {
@@ -155,13 +155,16 @@ export class DisputeService {
       return ApiResponse.error(message);
     }
   }
-
   // resolve a dispute (admin functionality)
-  async resolveDispute(id: string) {
+  async resolveDispute(id: string, userid: string) {
     try {
       const disputeExists = await this.prisma.dispute.findUnique({
         where: { id: id },
       });
+      if (disputeExists?.isSolved) {
+        this.logger.warn(`Dispute with ID ${id} is already resolved`);
+        return ApiResponse.success(disputeExists, 'Dispute is already resolved');
+      }
       if (!disputeExists) {
         this.logger.warn(`Dispute with ID ${id} does not exist`);
         throw new NotFoundException('Dispute not found');
@@ -170,6 +173,18 @@ export class DisputeService {
         where: { id: id },
         data: { isSolved: true },
       });
+      this.logger.log(`Dispute with ID ${id} has been resolved`);
+      this.eventEmitter.emit(
+        'Notification',
+        {
+          toNotification: disputeExists.userId,
+          fromNotification: userid,
+          type: 'DISPUTE_RESOLVED',
+          data: {
+            jobId: disputeExists.bidId,
+          },
+        },
+      );
       return ApiResponse.success(resolvedDispute, 'Dispute resolved successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';

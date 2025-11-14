@@ -138,7 +138,8 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   @OnEvent('Notification')
   async handleJobCompletedEvent(payload: EventPayload) {
     const receiverSocketId: string = this.cache.get(payload.toNotification) as string;
-    const message = this.getMessage('JOB_DONE', payload);
+    const eventType: string = (payload as unknown as { type?: string }).type ?? 'UNKNOWN';
+    const message = this.getMessage(eventType, payload);
     this.server.to(receiverSocketId).emit('new_notification', {
       jobId: payload.jobId,
       message: `  ${message}`,
@@ -164,6 +165,8 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
         return `Job ${payload.jobId} was rejected.`;
       case 'PAYMENT_RELEASED':
         return `Your payment for job ${payload.jobId} has been released.`;
+      case 'DISPUTE_RESOLVED':
+        return `Dispute for job ${payload.jobId} has been resolved.`;
       default:
         return 'You have a new notification.';
     }

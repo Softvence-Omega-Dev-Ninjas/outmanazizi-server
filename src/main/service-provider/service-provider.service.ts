@@ -217,6 +217,7 @@ export class ServiceProviderService {
       this.logger.log(`Service ${serviceId} marked as completed by service provider ${userid}`);
       this.eventEmitter.emit(
         'Notification',
+
         { fromNotification: userid, jobId: updatedService.id, toNotification: service.userId },
       );
       return ApiResponse.success(
