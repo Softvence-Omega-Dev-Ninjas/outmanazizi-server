@@ -12,6 +12,7 @@ export class DisputeService {
     private readonly prisma: PrismaService,
     private readonly helperService: HelperService
   ) { }
+
   async create(createDisputeDto: CreateDisputeDto, userId: string, images: string[]) {
     this.logger.log(`Creating dispute for user ${userId} with bid ID ${createDisputeDto.bidId}`);
 
@@ -19,13 +20,13 @@ export class DisputeService {
       const userExists = await this.prisma.user.findUnique({
         where: { id: userId },
       });
-      console.log(userExists);
+      // console.log(userExists);
       if (!userExists) {
         this.logger.warn(`User with ID ${userId} does not exist`);
         throw new NotFoundException('UserId not found');
       }
 
-      console.log(userExists);
+      // console.log(userExists);
       const againstDisputId = await this.helperService.userExistsByUserid(createDisputeDto.againstDisputId);
 
       if (!againstDisputId) {

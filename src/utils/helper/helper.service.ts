@@ -27,9 +27,9 @@ export class HelperService {
       where: { id: userId },
     });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    // if (!user) {
+    //   throw new NotFoundException('User not found');
+    // }
     return user;
   }
 
