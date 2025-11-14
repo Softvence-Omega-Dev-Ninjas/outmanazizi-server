@@ -21,7 +21,6 @@ export class AdminController {
 
   // Make Service Provider verified
   @Patch('verify-service-provider/:userid')
-
   @ApiOperation({ summary: 'Make Service Provider verified' })
   async create(@Param('userid') userid: string) {
     return await this.adminService.serviceProviderVerification(userid);
