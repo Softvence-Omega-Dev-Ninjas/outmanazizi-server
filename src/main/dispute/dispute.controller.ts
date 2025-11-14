@@ -69,4 +69,13 @@ export class DisputeController {
   async resolveDispute(@Param('id') id: string, @Req() req: Request) {
     return await this.disputeService.resolveDispute(id, req['userid'] as string);
   }
+
+  // specific dispute by id
+  @Get(':id')
+  @ApiOperation({ summary: 'Get dispute by ID (Admin functionality)' })
+  @UseGuards(AuthenticationGuard)
+  async findOne(@Param('id') id: string) {
+    return await this.disputeService.findOne(id);
+  }
+
 }

@@ -1,10 +1,12 @@
 model Dispute {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   serviceid String
-  service   Service  @relation(fields: [serviceid], references: [id])
+  service   Service @relation(fields: [serviceid], references: [id])
   userId    String
-  user      User     @relation("DisputeBy", fields: [userId], references: [id])
+  user      User    @relation("DisputeBy", fields: [userId], references: [id])
+
   againstId String
+  against   User     @relation("DisputeAgainst", fields: [againstId], references: [id])
   details   String
   isSolved  Boolean  @default(false)
   pictures  String[]

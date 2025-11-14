@@ -197,4 +197,33 @@ export class DisputeService {
       return ApiResponse.error(message);
     }
   }
+
+
+  // get specific dispute by id
+  async findOne(id: string) {
+    try {
+      const dispute = await this.prisma.dispute.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+              phone: true,
+              picture: true,
+            }
+          }
+        }
+      });
+      if (!dispute) {
+        this.logger.warn(`Dispute with ID ${id} does not exist`);
+        throw new NotFoundException('Dispute not found');
+      }
+      return ApiResponse.success(dispute, 'Dispute retrieved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to retrieve dispute with ID ${id}: ${message}`, message);
+      return ApiResponse.error(message);
+    }
+  }
 }
