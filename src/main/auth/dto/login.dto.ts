@@ -22,7 +22,7 @@ export class LoginDto {
 
   @ApiProperty({
     description: 'User role',
-    example: 'SERVICE_PROVIDER',
+    example: UserRole.CONSUMER,
     enum: UserRole,
   })
   @IsEnum(UserRole, { message: 'Role must be either USER or SERVICE_PROVIDER' })

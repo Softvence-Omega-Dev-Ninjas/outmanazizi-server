@@ -1,21 +1,27 @@
-import { Controller, Get, Patch, Param, Delete, Body, Post } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Delete, Body, Post, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { Public } from 'src/guards/public.decorator';
 import { AreaAndservicesService } from './area-andservices/area-andservices.service';
 import { CreateAreaDto, CreateServicesDto } from './dto/areaAndServices.dto';
 import { CreateSubServicesDto } from './dto/createSubServices.dto';
+import { RolesGuard } from 'src/guards/role.guard';
+import { UserRole } from '../auth/role.enum';
+import { AuthenticationGuard } from 'src/guards/auth.guard';
+import { Roles } from 'src/guards/roles.decorator';
 
 @Controller('admin')
+@UseGuards(RolesGuard, AuthenticationGuard)
+@Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly areaAndservicesService: AreaAndservicesService,
-  ) {}
+  ) { }
 
   // Make Service Provider verified
   @Patch('verify-service-provider/:userid')
-  @Public()
+
   @ApiOperation({ summary: 'Make Service Provider verified' })
   async create(@Param('userid') userid: string) {
     return await this.adminService.serviceProviderVerification(userid);
@@ -29,14 +35,12 @@ export class AdminController {
   }
 
   @Patch('blocked/:userid')
-  @Public()
   @ApiOperation({ summary: 'Blocked a User ' })
   async blockedUser(@Param('userid') userid: string) {
     return await this.adminService.blockedUser(userid);
   }
 
   @Patch('delete/:userid')
-  @Public()
   @ApiOperation({ summary: 'Delete  a User ' })
   async deleteUser(@Param('userid') userid: string) {
     return await this.adminService.deleteUser(userid);
@@ -44,7 +48,6 @@ export class AdminController {
 
   // Delete a service, which is created by service provider
   @Delete('service/:serviceid')
-  @Public()
   @ApiOperation({
     summary: 'Delete a service, which is created by service provider',
   })
@@ -54,14 +57,12 @@ export class AdminController {
 
   // create area and services
   @Post('create-area')
-  @Public()
   @ApiOperation({ summary: 'Create area  ' })
   async createAreaAndServices(@Body() body: CreateAreaDto) {
     return await this.areaAndservicesService.createArea(body);
   }
 
   @Post('create-service')
-  @Public()
   @ApiOperation({ summary: 'Create service  ' })
   async createServices(@Body() body: CreateServicesDto) {
     return await this.areaAndservicesService.createServices(body);
@@ -75,14 +76,12 @@ export class AdminController {
   }
   // find all serviceProvider
   @Get('all-service-provider')
-  @Public()
   @ApiOperation({ summary: 'Find all serviceProvider  ' })
   async findAllServiceProvider() {
     return await this.adminService.findAllServiceProvider();
   }
   // create sub services
   @Post('create-sub-service')
-  @Public()
   @ApiOperation({ summary: 'Create sub services  ' })
   async createSubServices(@Body() body: CreateSubServicesDto) {
     return await this.areaAndservicesService.createSubServices(body);

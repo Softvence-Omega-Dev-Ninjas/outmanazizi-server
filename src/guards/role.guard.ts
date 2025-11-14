@@ -10,7 +10,7 @@ import { ROLES_KEY } from './roles.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private reflector: Reflector) { }
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
@@ -19,9 +19,12 @@ export class RolesGuard implements CanActivate {
     ]);
 
     if (!requiredRoles || requiredRoles.length === 0) return true;
+    console.log({ requiredRoles });
 
     const request = context.switchToHttp().getRequest<{ role?: string }>();
+
     const userRole = request.role;
+    console.log({ userRole });
     if (!userRole) {
       throw new NotFoundException('User role not found');
     }
