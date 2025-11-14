@@ -94,11 +94,87 @@ export class DisputeService {
     }
   }
 
-  update(id: number, updateDisputeDto: UpdateDisputeDto) {
-    return `This action updates a #${id} dispute`;
+  async update(id: string, updateDisputeDto: UpdateDisputeDto, userId: string, images: string[]) {
+    try {
+      const userAndDisputeExists = await this.prisma.dispute.findFirst({
+        where: {
+          AND: [
+            { id: id },
+            { userId: userId },
+          ]
+        },
+      })
+      if (!userAndDisputeExists) {
+        this.logger.warn(`Dispute with ID ${id} for user ${userId} does not exist`);
+        throw new NotFoundException('Dispute not found for this user');
+      }
+      const disputeExists = await this.prisma.dispute.findUnique({
+        where: { id: id },
+      });
+      if (!disputeExists) {
+        this.logger.warn(`Dispute with ID ${id} does not exist`);
+        throw new NotFoundException('Dispute not found');
+      }
+      const updatedDispute = await this.prisma.dispute.update({
+        where: { id: id },
+        data: {
+          details: updateDisputeDto.details || disputeExists.details,
+          pictures: images.length > 0 ? images : disputeExists.pictures,
+        },
+      });
+      return ApiResponse.success(updatedDispute, 'Dispute updated successfully');
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to update dispute with ID ${id}: ${message}`, message);
+      return ApiResponse.error(message);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} dispute`;
+  async remove(id: string, userId: string) {
+    try {
+      const disputeExistsByUser = await this.prisma.dispute.findFirst({
+        where: {
+          AND: [
+            { id: id },
+            { userId: userId },
+          ]
+        },
+      });
+      if (!disputeExistsByUser) {
+        this.logger.warn(`Dispute with ID ${id} for user ${userId} does not exist`);
+        throw new NotFoundException('Dispute not found for this user');
+      }
+      const res = await this.prisma.dispute.delete({
+        where: { id: id },
+      });
+      return ApiResponse.success(res, 'Dispute deleted successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to delete dispute with ID ${id}: ${message}`, message);
+      return ApiResponse.error(message);
+    }
+  }
+
+  // resolve a dispute (admin functionality)
+  async resolveDispute(id: string) {
+    try {
+      const disputeExists = await this.prisma.dispute.findUnique({
+        where: { id: id },
+      });
+      if (!disputeExists) {
+        this.logger.warn(`Dispute with ID ${id} does not exist`);
+        throw new NotFoundException('Dispute not found');
+      }
+      const resolvedDispute = await this.prisma.dispute.update({
+        where: { id: id },
+        data: { isSolved: true },
+      });
+      return ApiResponse.success(resolvedDispute, 'Dispute resolved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to resolve dispute with ID ${id}: ${message}`, message);
+      return ApiResponse.error(message);
+    }
   }
 }

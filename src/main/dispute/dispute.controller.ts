@@ -27,6 +27,8 @@ export class DisputeController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all disputes (admin functionality)' })
+  @UseGuards(AuthenticationGuard)
   async findAll() {
     return await this.disputeService.findAll();
   }
@@ -40,12 +42,31 @@ export class DisputeController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDisputeDto: UpdateDisputeDto) {
-    return this.disputeService.update(+id, updateDisputeDto);
+  @ApiOperation({ summary: 'Update dispute data' })
+  @UseGuards(AuthenticationGuard)
+  @ApiBody({ type: UpdateDisputeDto })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('images', 10, { storage: storageConfig() }))
+  async update(@Param('id') id: string, @Body() updateDisputeDto: UpdateDisputeDto, @UploadedFiles() images: Express.Multer.File[], @Req() req: Request) {
+    const domain = process.env.DOMAIN;
+    if (!domain) {
+      throw new BadRequestException('DOMAIN must be defined in environment variables');
+    }
+    const image = images.map((f) => `${domain}/uploads/${f.filename}`);
+    return await this.disputeService.update(id, updateDisputeDto, req['userid'] as string, image);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.disputeService.remove(+id);
+  @ApiOperation({ summary: 'Delete dispute data' })
+  @UseGuards(AuthenticationGuard)
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    return await this.disputeService.remove(id, req['userid'] as string);
+  }
+
+  @Patch('resolve/:id')
+  @ApiOperation({ summary: 'Resolve a dispute (admin functionality)' })
+  @UseGuards(AuthenticationGuard)
+  async resolveDispute(@Param('id') id: string) {
+    return await this.disputeService.resolveDispute(id);
   }
 }
