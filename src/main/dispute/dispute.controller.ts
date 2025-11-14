@@ -18,8 +18,6 @@ export class DisputeController {
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('images', 10, { storage: storageConfig() }))
   async create(@Body() createDisputeDto: CreateDisputeDto, @UploadedFiles() images: Express.Multer.File[], @Req() req: Request) {
-
-
     const domain = process.env.DOMAIN;
     if (!domain) {
       throw new BadRequestException('DOMAIN must be defined in environment variables');
@@ -29,13 +27,16 @@ export class DisputeController {
   }
 
   @Get()
-  findAll() {
-    return this.disputeService.findAll();
+  async findAll() {
+    return await this.disputeService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.disputeService.findOne(+id);
+  // get dispute by specific user id
+  @Get('current-user')
+  @ApiOperation({ summary: 'Get disputes for the current authenticated user' })
+  @UseGuards(AuthenticationGuard)
+  find(@Req() req: Request) {
+    return this.disputeService.findDisputeByUser(req['userid'] as string);
   }
 
   @Patch(':id')

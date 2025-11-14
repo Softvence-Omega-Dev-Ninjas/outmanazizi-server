@@ -71,12 +71,27 @@ export class DisputeService {
 
 
 
-  findAll() {
-    return `This action returns all dispute`;
+  async findAll() {
+    try {
+      return ApiResponse.success(await this.prisma.dispute.findMany(), 'Disputes retrieved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to retrieve disputes: ${message}`, message);
+      return ApiResponse.error(message);
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} dispute`;
+  async findDisputeByUser(userId: string) {
+    try {
+      const res = await this.prisma.dispute.findMany({
+        where: { userId: userId },
+      });
+      return ApiResponse.success(res, 'User disputes retrieved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to retrieve disputes for user ${userId}: ${message}`, message);
+      return ApiResponse.error(message);
+    }
   }
 
   update(id: number, updateDisputeDto: UpdateDisputeDto) {
