@@ -5,7 +5,6 @@ model Dispute {
   userId    String
   user      User     @relation("DisputeBy", fields: [userId], references: [id])
   againstId String
-  against   User     @relation("DisputeAgainst", fields: [againstId], references: [id])
   details   String
   isSolved  Boolean  @default(false)
   pictures  String[]

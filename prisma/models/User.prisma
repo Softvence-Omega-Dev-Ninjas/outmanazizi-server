@@ -34,7 +34,6 @@ model User {
   receivedNotifications Notification[] @relation("ReceivedNotifications")
   order                 Order[]
   disputesBy            Dispute[]      @relation("DisputeBy")
-  disputesAgainst       Dispute[]      @relation("DisputeAgainst")
 }
 
 enum Role {
