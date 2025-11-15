@@ -58,8 +58,8 @@ export class PaymentsService {
         where: { id: userId },
       });
       if (!userExistsByUserid || !userExistsByUserid.customerIdFromStripe || !userExistsByUserid.paymentMethodIdFromStripe) {
-        this.logger.warn(`User not found: ${userId}`);
-        throw new NotFoundException('User not found');
+        this.logger.warn(`User not found or missing Stripe customer/payment method for userId: ${userId}`);
+        throw new NotFoundException(' User not found or missing Stripe customer/payment method');
       }
       const adminAccount = process.env.ADMIN_ACCOUNT;
       if (!adminAccount) {
@@ -76,9 +76,20 @@ export class PaymentsService {
         payment_method: userExistsByUserid.paymentMethodIdFromStripe,
         confirm: true,
       });
-
+      const bidExists = await this.prisma.bid.findUniqueOrThrow({
+        where: { id: dto.bidId },
+      })
+      const oder = await this.prisma.order.create({
+        data: {
+          serviceProviderId: bidExists.serviceProviderId,
+          consumerId: userId,
+          bidId: dto.bidId,
+          paymentIntentId: paymentIntent.id,
+          status: 'IN_PROGRESS',
+        }
+      })
       this.logger.log(`Payment intent created successfully for userId: ${userId}`);
-      return ApiResponse.success(paymentIntent, 'Payment intent created successfully');
+      return ApiResponse.success(oder, 'Payment intent created successfully');
     } catch (error) {
       this.logger.error(`Failed to create payment intent for userId: ${userId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -87,23 +98,59 @@ export class PaymentsService {
   }
 
   async createTransfer(dto: CreateTransferDto) {
-    this.logger.log(`Creating transfer for amount: ${dto.amountCents}`);
+
     try {
-      const sellerAccount = await this.stripe.accounts.retrieve(dto.destinationAcctId);
+      const orderExists = await this.prisma.order.findUnique({
+        where: { id: dto.orderId },
+      });
+      if (!orderExists) {
+        this.logger.warn(`Order not found: ${dto.orderId}`);
+        throw new NotFoundException('Order not found');
+      }
+      const bidExists = await this.prisma.bid.findUnique({
+        where: { id: orderExists.bidId },
+        include: {
+          serviceProvider: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+      if (!bidExists) {
+        this.logger.warn(`Bid not found for order: ${dto.orderId}`);
+        throw new NotFoundException('Bid not found for the given order');
+      }
+      const stripeAccountId = bidExists.serviceProvider.user.stripeAccountId;
+      if (!stripeAccountId) {
+        this.logger.warn(`Service provider does not have a Stripe account ID: ${bidExists.serviceProviderId}`);
+        throw new NotFoundException('Service provider Stripe account ID not found');
+      }
+      const sellerAccount = await this.stripe.accounts.retrieve(stripeAccountId);
       if (!sellerAccount) {
-        this.logger.warn(`Seller account not found: ${dto.destinationAcctId}`);
+        this.logger.warn(`Seller account not found: ${stripeAccountId}`);
         throw new NotFoundException('Seller account not found');
       }
       if (sellerAccount?.capabilities?.transfers !== 'active') {
         throw new Error('Seller account is not ready for transfers');
       }
-      const transfer = await this.stripe.transfers.create({
+
+      await this.stripe.transfers.create({
         amount: dto.amountCents,
-        currency: dto.currency || 'usd',
-        destination: dto.destinationAcctId,
+        currency: 'usd',
+        destination: stripeAccountId,
+      });
+
+      const orderUpdate = await this.prisma.order.update({
+        where: {
+          id: dto.orderId
+        },
+        data: {
+          status: 'COMPLETED'
+        }
       });
       this.logger.log(`Transfer created successfully for amount: ${dto.amountCents}`);
-      return ApiResponse.success(transfer, 'Transfer created successfully');
+      return ApiResponse.success(orderUpdate, 'Transfer created successfully');
     } catch (error) {
       this.logger.error(`Failed to create transfer for amount: ${dto.amountCents}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -113,11 +160,24 @@ export class PaymentsService {
 
   async refundCharge(dto: RefundDto) {
     try {
-      const refund = await this.stripe.refunds.create({
-        payment_intent: dto.paymentIntentId,
-        amount: dto.amount,
+      const orderExists = await this.prisma.order.findUnique({
+        where: { id: dto.orderId },
       });
-      // this.logger.log(`Refund processed successfully for chargeId: ${dto.chargeId}`);
+      if (!orderExists) {
+        this.logger.warn(`Order not found: ${dto.orderId}`);
+        throw new NotFoundException('Order not found');
+      }
+      const refund = await this.stripe.refunds.create({
+        payment_intent: orderExists.paymentIntentId,
+        amount: parseInt(dto.amount, 10),
+      });
+      if (refund.status === 'succeeded') {
+        await this.prisma.order.update({
+          where: { id: dto.orderId },
+          data: { status: 'CANCELLED' },
+        });
+      }
+      this.logger.log(`Refund processed successfully for chargeId: ${orderExists.paymentIntentId}`);
       return refund;
     } catch (error) {
       // this.logger.error(`Failed to process refund for chargeId: ${dto.chargeId}`, error);
