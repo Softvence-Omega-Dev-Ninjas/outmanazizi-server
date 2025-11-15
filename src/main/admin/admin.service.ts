@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -126,6 +127,26 @@ export class AdminService {
     return ApiResponse.success(
       orders,
       'All orders fetched successfully',
+    );
+
+
+  }
+  async changeUserRole(userid: string, role: Role) {
+    const userExits = await this.prisma.user.findUnique({
+      where: { id: userid },
+    });
+    if (!userExits) {
+      throw new UnauthorizedException('User does not exists');
+    }
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userid },
+      data: {
+        role: role,
+      },
+    });
+    return ApiResponse.success(
+      updatedUser,
+      'User role is updated successfully',
     );
   }
 }

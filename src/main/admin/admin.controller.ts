@@ -92,4 +92,15 @@ export class AdminController {
   async findAllOrders() {
     return await this.adminService.findAllOrders();
   }
+  // change role of a user
+  @Patch('change-role/:userid/:role')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Change role of a user  ' })
+  async changeUserRole(
+    @Param('userid') userid: string,
+    @Param('role') role: UserRole,
+  ) {
+    return await this.adminService.changeUserRole(userid, role);
+  }
 }
