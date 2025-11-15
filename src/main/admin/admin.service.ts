@@ -121,4 +121,11 @@ export class AdminService {
       'All service providers fetched successfully',
     );
   }
+  async findAllOrders() {
+    const orders = await this.prisma.order.findMany({});
+    return ApiResponse.success(
+      orders,
+      'All orders fetched successfully',
+    );
+  }
 }

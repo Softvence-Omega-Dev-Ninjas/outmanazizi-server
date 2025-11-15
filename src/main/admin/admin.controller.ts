@@ -85,4 +85,11 @@ export class AdminController {
   async createSubServices(@Body() body: CreateSubServicesDto) {
     return await this.areaAndservicesService.createSubServices(body);
   }
+  @Get('all-orders')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Find all orders  ' })
+  async findAllOrders() {
+    return await this.adminService.findAllOrders();
+  }
 }
