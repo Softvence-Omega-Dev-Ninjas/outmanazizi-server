@@ -122,6 +122,7 @@ export class ServiceProviderService {
       });
       this.logger.log(`Documents uploaded successfully for user: ${userid}`);
       return ApiResponse.success(updatedServiceProvider, 'Documents uploaded  successfully');
+
     } catch (error) {
       this.logger.error(`Error uploading documents for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
