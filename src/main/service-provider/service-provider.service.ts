@@ -181,17 +181,23 @@ export class ServiceProviderService {
   }
 
   async myBids(userid: string) {
-    const validSerivceProvider = await this.helperService.validServiceProvider(userid);
-    if (!validSerivceProvider) {
-      throw new NotFoundException('Invalid service provider');
+    try {
+      const validSerivceProvider = await this.helperService.validServiceProvider(userid);
+      if (!validSerivceProvider) {
+        throw new NotFoundException('Invalid service provider');
+      }
+      const bids = await this.prisma.bid.findMany({
+        where: { serviceProviderId: validSerivceProvider.id },
+        include: {
+          service: true,
+        },
+      });
+      return ApiResponse.success(bids, 'Bids retrieved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error(`Error retrieving bids for service provider ${userid}: ${message}`);
+      throw new BadRequestException(message);
     }
-    const bids = await this.prisma.bid.findMany({
-      where: { serviceProviderId: validSerivceProvider.id },
-      include: {
-        service: true,
-      },
-    });
-    return ApiResponse.success(bids, 'Bids retrieved successfully');
   }
 
   async workComplete(userid: string, serviceId: string) {
