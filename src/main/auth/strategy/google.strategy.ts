@@ -37,7 +37,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     if (!user.email) {
       return done(new Error('No email associated with this account!'), false);
     }
-    const userInDb = await this.prisma.user.findUnique({ where: { email: user.email } });
+
+    await this.prisma.user.findUnique({ where: { email: user.email } });
 
 
     done(null, user);
