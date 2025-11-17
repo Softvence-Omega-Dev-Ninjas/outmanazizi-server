@@ -57,15 +57,17 @@ export class PaymentsService {
       const userExistsByUserid = await this.prisma.user.findUnique({
         where: { id: userId },
       });
+      const bidExists = await this.prisma.bid.findUniqueOrThrow({
+        where: { id: dto.bidId },
+      })
+      if (!bidExists) {
+        throw new NotFoundException('Bid not found');
+      }
       if (!userExistsByUserid || !userExistsByUserid.customerIdFromStripe || !userExistsByUserid.paymentMethodIdFromStripe) {
         this.logger.warn(`User not found or missing Stripe customer/payment method for userId: ${userId}`);
         throw new NotFoundException(' User not found or missing Stripe customer/payment method');
       }
-      const adminAccount = process.env.ADMIN_ACCOUNT;
-      if (!adminAccount) {
-        this.logger.error('ADMIN_ACCOUNT not configured in environment');
-        throw new NotFoundException('Admin account not configured');
-      }
+
 
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: dto.amount,
@@ -76,9 +78,17 @@ export class PaymentsService {
         payment_method: userExistsByUserid.paymentMethodIdFromStripe,
         confirm: true,
       });
-      const bidExists = await this.prisma.bid.findUniqueOrThrow({
-        where: { id: dto.bidId },
-      })
+      const orderExists = await this.prisma.order.findFirst({
+        where: {
+          consumerId: userId,
+          serviceProviderId: bidExists.serviceProviderId,
+        },
+      });
+      if (orderExists) {
+        this.logger.warn(`Order already exists for bidId: ${dto.bidId}`);
+        throw new NotFoundException('Order already exists for the given bid');
+      }
+
       const oder = await this.prisma.order.create({
         data: {
           serviceProviderId: bidExists.serviceProviderId,

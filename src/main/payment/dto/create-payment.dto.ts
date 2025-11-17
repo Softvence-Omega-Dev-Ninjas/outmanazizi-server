@@ -11,6 +11,8 @@ export class CreatePaymentIntentDto {
   @IsNumber()
   @IsPositive()
   amount: number;
+
+
 }
 
 export class CreateTransferDto {
