@@ -263,26 +263,32 @@ export class ServiceProviderService {
   // my accepted bids
   async myAcceptedBids(userid: string) {
     this.logger.log(`Fetching accepted bids for service provider: ${userid}`);
-    const validSerivceProvider = await this.helperService.validServiceProvider(userid);
-    if (!validSerivceProvider) {
-      this.logger.error(`Invalid service provider: ${userid}`);
-      throw new NotFoundException('Invalid service provider');
-    }
-    const bids = await this.prisma.bid.findMany({
-      where: {
-        serviceProviderId: validSerivceProvider.id,
-        status: 'ACCEPTED',
-        service: {
-          isCompletedFromServiceProvider: true,
-          isCompleteFromConsumer: true,
+    try {
+      const validSerivceProvider = await this.helperService.validServiceProvider(userid);
+      if (!validSerivceProvider) {
+        this.logger.error(`Invalid service provider: ${userid}`);
+        throw new NotFoundException('Invalid service provider');
+      }
+      const bids = await this.prisma.bid.findMany({
+        where: {
+          serviceProviderId: validSerivceProvider.id,
+          status: 'ACCEPTED',
+          service: {
+            isCompletedFromServiceProvider: true,
+            isCompleteFromConsumer: true,
+          },
         },
-      },
-      include: {
-        service: true,
-      },
-    });
-    this.logger.log(`Accepted bids retrieved successfully for service provider: ${userid}`);
-    return ApiResponse.success(bids, 'Accepted bids retrieved successfully');
+        include: {
+          service: true,
+        },
+      });
+      this.logger.log(`Accepted bids retrieved successfully for service provider: ${userid}`);
+      return ApiResponse.success(bids, 'Accepted bids retrieved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error(`Error retrieving accepted bids for service provider ${userid}: ${message}`);
+      throw new BadRequestException(message);
+    }
   }
   // specific consumer  info
   async getConsumerInfo(id: string) {
