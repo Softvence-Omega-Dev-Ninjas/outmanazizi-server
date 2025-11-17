@@ -6,7 +6,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly prisma: PrismaService) {
-    console.log('passport initialized');
     super({
       clientID: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
@@ -19,7 +18,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Record<string, any>,
     done: VerifyCallback,
   ): Promise<void> {
-    console.log('profile', profile);
 
     if (!profile) {
       done(null, false);
