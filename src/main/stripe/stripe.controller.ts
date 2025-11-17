@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { StripeService } from './stripe.service';
 import { Public } from 'src/guards/public.decorator';
 import { CreateLoginLinkDto } from './dto/create-stripe.dto';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Stripe } from 'stripe';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 
@@ -43,5 +43,14 @@ export class StripeController {
   async getStripeInfo(@Req() req: Request) {
     const info = await this.stripeService.getStripeInfo(req['userid'] as string);
     return info;
+  }
+
+
+  @ApiTags('ServiceProvider')
+  @Get('/service-provider/payout-history')
+  @UseGuards(AuthenticationGuard)
+  async getPayoutHistory(@Req() req: Request) {
+    const payouts = await this.stripeService.getPayoutHistory(req['userid'] as string);
+    return payouts;
   }
 }

@@ -67,13 +67,24 @@ export class StripeService {
   async retrieveAccount(accountId: string): Promise<Stripe.Account> {
     this.logger.log(`Retrieving Stripe account for account ID: ${accountId}`);
     try {
-      const account = await this.stripe.accounts.retrieve(accountId);
-      this.logger.log(`Stripe account retrieved successfully for account ID: ${accountId}`);
-      return account;
+
+      try {
+        const account = await this.stripe.accounts.retrieve(accountId);
+        if (!account) {
+          this.logger.warn(`Stripe account not found: ${accountId}`);
+          throw new NotFoundException('Stripe account not found');
+        }
+        return account;
+      } catch (error) {
+        this.logger.error(`Stripe account not found for account ID: ${accountId}`, error);
+        throw new NotFoundException(`Stripe account not found for account ID: ${accountId}`);
+      }
+
+
     } catch (error) {
       this.logger.error('Failed to retrieve Stripe account', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Stripe Account Retrieval Failed: ${errorMessage}`);
+      throw new BadRequestException(errorMessage);
     }
   }
 
@@ -122,6 +133,39 @@ export class StripeService {
       this.logger.error('Failed to delete Stripe account', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Stripe Account Deletion Failed: ${errorMessage}`);
+    }
+  }
+  // payout history
+  async getPayoutHistory(userId: string): Promise<{ payoutsdata: { id: string; amount: number; arrival_date: number | null }[]; availableBalance: number }> {
+    this.logger.log(`Retrieving payout history for Stripe account ID: ${userId}`);
+
+    try {
+      const serviceProvider = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!serviceProvider || !serviceProvider.stripeAccountId) {
+        this.logger.warn(`Service provider or Stripe account not found for user ID: ${userId}`);
+        throw new NotFoundException('Service provider or Stripe account not found');
+      }
+      const payouts = await this.stripe.payouts.list(
+
+        { stripeAccount: serviceProvider.stripeAccountId }
+      );
+      const payoutsdata = payouts.data.map(payout => ({
+        id: payout.id,
+        amount: payout.amount,
+        arrival_date: payout.arrival_date,
+      }));
+      const balance = await this.stripe.balance.retrieve({
+        stripeAccount: serviceProvider.stripeAccountId
+      });
+
+      this.logger.log(`Payout history retrieved successfully for account ID: ${userId}`);
+      return { payoutsdata, availableBalance: balance.available[0].amount };
+    } catch (error) {
+      this.logger.error('Failed to retrieve payout history', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to retrieve payout history: ${errorMessage}`);
     }
   }
 }

@@ -177,6 +177,12 @@ export class PaymentsService {
         this.logger.warn(`Order not found: ${dto.orderId}`);
         throw new NotFoundException('Order not found');
       }
+      const captureIntent = await this.stripe.paymentIntents.retrieve(orderExists.paymentIntentId);
+      console.log(captureIntent);
+      if (captureIntent.status !== 'succeeded') {
+        this.logger.warn(`Payment intent not succeeded for order: ${dto.orderId}`);
+        throw new NotFoundException('Payment intent not succeeded, cannot process refund');
+      }
       const refund = await this.stripe.refunds.create({
         payment_intent: orderExists.paymentIntentId,
         amount: parseInt(dto.amount, 10),
@@ -187,7 +193,7 @@ export class PaymentsService {
           data: { status: 'CANCELLED' },
         });
       }
-      this.logger.log(`Refund processed successfully for chargeId: ${orderExists.paymentIntentId}`);
+      this.logger.log(`Refund processed successfully for pi: ${orderExists.paymentIntentId}`);
       return refund;
     } catch (error) {
       // this.logger.error(`Failed to process refund for chargeId: ${dto.chargeId}`, error);
