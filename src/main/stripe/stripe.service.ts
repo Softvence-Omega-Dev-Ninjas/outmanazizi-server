@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -50,12 +50,18 @@ export class StripeService {
   async generateAccountLink(accountId: string) {
     this.logger.log(`Generating account link for Stripe account ID: ${accountId}`);
     try {
+      try {
+        await this.stripe.accounts.retrieve(accountId);
+      } catch (error) {
+        this.logger.error(`Stripe account not found for account ID: ${accountId}`, error);
+        throw new NotFoundException(`Stripe account not found for account ID: ${accountId}`);
+      }
       const accountLink = await this.stripe.accounts.createLoginLink(accountId);
       return accountLink;
     } catch (error) {
       this.logger.error('Failed to generate account link', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Account Link Generation Failed: ${errorMessage}`);
+      throw new BadRequestException(errorMessage);
     }
   }
   async retrieveAccount(accountId: string): Promise<Stripe.Account> {
