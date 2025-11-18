@@ -68,6 +68,7 @@ export class JobService {
                 ratingGetFromUsers: true,
                 user: {
                   select: {
+                    id: true,
                     name: true,
                     picture: true,
                   }
@@ -157,3 +158,4 @@ export class JobService {
     }
   }
 }
+
