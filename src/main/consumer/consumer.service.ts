@@ -21,6 +21,7 @@ export class ConsumerService {
               ratingGetFromUsers: true,
               user: {
                 select: {
+                  id: true,
                   name: true,
                   picture: true,
                 },
