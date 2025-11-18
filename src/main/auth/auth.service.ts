@@ -234,10 +234,10 @@ export class AuthService {
 
       const token = await this.helperService.createTokenEntry(userExists.id, payload);
       if (String(userExists.role) === String(UserRole.SERVICE_PROVIDER)) {
-        if (!serviceProvider?.isVerifiedFromAdmin) {
-          this.logger.log(`Service provider ${loginDto.email} is verified by admin`);
-          throw new UnauthorizedException('Your account is not verified by admin yet, Provide valid documents and try again later');
-        }
+        // if (!serviceProvider?.isVerifiedFromAdmin) {
+        //   this.logger.log(`Service provider ${loginDto.email} is verified by admin`);
+        //   throw new UnauthorizedException('Your account is not verified by admin yet, Provide valid documents and try again later');
+        // }
         return ApiResponse.success(
           { token, serviceProvider },
           'Service provider logged in successfully',
@@ -520,5 +520,6 @@ export class AuthService {
       throw new InternalServerErrorException(error instanceof Error ? error.message : 'An unknown error occurred');
     }
   }
+
 
 }
