@@ -18,8 +18,6 @@ import { PassportModule } from "@nestjs/passport";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { DisputeModule } from "./main/dispute/dispute.module";
 import ms from "ms";
-import { ServeStaticModule } from "@nestjs/serve-static";
-import { join } from "path";
 
 @Module({
   imports: [
@@ -54,9 +52,6 @@ import { join } from "path";
       },
     }),
     DisputeModule,
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, "..", "public"),
-    }),
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
