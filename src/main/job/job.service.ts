@@ -176,7 +176,6 @@ export class JobService {
       const serviceExists = await this.prisma.service.findMany({
         where: { id: { in: serviceProviderExists.serviceCategories } }
       })
-      console.log(serviceExists);
 
       if (areaExists.length === 0) {
         this.logger.warn(`No service areas found for service provider: ${userId}`);

@@ -19,7 +19,6 @@ import type { Request } from 'express';
 import { ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
-import { RolesGuard } from 'src/guards/role.guard';
 
 @Controller('job')
 export class JobController {
