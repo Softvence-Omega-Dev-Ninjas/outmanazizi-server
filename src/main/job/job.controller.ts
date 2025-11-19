@@ -24,7 +24,6 @@ import { storageConfig } from 'src/utils/common/file/fileUploads';
 export class JobController {
   constructor(private readonly jobService: JobService) { }
 
-  // Create a new job
   @Post('create-job')
   @UseGuards(AuthenticationGuard)
   @ApiOperation({ summary: 'Create a new job' })
@@ -62,7 +61,6 @@ export class JobController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a job' })
   @UseGuards(AuthenticationGuard)
-  @ApiOperation({ summary: 'Update a job' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('file', 10, { storage: storageConfig() }))
   async update(

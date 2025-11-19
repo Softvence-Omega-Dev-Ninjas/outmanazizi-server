@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAreaDto, CreateServicesDto } from '../dto/areaAndServices.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
@@ -6,6 +6,7 @@ import { CreateSubServicesDto } from '../dto/createSubServices.dto';
 
 @Injectable()
 export class AreaAndservicesService {
+  private readonly logger = new Logger(AreaAndservicesService.name);
   constructor(private readonly prisma: PrismaService) { }
   // create area and services
 
@@ -82,5 +83,45 @@ export class AreaAndservicesService {
       include: { subServices: true },
     });
     return ApiResponse.success({ area, services }, 'Area and Services fetched successfully');
+  }
+  async deleteSubService(subServiceId: string) {
+    this.logger.log(`Deleting sub-service with ID: ${subServiceId}`);
+    try {
+      const subServiceExists = await this.prisma.subServices.findUnique({
+        where: { id: subServiceId },
+      });
+      if (!subServiceExists) {
+        throw new UnauthorizedException('Sub-service does not exists');
+      }
+      const deletedSubService = await this.prisma.subServices.delete({
+        where: { id: subServiceId },
+      });
+      return ApiResponse.success(deletedSubService, 'Sub-service deleted successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+  }
+  // update sub service
+  async updateSubService(subServiceId: string, dto: CreateSubServicesDto) {
+    this.logger.log(`Updating sub-service with ID: ${subServiceId}`);
+    try {
+      const subServiceExists = await this.prisma.subServices.findUnique({
+        where: { id: subServiceId },
+      });
+      if (!subServiceExists) {
+        throw new UnauthorizedException('Sub-service does not exists');
+      }
+      const updatedSubService = await this.prisma.subServices.update({
+        where: { id: subServiceId },
+        data: {
+          ...dto,
+        },
+      });
+      return ApiResponse.success(updatedSubService, 'Sub-service updated successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
   }
 }

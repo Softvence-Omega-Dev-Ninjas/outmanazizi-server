@@ -9,6 +9,7 @@ import { RolesGuard } from 'src/guards/role.guard';
 import { UserRole } from '../auth/role.enum';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { Roles } from 'src/guards/roles.decorator';
+import { UpdateLocationDto } from './dto/update.location.dto';
 
 @Controller('admin')
 @UseGuards(RolesGuard, AuthenticationGuard)
@@ -102,5 +103,37 @@ export class AdminController {
     @Param('role') role: UserRole,
   ) {
     return await this.adminService.changeUserRole(userid, role);
+  }
+
+  // update a location of a user
+  @Patch('update-location/:locationId')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Update a location of a user  ' })
+  async updateUserLocation(
+    @Param('locationId') locationId: string,
+    @Body() body: UpdateLocationDto,
+  ) {
+    return await this.adminService.updateUserLocation(locationId, body);
+  }
+  // delete a location of a user
+  @Delete('delete-location/:locationId')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Delete a location of a user  ' })
+  async deleteUserLocation(
+    @Param('locationId') locationId: string,
+  ) {
+    return await this.adminService.deleteUserLocation(locationId);
+  }
+  // delete sub-service
+  @Delete('delete-sub-service/:subServiceId')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Delete a sub-service  ' })
+  async deleteSubService(
+    @Param('subServiceId') subServiceId: string,
+  ) {
+    return await this.areaAndservicesService.deleteSubService(subServiceId);
   }
 }

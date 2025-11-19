@@ -1,10 +1,12 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { Role } from '@prisma/client';
+import { UpdateLocationDto } from './dto/update.location.dto';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
   constructor(private readonly prisma: PrismaService) { }
   async serviceProviderVerification(userid: string) {
     const userExits = await this.prisma.user.findUnique({
@@ -149,4 +151,50 @@ export class AdminService {
       'User role is updated successfully',
     );
   }
+  async updateUserLocation(locationId: string, dto: UpdateLocationDto) {
+    this.logger.log(`Updating location with ID: ${locationId}`);
+    try {
+      const locationExists = await this.prisma.area.findUnique({
+        where: { id: locationId },
+      });
+      if (!locationExists) {
+        throw new UnauthorizedException('Location does not exists');
+      }
+      const updatedLocation = await this.prisma.area.update({
+        where: { id: locationId },
+        data: {
+          ...dto,
+        },
+      });
+      return ApiResponse.success(updatedLocation, 'Location updated successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+  }
+
+  async deleteUserLocation(locationId: string) {
+    this.logger.log(`Deleting location with ID: ${locationId}`);
+    try {
+      const locationExists = await this.prisma.area.findUnique({
+        where: { id: locationId },
+      });
+      if (!locationExists) {
+        throw new UnauthorizedException('Location does not exists');
+      }
+      const deletedLocation = await this.prisma.area.delete({
+        where: { id: locationId },
+      });
+      return ApiResponse.success(deletedLocation, 'Location deleted successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+  }
+
+
+
+
+
+
 }
