@@ -157,5 +157,50 @@ export class JobService {
       throw new BadRequestException('Delete request failed', message);
     }
   }
+
+
+  async locationJobs(userId: string) {
+    console.log({ userId });
+    try {
+      const serviceProviderExists = await this.prisma.serviceProvider.findUnique({
+        where: { userId },
+      });
+      if (!serviceProviderExists) {
+        this.logger.warn(`Service provider not found: ${userId}`);
+        throw new NotFoundException('Service provider does not exist');
+      }
+      console.log(serviceProviderExists);
+      const areaExists = await this.prisma.area.findMany({
+        where: { id: { in: serviceProviderExists.serviceArea } },
+      });
+      const serviceExists = await this.prisma.service.findMany({
+        where: { id: { in: serviceProviderExists.serviceCategories } }
+      })
+      console.log(serviceExists);
+
+      if (areaExists.length === 0) {
+        this.logger.warn(`No service areas found for service provider: ${userId}`);
+        throw new NotFoundException('No service areas found for the service provider');
+      }
+      if (serviceExists.length === 0) {
+        this.logger.warn(`No service categories found for service provider: ${userId}`);
+        throw new NotFoundException('No service categories found for the service provider');
+      }
+
+      const relatedServices = await this.prisma.service.findMany({
+        where: {
+          location: { in: serviceProviderExists.serviceArea },              // area match
+          id: { in: serviceProviderExists.serviceCategories },              // category match
+          isDeleted: false,
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      return ApiResponse.success(relatedServices, 'Location-based jobs retrieved successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error(`Error retrieving service provider location jobs: ${message}`);
+      throw new BadRequestException(message);
+    }
+  }
 }
 

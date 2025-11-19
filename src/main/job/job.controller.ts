@@ -19,6 +19,7 @@ import type { Request } from 'express';
 import { ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
+import { RolesGuard } from 'src/guards/role.guard';
 
 @Controller('job')
 export class JobController {
@@ -80,5 +81,11 @@ export class JobController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return await this.jobService.remove(id);
+  }
+
+  // @UseGuards(AuthenticationGuard, )
+  @Get('service-provider/location-jobs')
+  async locationJobs(@Req() req: Request) {
+    return await this.jobService.locationJobs(req['userid'] as string);
   }
 }
