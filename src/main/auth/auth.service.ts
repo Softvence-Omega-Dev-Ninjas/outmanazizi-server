@@ -158,6 +158,7 @@ export class AuthService {
       return ApiResponse.error('OTP verification failed', errorMessage);
     }
   }
+
   // upload profile picture
   async uploadProfilePicture(userId: string, image: string[]) {
     try {
@@ -180,6 +181,7 @@ export class AuthService {
       return ApiResponse.error('Upload profile picture failed', errorMessage);
     }
   }
+
   // user login
   async login(loginDto: LoginDto) {
     try {
@@ -250,6 +252,7 @@ export class AuthService {
       return ApiResponse.error('Login failed', errorMessage);
     }
   }
+
   // get profile by id
   async getProfileById(id: string) {
     try {
@@ -274,6 +277,7 @@ export class AuthService {
       return ApiResponse.error('Get user profile failed', errorMessage);
     }
   }
+
   // forget password
   async forgotPassword(email: string) {
     try {

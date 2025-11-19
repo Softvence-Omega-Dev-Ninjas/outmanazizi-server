@@ -28,7 +28,7 @@ export class ChatController {
   constructor(
     private readonly messagesService: MessagesService,
     private readonly gateway: MessagesGateway,
-  ) {}
+  ) { }
 
   @Post('conversations')
   async createConversation(@Req() req: Request, @Body() dto: CreateConversationDto) {
@@ -66,7 +66,7 @@ export class ChatController {
     // @Body() dto: UploadImageDto,
   ) {
     if (!file) throw new BadRequestException('No file uploaded');
-    const fileUrl = `${process.env.DOMAIN}/uploads/chat/${file.filename}`;
+    const fileUrl = `${process.env.DOMAIN}/public/uploads/chat/${file.filename}`;
     return ApiResponse.success(fileUrl, 'File sent successfully');
   }
 

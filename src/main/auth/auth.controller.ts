@@ -73,7 +73,7 @@ export class AuthController {
     if (!domain) {
       throw new BadRequestException('DOMAIN must be defined in environment variables');
     }
-    const image = images.map((f) => `${domain}/uploads/${f.filename}`);
+    const image = images.map((f) => `${domain}/public/uploads/${f.filename}`);
 
     return await this.authService.uploadProfilePicture(req['userid'] as string, image);
   }

@@ -22,7 +22,7 @@ export class DisputeController {
     if (!domain) {
       throw new BadRequestException('DOMAIN must be defined in environment variables');
     }
-    const image = images.map((f) => `${domain}/uploads/${f.filename}`);
+    const image = images.map((f) => `${domain}/public/uploads/${f.filename}`);
     return await this.disputeService.create(createDisputeDto, req['userid'] as string, image);
   }
 
@@ -52,7 +52,7 @@ export class DisputeController {
     if (!domain) {
       throw new BadRequestException('DOMAIN must be defined in environment variables');
     }
-    const image = images.map((f) => `${domain}/uploads/${f.filename}`);
+    const image = images.map((f) => `${domain}/public/uploads/${f.filename}`);
     return await this.disputeService.update(id, updateDisputeDto, req['userid'] as string, image);
   }
 
