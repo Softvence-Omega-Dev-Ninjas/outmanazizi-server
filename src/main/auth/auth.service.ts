@@ -38,6 +38,10 @@ export class AuthService {
         this.logger.error(`User ${registerDto.email} attempted to register with Google account`);
         throw new BadRequestException('Please log in using Google authentication');
       }
+      if (userExists?.provider === 'FACEBOOK') {
+        this.logger.error(`User ${registerDto.email} attempted to register with Facebook account`);
+        throw new BadRequestException('Please log in using Facebook authentication');
+      }
       if (userExists) {
         this.logger.error(`User registration failed: ${registerDto.email} already exists`);
         throw new BadRequestException('You are already registered. Please log in.');
@@ -234,10 +238,7 @@ export class AuthService {
 
       const token = await this.helperService.createTokenEntry(userExists.id, payload);
       if (String(userExists.role) === String(UserRole.SERVICE_PROVIDER)) {
-        // if (!serviceProvider?.isVerifiedFromAdmin) {
-        //   this.logger.log(`Service provider ${loginDto.email} is verified by admin`);
-        //   throw new UnauthorizedException('Your account is not verified by admin yet, Provide valid documents and try again later');
-        // }
+
         return ApiResponse.success(
           { token, serviceProvider },
           'Service provider logged in successfully',

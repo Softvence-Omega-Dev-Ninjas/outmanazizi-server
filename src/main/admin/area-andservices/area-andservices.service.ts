@@ -125,8 +125,6 @@ export class AreaAndservicesService {
       throw new UnauthorizedException(message);
     }
   }
-
-
   // update location
   async updateUserLocation(locationId: string, dto: UpdateLocationDto) {
     this.logger.log(`Updating location with ID: ${locationId}`);
