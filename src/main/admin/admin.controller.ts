@@ -148,4 +148,18 @@ export class AdminController {
     console.log(serviceId, body);
     return await this.areaAndservicesService.updateService(serviceId, body);
   }
+  // area details 
+  @Get('area-details/:areaId')
+  @Public()
+  @ApiOperation({ summary: 'Get area details by area ID' })
+  async getAreaDetails(@Param('areaId') areaId: string) {
+    return await this.areaAndservicesService.getAreaDetails(areaId);
+  }
+  // service details
+  @Get('service-details/:serviceId')
+  @Public()
+  @ApiOperation({ summary: 'Get service details by service ID' })
+  async getServiceDetails(@Param('serviceId') serviceId: string) {
+    return await this.areaAndservicesService.getServiceDetails(serviceId);
+  }
 }

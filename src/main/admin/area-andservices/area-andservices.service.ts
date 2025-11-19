@@ -189,5 +189,35 @@ export class AreaAndservicesService {
       throw new UnauthorizedException(message);
     }
   }
-
+  // area details by area id
+  async getAreaDetails(areaId: string) {
+    try {
+      const areaExists = await this.prisma.area.findUnique({
+        where: { id: areaId },
+      });
+      if (!areaExists) {
+        throw new BadRequestException('Area does not exists');
+      }
+      return ApiResponse.success(areaExists, 'Area details fetched successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(message);
+    }
+  }
+  // service details by service id
+  async getServiceDetails(serviceId: string) {
+    try {
+      const serviceExists = await this.prisma.services.findUnique({
+        where: { id: serviceId },
+        include: { subServices: true },
+      });
+      if (!serviceExists) {
+        throw new BadRequestException('Service does not exists');
+      }
+      return ApiResponse.success(serviceExists, 'Service details fetched successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(message);
+    }
+  }
 }
