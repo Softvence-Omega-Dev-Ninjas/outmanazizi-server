@@ -158,7 +158,7 @@ export class AuthService {
       return ApiResponse.error('OTP verification failed', errorMessage);
     }
   }
-
+  // upload profile picture
   async uploadProfilePicture(userId: string, image: string[]) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -180,7 +180,7 @@ export class AuthService {
       return ApiResponse.error('Upload profile picture failed', errorMessage);
     }
   }
-
+  // user login
   async login(loginDto: LoginDto) {
     try {
       if (loginDto.role === UserRole.ADMIN) {
