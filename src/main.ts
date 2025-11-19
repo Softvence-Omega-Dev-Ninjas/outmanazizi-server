@@ -1,30 +1,30 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
-import { AllExceptionsFilter } from './utils/common/all-exception/all-exception-filter';
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { ValidationPipe } from "@nestjs/common";
+import { AllExceptionsFilter } from "./utils/common/all-exception/all-exception-filter";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({
-    origin: ['*'],
+    origin: ["*"],
     credentials: true,
   });
   const config = new DocumentBuilder()
-    .setTitle('OutManAzizi Playground 🎉 — Where APIs Party')
+    .setTitle("OutManAzizi Playground 🎉 — Where APIs Party")
     .setDescription(
-      'Your favorite API playground! Hit the routes, explore the endpoints, and enjoy the ride 😄🎯',
+      "Your favorite API playground! Hit the routes, explore the endpoints, and enjoy the ride 😄🎯",
     )
-    .setVersion('1.0')
+    .setVersion("1.0")
     .addBearerAuth(
       {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        in: 'bearer',
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+        in: "bearer",
       },
-      'access-token',
+      "access-token",
     )
     .build();
 
@@ -39,20 +39,20 @@ async function bootstrap() {
           method,
           {
             ...op,
-            security: [{ 'access-token': [] }],
+            security: [{ "access-token": [] }],
           },
         ]),
       ),
     ]),
   );
 
-  SwaggerModule.setup('api', app, document, {
+  SwaggerModule.setup("api", app, document, {
     swaggerOptions: {
       persistAuthorization: true,
-    }
+    },
   });
 
-  await app.listen(process.env.PORT ?? 3000,);
+  await app.listen(process.env.PORT ?? 3000);
 }
 
 bootstrap();
