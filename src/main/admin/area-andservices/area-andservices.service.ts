@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAreaDto, CreateServicesDto } from '../dto/areaAndServices.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { CreateSubServicesDto } from '../dto/createSubServices.dto';
+import { UpdateLocationDto } from '../dto/update.location.dto';
 
 @Injectable()
 export class AreaAndservicesService {
@@ -124,4 +125,71 @@ export class AreaAndservicesService {
       throw new UnauthorizedException(message);
     }
   }
+
+
+  // update location
+  async updateUserLocation(locationId: string, dto: UpdateLocationDto) {
+    this.logger.log(`Updating location with ID: ${locationId}`);
+    try {
+      const locationExists = await this.prisma.area.findUnique({
+        where: { id: locationId },
+      });
+      if (!locationExists) {
+        throw new UnauthorizedException('Location does not exists');
+      }
+      const updatedLocation = await this.prisma.area.update({
+        where: { id: locationId },
+        data: {
+          ...dto,
+        },
+      });
+      return ApiResponse.success(updatedLocation, 'Location updated successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+  }
+
+  async deleteUserLocation(locationId: string) {
+    this.logger.log(`Deleting location with ID: ${locationId}`);
+    try {
+      const locationExists = await this.prisma.area.findUnique({
+        where: { id: locationId },
+      });
+      if (!locationExists) {
+        throw new UnauthorizedException('Location does not exists');
+      }
+      const deletedLocation = await this.prisma.area.delete({
+        where: { id: locationId },
+      });
+      return ApiResponse.success(deletedLocation, 'Location deleted successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+  }
+
+  // update service 
+  async updateService(serviceId: string, dto: CreateServicesDto) {
+    this.logger.log(`Updating service with ID: ${serviceId}`);
+    try {
+      const serviceExists = await this.prisma.services.findUnique({
+        where: { id: serviceId },
+      });
+      if (!serviceExists) {
+        throw new UnauthorizedException('Service does not exists');
+      }
+      const updatedService = await this.prisma.services.update({
+        where: { id: serviceId },
+        data: {
+          name: dto.services,
+        },
+      });
+      return ApiResponse.success(updatedService, 'Service updated successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+  }
+
 }

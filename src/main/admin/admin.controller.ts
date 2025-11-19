@@ -114,7 +114,7 @@ export class AdminController {
     @Param('locationId') locationId: string,
     @Body() body: UpdateLocationDto,
   ) {
-    return await this.adminService.updateUserLocation(locationId, body);
+    return await this.areaAndservicesService.updateUserLocation(locationId, body);
   }
   // delete a location of a user
   @Delete('delete-location/:locationId')
@@ -124,7 +124,7 @@ export class AdminController {
   async deleteUserLocation(
     @Param('locationId') locationId: string,
   ) {
-    return await this.adminService.deleteUserLocation(locationId);
+    return await this.areaAndservicesService.deleteUserLocation(locationId);
   }
   // delete sub-service
   @Delete('delete-sub-service/:subServiceId')
@@ -135,5 +135,17 @@ export class AdminController {
     @Param('subServiceId') subServiceId: string,
   ) {
     return await this.areaAndservicesService.deleteSubService(subServiceId);
+  }
+  // update service 
+  @Patch('update-service/:serviceId')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Update a service  ' })
+  async updateService(
+    @Param('serviceId') serviceId: string,
+    @Body() body: CreateServicesDto,
+  ) {
+    console.log(serviceId, body);
+    return await this.areaAndservicesService.updateService(serviceId, body);
   }
 }
