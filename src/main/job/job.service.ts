@@ -160,19 +160,20 @@ export class JobService {
 
 
   async locationJobs(userId: string) {
-    console.log({ userId });
+    this.logger.log(`Fetching location-based jobs for service provider: ${userId}`);
     try {
       const serviceProviderExists = await this.prisma.serviceProvider.findUnique({
         where: { userId },
       });
+      this.logger.debug(`Service provider details: ${JSON.stringify(serviceProviderExists)}`);
       if (!serviceProviderExists) {
         this.logger.warn(`Service provider not found: ${userId}`);
         throw new NotFoundException('Service provider does not exist');
       }
-      console.log(serviceProviderExists);
       const areaExists = await this.prisma.area.findMany({
         where: { id: { in: serviceProviderExists.serviceArea } },
       });
+
       const serviceExists = await this.prisma.service.findMany({
         where: { id: { in: serviceProviderExists.serviceCategories } }
       })
@@ -188,11 +189,11 @@ export class JobService {
 
       const relatedServices = await this.prisma.service.findMany({
         where: {
-          location: { in: serviceProviderExists.serviceArea },              // area match
-          id: { in: serviceProviderExists.serviceCategories },              // category match
-          isDeleted: false,
+          OR: [
+            ...areaExists.map(area => ({ location: area.id })),
+            ...serviceExists.map(service => ({ title: service.id })),
+          ]
         },
-        orderBy: { createdAt: 'desc' }
       });
       return ApiResponse.success(relatedServices, 'Location-based jobs retrieved successfully');
     } catch (error) {

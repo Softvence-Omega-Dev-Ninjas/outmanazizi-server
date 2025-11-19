@@ -36,7 +36,6 @@ export class JobController {
     @UploadedFiles() images: Express.Multer.File[],
   ) {
     const imageUrls = images.map((f) => `${process.env.DOMAIN}/uploads/${f.filename}`);
-
     createJobDto.images = imageUrls;
     return await this.jobService.create(req['userid'] as string, createJobDto);
   }
@@ -49,16 +48,19 @@ export class JobController {
 
   @Get('user-jobs')
   @UseGuards(AuthenticationGuard)
+  @ApiOperation({ summary: 'Get jobs for the authenticated user' })
   async userJobs(@Req() req: Request) {
     return await this.jobService.userJobs(req['userid'] as string);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a job by ID' })
   async findOne(@Param('id') id: string) {
     return await this.jobService.findOne(id);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a job' })
   @UseGuards(AuthenticationGuard)
   @ApiOperation({ summary: 'Update a job' })
   @ApiConsumes('multipart/form-data')
@@ -73,17 +75,18 @@ export class JobController {
     if (imageUrls.length) {
       updateJobDto.file = imageUrls;
     }
-
     return await this.jobService.update(id, updateJobDto);
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a job' })
   async remove(@Param('id') id: string) {
     return await this.jobService.remove(id);
   }
 
   // @UseGuards(AuthenticationGuard, )
   @Get('service-provider/location-jobs')
+  @ApiOperation({ summary: 'Get jobs for service providers based on their location' })
   async locationJobs(@Req() req: Request) {
     return await this.jobService.locationJobs(req['userid'] as string);
   }
