@@ -5,6 +5,9 @@ import { CreatePaymentIntentDto, CreateTransferDto } from './dto/create-payment.
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { MakeCustomerDto } from './dto/makeCustomer.dto';
 import { RefundDto } from './dto/refund.dto';
+import { RolesGuard } from 'src/guards/role.guard';
+import { Roles } from 'src/guards/roles.decorator';
+import { UserRole } from '../auth/role.enum';
 
 @Controller('payments')
 export class PaymentsController {
@@ -25,8 +28,10 @@ export class PaymentsController {
   }
 
   @Post('create-transfer')
-  async createTransfer(@Body() dto: CreateTransferDto) {
-    const transfer = await this.paymentsService.createTransfer(dto);
+  @UseGuards(AuthenticationGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  async createTransfer(@Body() dto: CreateTransferDto, @Req() req: Request) {
+    const transfer = await this.paymentsService.createTransfer(req['userid'] as string, dto);
     return transfer;
   }
 

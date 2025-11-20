@@ -12,6 +12,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { MakeCustomerDto } from './dto/makeCustomer.dto';
 import { RefundDto } from './dto/refund.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 export interface CustomerResponse {
   id: string;
   email: string | null;
@@ -23,6 +24,7 @@ export class PaymentsService {
   constructor(
     @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
     private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   async makeCustomer(userId: string, makeCustomerDto: MakeCustomerDto) {
@@ -107,9 +109,17 @@ export class PaymentsService {
     }
   }
 
-  async createTransfer(dto: CreateTransferDto) {
-
+  async createTransfer(userId: string, dto: CreateTransferDto) {
+    this.logger.log(`Creating transfer for userId: ${userId}`);
     try {
+      const userExist = await this.prisma.user.findUnique({
+        where: { id: userId, role: 'ADMIN' },
+
+      });
+      if (!userExist) {
+        this.logger.warn(` User not found or not authorized: ${userId}`);
+        throw new NotFoundException('User not found');
+      }
       const orderExists = await this.prisma.order.findUnique({
         where: { id: dto.orderId },
       });
@@ -159,6 +169,15 @@ export class PaymentsService {
           status: 'COMPLETED'
         }
       });
+      this.eventEmitter.emit(
+        'Notification',
+        {
+          toNotification: bidExists.serviceProviderId,
+          fromNotification: userId,
+          type: 'PAYMENT_RELEASED',
+          jobId: orderExists.id,
+        },
+      );
       this.logger.log(`Transfer created successfully for amount: ${dto.amountCents}`);
       return ApiResponse.success(orderUpdate, 'Transfer created successfully');
     } catch (error) {
