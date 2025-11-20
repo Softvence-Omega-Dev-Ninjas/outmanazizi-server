@@ -142,11 +142,10 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     const message = this.getMessage(eventType, payload);
     this.server.to(receiverSocketId).emit('new_notification', {
       jobId: payload.jobId,
-      message: `  ${message}`,
+      message: `${message}`,
     });
 
     this.logger.log(`Emitted job.completed event to user ${payload.toNotification}`);
-
 
     await this.prisma.notification.create({
       data: {
