@@ -33,3 +33,29 @@ export class MailService {
     }
   }
 }
+// constructor(private readonly configService: ConfigService) {
+//     const emailUser = this.configService.get<string>('EMAIL_USER');
+//     const emailPass = this.configService.get<string>('APP_PASS');
+
+//     if (!emailUser || !emailPass) {
+//       throw new Error('Email configuration is missing');
+//     }
+
+//     this.transporter = nodemailer.createTransport({
+//       host: 'smtp.hostinger.com',
+//       port: 465,
+//       secure: true,
+//       auth: {
+//         user: emailUser,
+//         pass: emailPass,
+//       },
+//     });
+
+//     this.transporter.verify((error) => {
+//       if (error) {
+//         this.logger.error('SMTP connection error:', error);
+//       } else {
+//         this.logger.log('SMTP server is ready to take messages');
+//       }
+//     });
+//   }

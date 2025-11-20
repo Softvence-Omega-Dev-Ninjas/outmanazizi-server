@@ -36,9 +36,8 @@ export class DisputeService {
           }
         },
       });
-      console.log(jobExists);
       const againstId = jobExists?.assignedServiceProvider?.userId;
-      console.log(againstId);
+
       if (!jobExists) {
         this.logger.warn(`Job with ID ${createDisputeDto.serviceid} does not exist`);
         throw new NotFoundException('Job not found');
@@ -52,7 +51,6 @@ export class DisputeService {
         this.logger.warn(` You have already raised a dispute for service ID ${createDisputeDto.serviceid} against user ID ${jobExists.assignedServiceProvider?.userId}`);
         return ApiResponse.error(' You have already raised a dispute for this service against the specified user');
       }
-      console.log();
       const result = await this.prisma.dispute.create({
         data: {
           serviceid: createDisputeDto.serviceid,
@@ -173,7 +171,6 @@ export class DisputeService {
         where: { id: id },
         data: { isSolved: true },
       });
-      console.log(disputeExists);
       this.logger.log(`Dispute with ID ${id} has been resolved`);
       this.eventEmitter.emit(
         'Notification',

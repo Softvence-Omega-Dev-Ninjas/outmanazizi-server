@@ -134,8 +134,36 @@ export class AdminService {
       const message = error instanceof Error ? error.message : String(error);
       throw new UnauthorizedException(message);
     }
-
-
+  }
+  async findOrderDetails(orderId: string) {
+    try {
+      const order = await this.prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          bid: {
+            include: {
+              serviceProvider: {
+                include: {
+                  user: true,
+                },
+              },
+              service: true,
+            },
+          },
+          consumer: true,
+        },
+      });
+      if (!order) {
+        throw new UnauthorizedException('Order not found');
+      }
+      return ApiResponse.success(
+        order,
+        'Order details fetched successfully',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
   }
   async changeUserRole(userid: string, role: Role) {
     const userExits = await this.prisma.user.findUnique({

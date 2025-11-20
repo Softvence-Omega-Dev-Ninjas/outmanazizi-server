@@ -93,6 +93,17 @@ export class AdminController {
   async findAllOrders() {
     return await this.adminService.findAllOrders();
   }
+
+  // a order details by order ID
+  @Get('order-details/:orderId')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Get order details by order ID' })
+  async getOrderDetails(@Param('orderId') orderId: string) {
+    return await this.adminService.findOrderDetails(orderId);
+  }
+
+
   // change role of a user
   @Patch('change-role/:userid/:role')
   @UseGuards(RolesGuard, AuthenticationGuard)
