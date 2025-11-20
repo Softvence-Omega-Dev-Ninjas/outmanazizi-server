@@ -57,7 +57,7 @@ export class ChatController {
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
     FileInterceptor('images', {
-      storage: storageConfig('./public/uploads/chat'),
+      storage: storageConfig('./uploads/'),
     }),
   )
   uploadFile(
@@ -66,7 +66,7 @@ export class ChatController {
     // @Body() dto: UploadImageDto,
   ) {
     if (!file) throw new BadRequestException('No file uploaded');
-    const fileUrl = `${process.env.DOMAIN}/public/uploads/chat/${file.filename}`;
+    const fileUrl = `${process.env.DOMAIN}/uploads/${file.filename}`;
     return ApiResponse.success(fileUrl, 'File sent successfully');
   }
 

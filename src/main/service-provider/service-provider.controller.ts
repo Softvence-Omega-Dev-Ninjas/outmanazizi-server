@@ -64,7 +64,7 @@ export class ServiceProviderController {
     const documents =
       (req as CustomRequest)['files']
         ?.map(
-          (f: UploadedFile) => `${process.env.DOMAIN}/public/uploads/${f.filename}`,
+          (f: UploadedFile) => `${process.env.DOMAIN}/uploads/${f.filename}`,
         )
         .toString() || '';
     return await this.serviceProviderService.uploadDocuments(
