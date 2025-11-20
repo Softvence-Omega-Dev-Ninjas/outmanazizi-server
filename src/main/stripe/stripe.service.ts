@@ -38,7 +38,6 @@ export class StripeService {
         business_type: 'individual',
         metadata: { userId },
       });
-      console.log({ account });
       await this.prisma.user.update({
         where: { id: userId },
         data: { stripeAccountId: account.id },
