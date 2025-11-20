@@ -2,12 +2,13 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { ValidationPipe } from "@nestjs/common";
-import { NestExpressApplication } from "@nestjs/platform-express";
 import { AllExceptionsFilter } from "./utils/common/all-exception/all-exception-filter";
 import { join } from "path";
+import express from "express";
+import fs from "fs";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({
     origin: ["*"],
@@ -29,7 +30,11 @@ async function bootstrap() {
       "access-token",
     )
     .build();
-  app.useStaticAssets(join(__dirname, "..", "public"));
+
+  const public_dir = join(process.cwd(), "public");
+  const upload_dir = join(process.cwd(), "uploads");
+  app.use("/", express.static(public_dir));
+  app.use("/uploads", express.static(upload_dir));
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
