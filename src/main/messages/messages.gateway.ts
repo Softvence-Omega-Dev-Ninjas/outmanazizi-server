@@ -172,18 +172,4 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
-
-  // 7. Notifications
-  // Job done → ask customer to approve
-  // Job rejected → alert admin + worker
-  // Dispute resolved → alert both users
-  // Payment released → confirm to worker
-
-  // sendNotificationToUser(userId: string, notification: any) {
-  //   this.logger.log(`Sending notification to user ${userId}`);
-
-  //   if (!this.server) return;
-  //   this.server.to(`user:${userId}`).emit('new_notification', notification);
-  // }
-
 }
