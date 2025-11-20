@@ -17,6 +17,7 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { EmailAndOtpDto } from './dto/emailAndOtp.dto';
 import { UserRole } from './role.enum';
 import { GoogleAuthDto } from './dto/google.dto';
+import { otpEmailTemplate } from 'src/utils/mail/templates/contact-seller.template';
 
 @Injectable()
 export class AuthService {
@@ -30,30 +31,30 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     try {
       this.logger.log(`Registering user: ${registerDto.email}`);
+
       const userExists = await this.prisma.user.findUnique({
         where: { email: registerDto.email },
       });
 
       if (userExists?.provider === 'GOOGLE') {
-        this.logger.error(`User ${registerDto.email} attempted to register with Google account`);
         throw new BadRequestException('Please log in using Google authentication');
       }
       if (userExists?.provider === 'FACEBOOK') {
-        this.logger.error(`User ${registerDto.email} attempted to register with Facebook account`);
         throw new BadRequestException('Please log in using Facebook authentication');
       }
       if (userExists) {
-        this.logger.error(`User registration failed: ${registerDto.email} already exists`);
         throw new BadRequestException('You are already registered. Please log in.');
       }
 
-      const saltRounds = 12;
-      const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(registerDto.password, 12);
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = getLocalDateTime(10);
+
+      let user: any;
+
       if (registerDto.role === UserRole.CONSUMER) {
-        const user = await this.prisma.user.create({
+        user = await this.prisma.user.create({
           data: {
             email: registerDto.email,
             name: registerDto.name,
@@ -64,16 +65,10 @@ export class AuthService {
             otpExpiresAt,
           },
         });
-        const data = { ...user, otp };
-        this.logger.log(`User registered successfully: ${registerDto.email}`);
-        return ApiResponse.success(
-          data,
-          'User registered successfully. Please verify OTP sent to your email.',
-        );
       }
 
       if (registerDto.role === UserRole.SERVICE_PROVIDER) {
-        const user = await this.prisma.user.create({
+        const createdUser = await this.prisma.user.create({
           data: {
             email: registerDto.email,
             name: registerDto.name,
@@ -83,44 +78,39 @@ export class AuthService {
             otp,
             otpExpiresAt,
           },
-
         });
-        this.logger.log(`Service Provider user created: ${registerDto.email}`);
-        const serviceProvider = await this.prisma.serviceProvider.create({
+        await this.prisma.serviceProvider.create({
           data: {
-            userId: user.id,
+            userId: createdUser.id,
             isProfileCompleted: false,
             address: '',
           },
         });
-        const data = {
-          ...serviceProvider,
-          otp,
-        };
-        this.logger.log(`Service Provider registered successfully: ${registerDto.email}`);
-        return ApiResponse.success(
-          data,
-          'Service Provider registered successfully. Please verify OTP sent to your email.',
-        );
+
+        user = createdUser;
       }
 
-      // Send OTP email
+      // 🔥 Send OTP before returning
       await this.mailService.sendMail(
         registerDto.email,
         'Account Verification OTP',
-        `<p>Your OTP code is: <strong>${otp}</strong></p>`,
+        otpEmailTemplate({ otp })
       );
-      this.logger.log(`OTP sent to email: ${registerDto.email}`);
-      return ApiResponse.success(null, 'Registration successful. Please verify OTP sent to your email.');
 
-    } catch (error: any) {
-      const errorMessage =
-        typeof error === 'object' && error !== null && 'message' in error
-          ? String((error as { message?: unknown }).message)
-          : 'Unknown error';
-      return ApiResponse.error('Registration failed', errorMessage);
+      this.logger.log(`OTP sent to email: ${registerDto.email}`);
+
+      return ApiResponse.success(
+        { ...user, otp },
+        'Registration successful. Please verify OTP sent to your email.'
+      );
+
+    } catch (error) {
+      this.logger.error(`Registration failed for email ${registerDto.email}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      return ApiResponse.error(message);
     }
   }
+
   // verify otp and create user
   async verifyOtp(email: string, otp: string) {
     try {
@@ -345,7 +335,11 @@ export class AuthService {
         where: { email },
         data: { otp: null, otpExpiresAt: null },
       });
-
+      await this.mailService.sendMail(
+        email,
+        'Reset Password OTP Verified',
+        otpEmailTemplate({ otp }),
+      );
       return ApiResponse.success(null, 'Otp verified successfully, Please give me new passwords');
     } catch (error) {
       console.error('Error verifying reset password:', error);
@@ -447,7 +441,7 @@ export class AuthService {
       await this.mailService.sendMail(
         email,
         'Resend OTP',
-        `<p>Your OTP code is: <strong>${otp}</strong></p>`,
+        otpEmailTemplate({ otp }),
       );
       return ApiResponse.success(otp, 'OTP resent to email successfully');
     } catch (error) {
