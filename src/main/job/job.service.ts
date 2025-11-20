@@ -165,6 +165,7 @@ export class JobService {
       const serviceProviderExists = await this.prisma.serviceProvider.findUnique({
         where: { userId },
       });
+      console.log(serviceProviderExists);
       this.logger.debug(`Service provider details: ${JSON.stringify(serviceProviderExists)}`);
       if (!serviceProviderExists) {
         this.logger.warn(`Service provider not found: ${userId}`);
