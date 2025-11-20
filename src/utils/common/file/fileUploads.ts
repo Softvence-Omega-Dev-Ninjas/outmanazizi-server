@@ -6,7 +6,7 @@ import { existsSync, mkdirSync } from 'fs';
  * Multer storage configuration generator
  * @param folder - Folder where files will be saved (default: ./public/uploads)
  */
-export const storageConfig = (folder = './public/uploads') =>
+export const storageConfig = (folder = './uploads') =>
   diskStorage({
     destination: (req, file, callback) => {
       try {

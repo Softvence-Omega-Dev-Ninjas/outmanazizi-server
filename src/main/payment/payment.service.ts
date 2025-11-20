@@ -57,7 +57,7 @@ export class PaymentsService {
       const userExistsByUserid = await this.prisma.user.findUnique({
         where: { id: userId },
       });
-      const bidExists = await this.prisma.bid.findUniqueOrThrow({
+      const bidExists = await this.prisma.bid.findUnique({
         where: { id: dto.bidId },
       })
       if (!bidExists) {
@@ -178,7 +178,6 @@ export class PaymentsService {
         throw new NotFoundException('Order not found');
       }
       const captureIntent = await this.stripe.paymentIntents.retrieve(orderExists.paymentIntentId);
-      console.log(captureIntent);
       if (captureIntent.status !== 'succeeded') {
         this.logger.warn(`Payment intent not succeeded for order: ${dto.orderId}`);
         throw new NotFoundException('Payment intent not succeeded, cannot process refund');
@@ -196,7 +195,7 @@ export class PaymentsService {
       this.logger.log(`Refund processed successfully for pi: ${orderExists.paymentIntentId}`);
       return refund;
     } catch (error) {
-      // this.logger.error(`Failed to process refund for chargeId: ${dto.chargeId}`, error);
+      this.logger.error(`Failed to process refund for orderId: ${dto.orderId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(`Failed to process refund: ${message}`);
     }

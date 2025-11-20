@@ -17,6 +17,17 @@ export class StripeService {
   async createExpressAccount(userId: string) {
     this.logger.log(`Creating Stripe Express account for user: ${userId}`);
     try {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!existingUser) {
+        this.logger.warn(`User not found: ${userId}`);
+        return ApiResponse.error('User Not Found', 'The specified user does not exist');
+      }
+      if (!existingUser.stripeAccountId) {
+        this.logger.warn(`User already has a Stripe account: ${userId}`);
+        return ApiResponse.error('Stripe Account Exists', 'User already has a Stripe account');
+      }
       const account = await this.stripe.accounts.create({
         type: 'express',
         country: 'US',
@@ -27,6 +38,7 @@ export class StripeService {
         business_type: 'individual',
         metadata: { userId },
       });
+      console.log({ account });
       await this.prisma.user.update({
         where: { id: userId },
         data: { stripeAccountId: account.id },
