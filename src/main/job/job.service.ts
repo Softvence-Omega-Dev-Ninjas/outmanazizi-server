@@ -165,7 +165,6 @@ export class JobService {
       const serviceProviderExists = await this.prisma.serviceProvider.findUnique({
         where: { userId },
       });
-      console.log(serviceProviderExists);
       this.logger.debug(`Service provider details: ${JSON.stringify(serviceProviderExists)}`);
       if (!serviceProviderExists) {
         this.logger.warn(`Service provider not found: ${userId}`);
@@ -174,11 +173,9 @@ export class JobService {
       const areaExists = await this.prisma.area.findMany({
         where: { id: { in: serviceProviderExists.serviceArea } },
       });
-
-      const serviceExists = await this.prisma.service.findMany({
+      const serviceExists = await this.prisma.services.findMany({
         where: { id: { in: serviceProviderExists.serviceCategories } }
       })
-
       if (areaExists.length === 0) {
         this.logger.warn(`No service areas found for service provider: ${userId}`);
         throw new NotFoundException('No service areas found for the service provider');
