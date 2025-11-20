@@ -1,4 +1,17 @@
 services:
+  web:
+    profiles:
+      - prod
+    platform: linux/amd64
+    image: softvence/outmanazizi-web:latest
+    container_name: outmanazizi-web
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - app
+
   app:
     profiles:
       - prod

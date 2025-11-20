@@ -1,3 +1,7 @@
 api.m3alem.group {
     reverse_proxy app:5000
 }
+
+m3alem.group {
+    reverse_proxy app:3000
+}
