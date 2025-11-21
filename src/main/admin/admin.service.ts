@@ -185,9 +185,80 @@ export class AdminService {
   }
 
 
+  // create platform fee
+  async createPlatformFee(amount: number) {
+    try {
+      const existingFee = await this.prisma.platformFee.findMany({});
+
+      if (existingFee.length > 0) {
+        throw new UnauthorizedException('Platform fee already exists');
+      }
+      const platformFee = await this.prisma.platformFee.create({
+        data: {
+          amount: amount,
+        },
+      });
+      return ApiResponse.success(
+        platformFee,
+        'Platform fee created successfully',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+    // get platform fee
+
+  }
+  async getPlatformFee() {
+    try {
+      const platformFee = await this.prisma.platformFee.findMany({});
+      return ApiResponse.success(
+        platformFee,
+        'Platform fee fetched successfully',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+  }
 
 
-
-
+  // update a platform fee 
+  async updatePlatformFee(id: string, fee: number) {
+    try {
+      const existingFee = await this.prisma.platformFee.update({
+        where: {
+          id: id
+        },
+        data: {
+          amount: fee
+        }
+      })
+      return ApiResponse.success(
+        existingFee,
+        'Platform fee updated successfully',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+  }
+  // delete a platform fee
+  async deletePlatformFee(id: string) {
+    try {
+      const deletedFee = await this.prisma.platformFee.delete({
+        where: {
+          id: id
+        }
+      })
+      return ApiResponse.success(
+        deletedFee,
+        'Platform fee deleted successfully',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new UnauthorizedException(message);
+    }
+  }
 
 }

@@ -173,4 +173,43 @@ export class AdminController {
   async getServiceDetails(@Param('serviceId') serviceId: string) {
     return await this.areaAndservicesService.getServiceDetails(serviceId);
   }
+
+  // create platform fee
+  @Post('create-platform-fee/:amount')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create platform fee  ' })
+  async createPlatformFee(@Param('amount') amount: number) {
+    return await this.adminService.createPlatformFee(amount);
+  }
+
+  // get platform fee
+  @Get('get-platform-fee')
+  @Public()
+  @ApiOperation({ summary: 'Get platform fee  ' })
+  async getPlatformFee() {
+    return await this.adminService.getPlatformFee();
+  }
+
+  // update platform fee
+  @Patch('update-platform-fee/:id/:fee')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update platform fee  ' })
+  async updatePlatformFee(
+    @Param('id') id: string,
+    @Param('fee') fee: number,
+  ) {
+    return await this.adminService.updatePlatformFee(id, fee);
+  }
+
+  // delete platform fee
+  @Delete('delete-platform-fee/:id')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Delete platform fee  ' })
+  async deletePlatformFee(@Param('id') id: string) {
+    return await this.adminService.deletePlatformFee(id);
+  }
+
 }
