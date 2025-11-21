@@ -22,6 +22,8 @@ export class AdminController {
 
   // Make Service Provider verified
   @Patch('verify-service-provider/:userid')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Make Service Provider verified' })
   async create(@Param('userid') userid: string) {
     return await this.adminService.serviceProviderVerification(userid);
@@ -35,12 +37,16 @@ export class AdminController {
   }
 
   @Patch('blocked/:userid')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Blocked a User ' })
   async blockedUser(@Param('userid') userid: string) {
     return await this.adminService.blockedUser(userid);
   }
 
   @Patch('delete/:userid')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Delete  a User ' })
   async deleteUser(@Param('userid') userid: string) {
     return await this.adminService.deleteUser(userid);
@@ -48,6 +54,8 @@ export class AdminController {
 
   // Delete a service, which is created by service provider
   @Delete('service/:serviceid')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Delete a service, which is created by service provider',
   })
@@ -57,12 +65,16 @@ export class AdminController {
 
   // create area and services
   @Post('create-area')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Create area  ' })
   async createAreaAndServices(@Body() body: CreateAreaDto) {
     return await this.areaAndservicesService.createArea(body);
   }
 
   @Post('create-service')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Create service  ' })
   async createServices(@Body() body: CreateServicesDto) {
     return await this.areaAndservicesService.createServices(body);
@@ -76,6 +88,8 @@ export class AdminController {
   }
   // find all serviceProvider
   @Get('all-service-provider')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Find all serviceProvider  ' })
   async findAllServiceProvider() {
     return await this.adminService.findAllServiceProvider();
