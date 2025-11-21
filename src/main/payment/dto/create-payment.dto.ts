@@ -12,6 +12,9 @@ export class CreatePaymentIntentDto {
   @IsPositive()
   amount: number;
 
+  @ApiProperty({ description: 'Application fee amount in cents', example: 10 })
+  @IsPositive()
+  applicationFeePersent: number;
 
 }
 

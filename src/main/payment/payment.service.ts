@@ -63,6 +63,13 @@ export class PaymentsService {
       const bidExists = await this.prisma.bid.findUnique({
         where: { id: dto.bidId },
       })
+      const persentExists = await this.prisma.platformFee.findFirst({
+        where: { amount: dto.applicationFeePersent },
+      })
+      if (!persentExists) {
+        throw new NotFoundException('Application fee percent not found');
+      }
+
       if (!bidExists) {
         throw new NotFoundException('Bid not found');
       }
@@ -70,7 +77,6 @@ export class PaymentsService {
         this.logger.warn(`User not found or missing Stripe customer/payment method for userId: ${userId}`);
         throw new NotFoundException(' User not found or missing Stripe customer/payment method');
       }
-
 
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: dto.amount,
@@ -80,11 +86,14 @@ export class PaymentsService {
         customer: userExistsByUserid.customerIdFromStripe,
         payment_method: userExistsByUserid.paymentMethodIdFromStripe,
         confirm: true,
+
       });
+
       const orderExists = await this.prisma.order.findFirst({
         where: {
           consumerId: userId,
           serviceProviderId: bidExists.serviceProviderId,
+          applicationFeePersen: dto.applicationFeePersent,
         },
       });
       if (orderExists) {
@@ -99,6 +108,7 @@ export class PaymentsService {
           bidId: dto.bidId,
           paymentIntentId: paymentIntent.id,
           status: 'IN_PROGRESS',
+          applicationFeePersen: dto.applicationFeePersent,
         }
       })
       this.logger.log(`Payment intent created successfully for userId: ${userId}`);
