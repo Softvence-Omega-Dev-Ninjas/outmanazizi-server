@@ -48,6 +48,7 @@ export class AdminService {
   async findAll() {
     const allUser = await this.prisma.user.findMany({
       include: { serviceProvider: true },
+      orderBy: { createdAt: 'desc' },
     });
     return ApiResponse.success(allUser, 'All users fetched successfully');
   }
@@ -97,7 +98,7 @@ export class AdminService {
   // Delete a service, which is created by service provider
   async deleteService(serviceid: string) {
     const serviceExits = await this.prisma.service.findUnique({
-      where: { id: serviceid },
+      where: { id: serviceid, },
     });
     if (!serviceExits) {
       throw new UnauthorizedException('Service does not exists');
@@ -117,7 +118,9 @@ export class AdminService {
   }
   // find all serviceProvider
   async findAllServiceProvider() {
-    const serviceProviders = await this.prisma.serviceProvider.findMany({});
+    const serviceProviders = await this.prisma.serviceProvider.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
     return ApiResponse.success(
       serviceProviders,
       'All service providers fetched successfully',
@@ -125,7 +128,9 @@ export class AdminService {
   }
   async findAllOrders() {
     try {
-      const orders = await this.prisma.order.findMany({});
+      const orders = await this.prisma.order.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
       return ApiResponse.success(
         orders,
         'All orders fetched successfully',
