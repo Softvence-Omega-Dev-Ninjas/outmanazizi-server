@@ -5,13 +5,12 @@ import { ValidationPipe } from "@nestjs/common";
 import { AllExceptionsFilter } from "./utils/common/all-exception/all-exception-filter";
 import { join } from "path";
 import express from "express";
-import fs from "fs";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({
-    origin: ["*"],
+    origin: ["https://m3alem.group", "www.m3alem.group"],
     credentials: true,
   });
   const config = new DocumentBuilder()
