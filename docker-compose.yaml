@@ -7,6 +7,8 @@ services:
       context: .
     image: softvence/outmanazizi-server:latest
     container_name: outmanazizi-server
+    networks:
+      - web
     ports:
       - "${PORT}:${PORT}"
     env_file:
@@ -30,6 +32,8 @@ services:
 
   db:
     image: postgres:17
+    networks:
+      - web
     restart: always
     profiles:
       - dev
@@ -53,6 +57,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
+    networks:
+      - web
     restart: always
     profiles:
       - dev
@@ -73,6 +79,8 @@ services:
     profiles:
       - prod
     container_name: caddy_server
+    networks:
+      - web
     restart: unless-stopped
     depends_on:
       - app
@@ -95,4 +103,5 @@ volumes:
   files-data:
 
 networks:
-  default:
+  web:
+    external: true
