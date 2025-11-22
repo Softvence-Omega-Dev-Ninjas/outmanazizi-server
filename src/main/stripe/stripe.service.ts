@@ -102,12 +102,13 @@ export class StripeService {
   async getStripeInfo(userId: string) {
     this.logger.log(`Getting Stripe info for user: ${userId}`);
     try {
-      const [account, balance, payments, transfers, accountsList] = await Promise.all([
+      const [account, balance, payments, transfers, accountsList, refundList] = await Promise.all([
         this.stripe.accounts.retrieve(),
         this.stripe.balance.retrieve(),
-        this.stripe.paymentIntents.list({ limit: 10 }),
-        this.stripe.transfers.list({ limit: 10 }),
-        this.stripe.accounts.list({ limit: 3 }),
+        this.stripe.paymentIntents.list({ limit: 100 }),
+        this.stripe.transfers.list({ limit: 100 }),
+        this.stripe.accounts.list({ limit: 100 }),
+        this.stripe.refunds.list({ limit: 100 }),
       ]);
       return {
         account: { id: account.id, email: account.email },
@@ -125,6 +126,11 @@ export class StripeService {
           id: acc.id,
           email: acc.individual?.email,
           userId: acc?.metadata?.userId
+        })),
+        refundList: refundList.data.map(ref => ({
+          id: ref.id,
+          amount: ref.amount,
+          payment_intent: ref.payment_intent,
         })),
       };
 
