@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import nodemailer from 'nodemailer';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import nodemailer from "nodemailer";
 
 @Injectable()
 export class MailService {
@@ -9,10 +9,13 @@ export class MailService {
 
   constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      pool: true,
+      host: this.configService.get("SMTP_HOST"),
+      port: this.configService.get("SMTP_PORT"),
+      secure: true,
       auth: {
-        user: this.configService.get<string>('EMAIL_USER'),
-        pass: this.configService.get<string>('APP_PASS'),
+        user: this.configService.get("SMTP_USER"),
+        pass: this.configService.get("SMTP_PASSWORD"),
       },
     });
   }
@@ -20,11 +23,11 @@ export class MailService {
   async sendMail(to: string, subject: string, html: string, text?: string): Promise<void> {
     try {
       await this.transporter.sendMail({
-        from: `"${this.configService.get<string>('EMAIL_FROM') || 'OutManAzizi'}" <${this.configService.get<string>('EMAIL_FROM')}>`,
+        from: this.configService.get("SMTP_USER"),
         to,
         subject,
         html,
-        text: text || '',
+        text: text || "",
       });
 
       this.logger.log(`Email sent successfully to ${to}`);
@@ -59,3 +62,4 @@ export class MailService {
 //       }
 //     });
 //   }
+
