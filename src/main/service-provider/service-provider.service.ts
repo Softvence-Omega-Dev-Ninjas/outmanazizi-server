@@ -5,6 +5,7 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { HelperService } from 'src/utils/helper/helper.service';
 import { ServiceProviderBidDto } from './dto/service-provider-bid.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class ServiceProviderService {
@@ -13,6 +14,7 @@ export class ServiceProviderService {
     private readonly prisma: PrismaService,
     private readonly helperService: HelperService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly firebase: FirebaseService,
   ) {
     if (!this.prisma) {
       throw new Error('PrismaService not initialized');
@@ -231,6 +233,29 @@ export class ServiceProviderService {
           jobId: service.id,
         },
       );
+
+      // fetch consumer FCM tokens and send push notification if available
+      const consumerTokensResult = await this.prisma.user.findUnique({
+        where: { id: service.userId },
+        select: { fcmToken: true },
+      });
+
+      const fcmTokens = consumerTokensResult?.fcmToken ?? null;
+      if (fcmTokens) {
+        try {
+          await this.firebase.sendPushNotification(
+            [fcmTokens],
+            'Job Completed',
+            'Your job has been marked as completed by the service provider.',
+            { jobId: service.id },
+          );
+        } catch (err) {
+          this.logger.error(`Failed to send push notification for service ${service.id}: ${err instanceof Error ? err.message : err}`);
+        }
+      } else {
+        this.logger.log(`No FCM tokens found for user ${service.userId}, skipping push notification`);
+      }
+
       return ApiResponse.success(
         updatedService,
         'Service marked as completed from service provider, and waiting for consumer confirmation',

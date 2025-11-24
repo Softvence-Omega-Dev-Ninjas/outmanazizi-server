@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '../role.enum';
 
@@ -28,5 +28,12 @@ export class LoginDto {
   @IsEnum(UserRole, { message: 'Role must be either USER or SERVICE_PROVIDER' })
   role: UserRole;
 
-
+  @ApiProperty({
+    description: 'Firebase Cloud Messaging token',
+    example: 'fcmTokenExample123',
+    required: false,
+  })
+  @IsString({ message: 'FCM token must be a string' })
+  @IsOptional({ message: 'FCM token is required' })
+  fcmToken: string;
 }

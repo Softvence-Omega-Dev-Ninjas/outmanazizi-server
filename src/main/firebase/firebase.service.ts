@@ -1,0 +1,87 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
+import { BadRequestException, Injectable, Logger, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import * as admin from 'firebase-admin';
+
+@Injectable()
+export class FirebaseService implements OnModuleInit {
+  private logger = new Logger(FirebaseService.name);
+
+
+
+  onModuleInit() {
+
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: (process.env.FIREBASE_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
+        } as admin.ServiceAccount),
+        projectId: process.env.FIREBASE_PROJECT_ID,
+      });
+
+      this.logger.log('Firebase initialized');
+    } else {
+      this.logger.log('Firebase already initialized');
+    }
+  }
+
+  /** Verify Firebase ID token (Google signup/login) */
+  async verifyIdToken(idToken: string) {
+    try {
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      return decodedToken;
+    } catch (err) {
+      this.logger.error('Firebase ID token verification error:', err);
+      throw new UnauthorizedException(401, 'Invalid Firebase ID token');
+    }
+  }
+
+  /** Send push notification via FCM */
+  async sendPushNotification(
+    fcmTokens: string[],
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ) {
+    if (!fcmTokens || fcmTokens.length === 0) {
+      this.logger.error('No FCM tokens provided');
+      throw new UnauthorizedException(400, 'No FCM tokens provided');
+    }
+    this.logger.log('Sending push notification...');
+
+    const message: admin.messaging.MulticastMessage = {
+      tokens: fcmTokens,
+      notification: { title, body },
+      data,
+    };
+
+    try {
+      const response = await admin.messaging().sendEachForMulticast(message);
+
+      this.logger.log(
+        `[FCM] Broadcast sent: ${response.successCount} succeeded, ${response.failureCount} failed.`,
+      );
+
+      if (response.failureCount > 0) {
+        const failedTokens = response.responses
+          .map((res, i) => (!res.success ? fcmTokens[i] : null))
+          .filter(Boolean);
+
+        this.logger.error(`[FCM] Failed tokens: ${failedTokens.join(', ')}`);
+      }
+
+      return response;
+    } catch (err) {
+      this.logger.error('Firebase push notification error:', err);
+      throw new BadRequestException(500, 'Failed to send push notification');
+    }
+  }
+
+  /** Get Firebase Messaging instance */
+  getMessaging() {
+    return admin.messaging();
+  }
+}

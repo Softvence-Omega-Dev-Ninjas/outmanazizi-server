@@ -19,7 +19,10 @@ model User {
   customerId      String?
   serviceProvider ServiceProvider?
   stripeAccountId String?
-  services        Service[]
+
+  fcmToken String?
+
+  services Service[]
 
   sentMessages              Message[]      @relation("SentMessages")
   receivedMessages          Message[]      @relation("ReceivedMessages")

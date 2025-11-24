@@ -26,7 +26,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly helperService: HelperService,
     private readonly mailService: MailService,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto) {
     try {
@@ -175,7 +175,14 @@ export class AuthService {
 
   // user login
   async login(loginDto: LoginDto) {
+
     try {
+      if (loginDto.fcmToken) {
+        await this.prisma.user.update({
+          where: { email: loginDto.email },
+          data: { fcmToken: loginDto.fcmToken },
+        })
+      }
       const userExists = await this.helperService.userExistsByEmail(loginDto.email);
       if (!userExists) {
         throw new NotFoundException("User not found");
