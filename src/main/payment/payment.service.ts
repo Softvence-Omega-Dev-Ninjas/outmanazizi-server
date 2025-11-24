@@ -14,6 +14,7 @@ import { MakeCustomerDto } from './dto/makeCustomer.dto';
 import { RefundDto } from './dto/refund.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserRole } from '../auth/role.enum';
+import { FirebaseService } from '../firebase/firebase.service';
 export interface CustomerResponse {
   id: string;
   email: string | null;
@@ -26,6 +27,7 @@ export class PaymentsService {
     @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly firebase: FirebaseService,
   ) { }
 
   async makeCustomer(userId: string, makeCustomerDto: MakeCustomerDto) {
@@ -189,6 +191,34 @@ export class PaymentsService {
           jobId: orderExists.id,
         },
       );
+      const consumerTokensResult = await this.prisma.user.findUnique({
+        where: { id: orderExists.consumerId },
+        select: { fcmToken: true },
+      });
+
+      const fcmTokens = consumerTokensResult?.fcmToken ?? null;
+      // Normalize fcmTokens to string[] to match the expected parameter type
+      const fcmTokenArray: string[] = Array.isArray(fcmTokens)
+        ? fcmTokens
+        : fcmTokens
+          ? [fcmTokens]
+          : [];
+
+      if (fcmTokenArray.length > 0) {
+        try {
+          await this.firebase.sendPushNotification(
+            fcmTokenArray,
+            'Job Completed',
+            'Your job has been marked as completed by the service provider.',
+            { jobId: orderExists.id },
+          );
+        } catch (err) {
+          this.logger.error(`Failed to send push notification for order ${orderExists.id}: ${err instanceof Error ? err.message : err}`);
+        }
+      } else {
+        this.logger.log(`No FCM tokens found for user ${orderExists.consumerId}, skipping push notification`);
+      }
+
       this.logger.log(`Transfer created successfully for amount: ${dto.amountCents}`);
       return ApiResponse.success(orderUpdate, 'Transfer created successfully');
     } catch (error) {

@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { HelperService } from 'src/utils/helper/helper.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class DisputeService {
@@ -13,6 +14,7 @@ export class DisputeService {
     private readonly prisma: PrismaService,
     private readonly helperService: HelperService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly firebase: FirebaseService,
   ) { }
 
   async create(createDisputeDto: CreateDisputeDto, userId: string, images: string[]) {
@@ -190,6 +192,31 @@ export class DisputeService {
           jobId: disputeExists.id,
         },
       );
+      // send push notifications to both dispute participants (if they have FCM tokens)
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      const participants = [disputeExists.userId, disputeExists.againstId].filter(Boolean) as string[];
+      for (const participantId of participants) {
+        try {
+          const userTokenResult = await this.prisma.user.findUnique({
+            where: { id: participantId },
+            select: { fcmToken: true },
+          });
+          const fcmToken = userTokenResult?.fcmToken ?? null;
+          if (fcmToken) {
+            await this.firebase.sendPushNotification(
+              [fcmToken],
+              'Dispute Resolved',
+              'A dispute you were involved in has been resolved.',
+              { disputeId: disputeExists.id, serviceId: disputeExists.serviceid },
+            );
+          } else {
+            this.logger.log(`No FCM tokens found for user ${participantId}, skipping push notification`);
+          }
+        } catch (err) {
+          this.logger.error(`Failed to send push notification for user ${participantId}: ${err instanceof Error ? err.message : err}`);
+        }
+      }
+
       return ApiResponse.success(resolvedDispute, 'Dispute resolved successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
