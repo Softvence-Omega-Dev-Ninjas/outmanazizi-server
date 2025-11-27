@@ -24,7 +24,8 @@ export class StripeService {
         this.logger.warn(`User not found: ${userId}`);
         return ApiResponse.error('User Not Found', 'The specified user does not exist');
       }
-      if (!existingUser.stripeAccountId) {
+
+      if (existingUser.stripeAccountId != null) {
         this.logger.warn(`User already has a Stripe account: ${userId}`);
         return ApiResponse.error('Stripe Account Exists', 'User already has a Stripe account');
       }
@@ -43,11 +44,10 @@ export class StripeService {
         data: { stripeAccountId: account.id },
       });
 
-
       const link = await this.stripe.accountLinks.create({
         account: account.id,
-        refresh_url: 'https://example.com/refresh',
-        return_url: 'https://example.com/return',
+        refresh_url: 'https://giveYourRefreshUrl.com/refresh',
+        return_url: 'https://giveYourReturnUrl.com(this is your deep link when success)/return',
         type: 'account_onboarding',
       });
       this.logger.log(`Stripe Express account created successfully for user: ${userId}`);
