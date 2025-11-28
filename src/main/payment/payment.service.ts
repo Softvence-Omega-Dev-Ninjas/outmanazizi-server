@@ -158,7 +158,7 @@ export class PaymentsService {
 
       await this.stripe.transfers.create({
         amount: dto.amountCents,
-        currency: 'cents',
+        currency: 'usd',
         destination: stripeAccountId,
       });
 
