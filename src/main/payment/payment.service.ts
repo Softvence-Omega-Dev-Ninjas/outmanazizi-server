@@ -13,7 +13,6 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { MakeCustomerDto } from './dto/makeCustomer.dto';
 import { RefundDto } from './dto/refund.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { UserRole } from '../auth/role.enum';
 import { FirebaseService } from '../firebase/firebase.service';
 export interface CustomerResponse {
   id: string;
@@ -115,7 +114,7 @@ export class PaymentsService {
     this.logger.log(`Creating transfer for userId: ${userId}`);
     try {
       const userExist = await this.prisma.user.findUnique({
-        where: { id: userId, role: UserRole.ADMIN },
+        where: { id: userId },
 
       });
       if (!userExist) {
