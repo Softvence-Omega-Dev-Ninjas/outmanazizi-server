@@ -15,54 +15,90 @@ export class StripeService {
   ) { }
 
   async createExpressAccount(userId: string) {
-    this.logger.log(`Creating Stripe Express account for user: ${userId}`);
+    this.logger.log(`🚀 Starting Stripe Express onboarding for user: ${userId}`);
+
     try {
-      const existingUser = await this.prisma.user.findUnique({
+      const user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
-      if (!existingUser) {
-        this.logger.warn(`User not found: ${userId}`);
+
+      // 1️⃣ Check if user exists
+      if (!user) {
+        this.logger.warn(`❌ User not found: ${userId}`);
         return ApiResponse.error('User Not Found', 'The specified user does not exist');
       }
 
-      console.log(existingUser?.stripeAccountId);
-      if (existingUser?.stripeAccountId == null) {
-        const account = await this.stripe.accounts.create({
-          type: 'express',
-          country: 'US',
-          capabilities: {
-            card_payments: { requested: true },
-            transfers: { requested: true },
-          },
-          business_type: 'individual',
-          metadata: { userId },
-        });
-        await this.prisma.user.update({
-          where: { id: userId },
-          data: { stripeAccountId: account.id },
-        });
+      const refreshUrl = 'https://outmanazizi.com/stripe/refresh'; //process.env.STRIPE_REFRESH_URL;
+      const returnUrl = 'https://outmanazizi.com/stripe/return'; //process.env.STRIPE_RETURN_URL;
 
-        const link = await this.stripe.accountLinks.create({
-          account: account.id,
-          refresh_url: 'https://giveYourRefreshUrl.com/refresh',
-          return_url: 'https://giveYourReturnUrl.com(this is your deep link when success)/return',
-          type: 'account_onboarding',
-        });
-        this.logger.log(`Stripe Express account created successfully for user: ${userId}`);
-        return { url: link.url };
-
-      } else {
-        this.logger.warn(`User already has a Stripe account:  userId: ${existingUser.stripeAccountId}`);
-        return ApiResponse.error('Stripe Account Exists', 'User already has a Stripe account');
+      if (!refreshUrl || !returnUrl) {
+        throw new Error('Missing STRIPE_REFRESH_URL or STRIPE_RETURN_URL in environment variables');
       }
 
+      // 2️⃣ If Stripe account already exists → Generate onboarding link again
+      if (user.stripeAccountId) {
+        this.logger.log(`ℹ️ Existing Stripe account detected. Generating new onboarding link…`);
+
+        const link = await this.stripe.accountLinks.create({
+          account: user.stripeAccountId,
+          refresh_url: refreshUrl,
+          return_url: returnUrl,
+          type: 'account_onboarding',
+        });
+
+        return ApiResponse.success(
+          { url: link.url },
+          'Stripe account already exists. New onboarding link generated.'
+        );
+      }
+
+      // 3️⃣ Create new Stripe Express account
+      this.logger.log(`🆕 Creating new Stripe Express account for user: ${userId}`);
+
+      const account = await this.stripe.accounts.create({
+        type: 'express',
+        country: 'US',
+        business_type: 'individual',
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+        metadata: { userId },
+      });
+
+      // Save Stripe account ID to DB
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { stripeAccountId: account.id },
+      });
+
+      this.logger.log(`✅ Stripe account created and saved for user: ${userId}`);
+
+      // 4️⃣ Generate onboarding link for new account
+      const onboardingLink = await this.stripe.accountLinks.create({
+        account: account.id,
+        refresh_url: refreshUrl,
+        return_url: returnUrl,
+        type: 'account_onboarding',
+      });
+
+      this.logger.log(`🔗 Onboarding link generated: ${onboardingLink.url}`);
+
+      return ApiResponse.success(
+        { url: onboardingLink.url },
+        'Stripe Express account created successfully'
+      );
 
     } catch (error) {
-      this.logger.error('Stripe account creation failed', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('❌ Stripe account creation failed', error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown Stripe error occurred';
+
       return ApiResponse.error('Stripe Account Creation Failed', errorMessage);
     }
   }
+
   async generateAccountLink(accountId: string) {
     this.logger.log(`Generating account link for Stripe account ID: ${accountId}`);
     try {
