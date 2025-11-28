@@ -25,33 +25,37 @@ export class StripeService {
         return ApiResponse.error('User Not Found', 'The specified user does not exist');
       }
 
-      if (existingUser?.stripeAccountId) {
+      if (existingUser?.stripeAccountId != null) {
         this.logger.warn(`User already has a Stripe account: ${userId}`);
         return ApiResponse.error('Stripe Account Exists', 'User already has a Stripe account');
-      }
-      const account = await this.stripe.accounts.create({
-        type: 'express',
-        country: 'US',
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-        business_type: 'individual',
-        metadata: { userId },
-      });
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { stripeAccountId: account.id },
-      });
+      } else {
+        this.logger.log(`No existing Stripe account for user: ${userId}, proceeding to create one.`);
+        const account = await this.stripe.accounts.create({
+          type: 'express',
+          country: 'US',
+          capabilities: {
+            card_payments: { requested: true },
+            transfers: { requested: true },
+          },
+          business_type: 'individual',
+          metadata: { userId },
+        });
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { stripeAccountId: account.id },
+        });
 
-      const link = await this.stripe.accountLinks.create({
-        account: account.id,
-        refresh_url: 'https://giveYourRefreshUrl.com/refresh',
-        return_url: 'https://giveYourReturnUrl.com(this is your deep link when success)/return',
-        type: 'account_onboarding',
-      });
-      this.logger.log(`Stripe Express account created successfully for user: ${userId}`);
-      return { url: link.url };
+        const link = await this.stripe.accountLinks.create({
+          account: account.id,
+          refresh_url: 'https://giveYourRefreshUrl.com/refresh',
+          return_url: 'https://giveYourReturnUrl.com(this is your deep link when success)/return',
+          type: 'account_onboarding',
+        });
+        this.logger.log(`Stripe Express account created successfully for user: ${userId}`);
+        return { url: link.url };
+      }
+
+
     } catch (error) {
       this.logger.error('Stripe account creation failed', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
