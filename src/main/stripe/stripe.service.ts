@@ -25,7 +25,7 @@ export class StripeService {
         return ApiResponse.error('User Not Found', 'The specified user does not exist');
       }
 
-      if (existingUser.stripeAccountId !== null) {
+      if (existingUser?.stripeAccountId) {
         this.logger.warn(`User already has a Stripe account: ${userId}`);
         return ApiResponse.error('Stripe Account Exists', 'User already has a Stripe account');
       }
