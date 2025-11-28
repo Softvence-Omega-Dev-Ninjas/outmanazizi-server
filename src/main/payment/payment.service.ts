@@ -90,17 +90,7 @@ export class PaymentsService {
         confirm: true,
       });
 
-      const orderExists = await this.prisma.order.findFirst({
-        where: {
-          consumerId: userId,
-          serviceProviderId: bidExists.serviceProviderId,
-          applicationFeePersen: dto.applicationFeePersent,
-        },
-      });
-      // if (orderExists) {
-      //   this.logger.warn(`Order already exists for bidId: ${dto.bidId}`);
-      //   throw new NotFoundException('Order already exists for the given bid');
-      // }
+
 
       const oder = await this.prisma.order.create({
         data: {
@@ -169,7 +159,7 @@ export class PaymentsService {
 
       await this.stripe.transfers.create({
         amount: dto.amountCents,
-        currency: 'usd',
+        currency: 'cents',
         destination: stripeAccountId,
       });
 
