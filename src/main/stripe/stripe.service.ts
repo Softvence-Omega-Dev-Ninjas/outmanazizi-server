@@ -25,11 +25,8 @@ export class StripeService {
         return ApiResponse.error('User Not Found', 'The specified user does not exist');
       }
 
-      if (existingUser?.stripeAccountId != null) {
-        this.logger.warn(`User already has a Stripe account: ${userId}`);
-        return ApiResponse.error('Stripe Account Exists', 'User already has a Stripe account');
-      } else {
-        this.logger.log(`No existing Stripe account for user: ${userId}, proceeding to create one.`);
+      console.log(existingUser?.stripeAccountId);
+      if (existingUser?.stripeAccountId == null) {
         const account = await this.stripe.accounts.create({
           type: 'express',
           country: 'US',
@@ -53,6 +50,10 @@ export class StripeService {
         });
         this.logger.log(`Stripe Express account created successfully for user: ${userId}`);
         return { url: link.url };
+
+      } else {
+        this.logger.warn(`User already has a Stripe account:  userId: ${existingUser.stripeAccountId}`);
+        return ApiResponse.error('Stripe Account Exists', 'User already has a Stripe account');
       }
 
 
