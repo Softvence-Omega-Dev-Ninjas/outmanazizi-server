@@ -25,6 +25,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
 import { GoogleAuthDto } from './dto/google.dto';
+import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 // import { AuthGuard } from '@nestjs/passport';
 // import { GoogleUser } from './strategy/google.strategy';
 
@@ -145,5 +146,19 @@ export class AuthController {
     return await this.authService.googleAuth(googleAuthDto);
   }
 
+  @ApiTags('Environment')
+  @Post('get-env')
+  @Public()
+  getEnv() {
+    const STRIPE_PUBLIC_KEY = process.env.STRIPE_PUBLIC_KEY
+    const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
+    if (!STRIPE_PUBLIC_KEY || !STRIPE_SECRET_KEY) {
+      throw new BadRequestException('Stripe keys are not defined in environment variables');
+    }
+    return ApiResponse.success({
+      stripePublicKey: STRIPE_PUBLIC_KEY,
+      stripeSecretKey: STRIPE_SECRET_KEY,
+    });
+  }
 
 }

@@ -154,7 +154,7 @@ export class PaymentsService {
       }
       // if (sellerAccount?.capabilities?.transfers !== 'active') {
       //   throw new Error('Seller account is not ready for transfers');
-      // }
+      // }   
 
       await this.stripe.transfers.create({
         amount: dto.amountCents,
