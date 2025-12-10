@@ -160,9 +160,9 @@ export class PaymentsService {
         this.logger.warn(`Seller account not found: ${stripeAccountId}`);
         throw new NotFoundException('Seller account not found');
       }
-      // if (sellerAccount?.capabilities?.transfers !== 'active') {
-      //   throw new Error('Seller account is not ready for transfers');
-      // }   
+      if (sellerAccount?.capabilities?.transfers !== 'active') {
+        throw new Error('Seller account is not ready for transfers');
+      }   
 
       await this.stripe.transfers.create({
         amount: dto.amountCents,
@@ -178,14 +178,15 @@ export class PaymentsService {
           status: 'COMPLETED'
         }
       });
-      await this.prisma.notification.create({
+      // console.log({ bidExists });
+       await this.prisma.notification.create({
         data: {
           fromNotification: userId,
-          toNotification: bidExists.serviceProviderId,
+          toNotification: bidExists.serviceProvider.userId,
           message: `Payment of $${(dto.amountCents / 100).toFixed(2)} has been released to your account for order ${dto.orderId}.`,
           createdAt: new Date(),
         }
-      });
+      }); 
       this.eventEmitter.emit(
         'Notification',
         {
