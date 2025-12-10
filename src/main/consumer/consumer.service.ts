@@ -60,6 +60,14 @@ export class ConsumerService {
       await this.prisma.bid.delete({
         where: { id: bidToRemove.id },
       });
+      await this.prisma.notification.create({
+        data: {
+          fromNotification: userid,
+          toNotification: serviceProviderId,
+          message: `Your bid has been removed by the consumer for service request ${serviceId}`,
+          createdAt: new Date(),
+        }
+      })
       this.logger.log(`Bid for service ${serviceId} removed by user ${userid}`);
       return { message: 'Bid removed successfully' };
     } catch (error) {
