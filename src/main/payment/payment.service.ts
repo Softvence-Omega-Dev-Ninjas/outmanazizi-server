@@ -101,6 +101,14 @@ export class PaymentsService {
           applicationFeePersen: dto.applicationFeePersent,
         }
       })
+      // await this.prisma.notification.create({
+      //   data: {
+      //     fromNotification: userId,
+      //     toNotification: bidExists.serviceProviderId,
+      //     message: `A new order has been created for your bid ${dto.bidId}.`,
+      //     createdAt: new Date(),
+      //   }
+      // })
       this.logger.log(`Payment intent created successfully for userId: ${userId}`);
       return ApiResponse.success(oder, 'Payment intent created successfully');
     } catch (error) {
@@ -168,6 +176,14 @@ export class PaymentsService {
         },
         data: {
           status: 'COMPLETED'
+        }
+      });
+      await this.prisma.notification.create({
+        data: {
+          fromNotification: userId,
+          toNotification: bidExists.serviceProviderId,
+          message: `Payment of $${(dto.amountCents / 100).toFixed(2)} has been released to your account for order ${dto.orderId}.`,
+          createdAt: new Date(),
         }
       });
       this.eventEmitter.emit(
