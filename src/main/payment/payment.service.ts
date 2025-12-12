@@ -123,7 +123,6 @@ export class PaymentsService {
     try {
       const userExist = await this.prisma.user.findUnique({
         where: { id: userId },
-
       });
       if (!userExist) {
         this.logger.warn(` User not found or not authorized: ${userId}`);

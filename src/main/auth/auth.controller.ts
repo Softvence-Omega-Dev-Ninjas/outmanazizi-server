@@ -145,6 +145,12 @@ export class AuthController {
   async googleAuth(@Body() googleAuthDto: GoogleAuthDto) {
     return await this.authService.googleAuth(googleAuthDto);
   }
+  @Post('apple')
+  @Public()
+  @ApiBody({ type: GoogleAuthDto })
+  async appleAuth(@Body() googleAuthDto: GoogleAuthDto) {
+    return await this.authService.appleAuth(googleAuthDto);
+  }
 
   @ApiTags('Environment')
   @Post('get-env')

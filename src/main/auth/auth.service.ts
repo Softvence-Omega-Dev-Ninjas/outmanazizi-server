@@ -42,6 +42,9 @@ export class AuthService {
       if (userExists?.provider === "FACEBOOK") {
         throw new BadRequestException("Please log in using Facebook authentication");
       }
+      if (userExists?.provider === "APPLE") {
+        throw new BadRequestException("Please log in using Apple authentication");
+      }
       if (userExists) {
         throw new BadRequestException("You are already registered. Please log in.");
       }
@@ -483,6 +486,72 @@ export class AuthService {
             role,
             phone: "",
             provider: "GOOGLE",
+            isEmailVerified: true,
+          },
+        });
+
+        if (!newUser || !newUser.id) {
+          this.logger.error(`User creation failed for email: ${email}`);
+          throw new InternalServerErrorException("User creation failed");
+        }
+
+        // If service provider, create related record
+        if (role === (UserRole.SERVICE_PROVIDER as UserRole)) {
+          try {
+            await this.prisma.serviceProvider.create({
+              data: { userId: newUser.id, isProfileCompleted: false, address: "" },
+            });
+            this.logger.log(`ServiceProvider record created for user: ${email}`);
+          } catch (err) {
+            this.logger.error(`ServiceProvider creation failed for user: ${email}`, err);
+            // Optional: Rollback user creation or continue depending on business logic
+          }
+        }
+
+        this.logger.log(`New user created successfully: ${email}`);
+
+        const payload = { sub: newUser.id, email: newUser.email, role: newUser.role };
+        const token = await this.helperService.createTokenEntry(newUser.id, payload);
+        return ApiResponse.success(token, "User created successfully");
+      }
+
+      // Existing user
+      if (user.role !== role) {
+        this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${user.role}`);
+        throw new BadRequestException("User role mismatch. Please use the correct login method.");
+      }
+
+      const payload = { sub: user.id, email: user.email, role: user.role };
+      const token = await this.helperService.createTokenEntry(user.id, payload);
+      this.logger.log(`User logged in successfully: ${email}`);
+      return ApiResponse.success(token, "User logged in successfully");
+    } catch (error) {
+      this.logger.error("Google Auth failed", error instanceof Error ? error.stack : error);
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
+    }
+  }
+  async appleAuth(googleAuthDto: GoogleAuthDto) {
+    this.logger.log("Apple Auth request received");
+    this.logger.debug(`Payload: ${JSON.stringify(googleAuthDto)}`);
+
+    try {
+      const { email, name, picture, role } = googleAuthDto;
+
+      const user = await this.prisma.user.findUnique({ where: { email } });
+
+      if (!user) {
+        // Create new user
+        const newUser = await this.prisma.user.create({
+          data: {
+            email,
+            name,
+            picture,
+            role,
+            phone: "",
+            provider: "APPLE",
             isEmailVerified: true,
           },
         });
