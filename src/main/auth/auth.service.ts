@@ -190,6 +190,18 @@ export class AuthService {
       if (!userExists) {
         throw new NotFoundException("User not found");
       }
+      if (!userExists?.isEmailVerified) {
+        this.logger.warn(`Email not verified for user: ${loginDto.email}`);
+        throw new BadRequestException("Please verify your email first");
+      }
+      if (userExists.provider === "GOOGLE") {
+        this.logger.warn(`Attempted login with email ${loginDto.email} using non-Google method`);
+        throw new BadRequestException("Please log in using Google authentication");
+      }
+      if (userExists.provider === "APPLE") {
+        this.logger.warn(`Attempted login with email ${loginDto.email} using non-Apple method`);
+        throw new BadRequestException("Please log in using Apple authentication");
+      }
       if (!userExists.password) {
         throw new UnauthorizedException("Invalid credentials");
       }
@@ -220,14 +232,8 @@ export class AuthService {
         `User existence check for email ${loginDto.email}: ${userExists ? "found" : "not found"}`,
       );
 
-      if (userExists.provider === "GOOGLE") {
-        this.logger.warn(`Attempted login with email ${loginDto.email} using non-Google method`);
-        throw new BadRequestException("Please log in using Google authentication");
-      }
-      if (!userExists?.isEmailVerified) {
-        this.logger.warn(`Email not verified for user: ${loginDto.email}`);
-        throw new BadRequestException("Please verify your email first");
-      }
+
+
 
       if (String(userExists.role) !== String(loginDto.role)) {
         throw new UnauthorizedException("User role mismatch");
