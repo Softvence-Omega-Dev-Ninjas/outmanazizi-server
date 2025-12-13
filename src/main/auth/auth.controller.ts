@@ -26,6 +26,7 @@ import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
 import { GoogleAuthDto } from './dto/google.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
+import { AppleLoginDto } from './dto/apple-login.dto';
 // import { AuthGuard } from '@nestjs/passport';
 // import { GoogleUser } from './strategy/google.strategy';
 
@@ -150,6 +151,12 @@ export class AuthController {
   @ApiBody({ type: GoogleAuthDto })
   async appleAuth(@Body() googleAuthDto: GoogleAuthDto) {
     return await this.authService.appleAuth(googleAuthDto);
+  }
+  @Post('apple/login')
+  @Public()
+  @ApiBody({ type: AppleLoginDto })
+  async appleLogin(@Body() appleLoginDto: AppleLoginDto) {
+    return await this.authService.appleLogin(appleLoginDto);
   }
 
   @ApiTags('Environment')

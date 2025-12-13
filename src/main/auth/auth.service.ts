@@ -18,6 +18,7 @@ import { EmailAndOtpDto } from "./dto/emailAndOtp.dto";
 import { UserRole } from "./role.enum";
 import { GoogleAuthDto } from "./dto/google.dto";
 import { otpEmailTemplate } from "src/utils/mail/templates/contact-seller.template";
+import { AppleLoginDto } from "./dto/apple-login.dto";
 
 @Injectable()
 export class AuthService {
@@ -601,6 +602,27 @@ export class AuthService {
     } catch (error) {
       this.logger.error("Google Auth failed", error instanceof Error ? error.stack : error);
       if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
+    }
+  }
+  async appleLogin(appleLoginDto: AppleLoginDto) {
+    try {
+      const { appleUserId } = appleLoginDto;
+      const user = await this.prisma.user.findFirst({ where: { applePushToken: appleUserId } });
+
+      if (!user) {
+        this.logger.warn(`Apple user not found: ${appleUserId}`);
+        throw new NotFoundException("User not found. Please register first.");
+      }
+      const payload = { sub: user.id, email: user.email, role: user.role };
+      const token = await this.helperService.createTokenEntry(user.id, payload);
+      this.logger.log(`Apple user logged in successfully: ${appleUserId}`);
+      return ApiResponse.success(token, "User logged in successfully");
+    } catch (error) {
+      this.logger.error("Apple Login failed", error instanceof Error ? error.stack : error);
+      if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException(
         error instanceof Error ? error.message : "An unknown error occurred",
       );
