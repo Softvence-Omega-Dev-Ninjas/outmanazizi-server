@@ -559,6 +559,7 @@ export class AuthService {
             phone: "",
             provider: "APPLE",
             isEmailVerified: true,
+            applePushToken: googleAuthDto.applePushToken,
           },
         });
 
@@ -584,7 +585,7 @@ export class AuthService {
 
         const payload = { sub: newUser.id, email: newUser.email, role: newUser.role };
         const token = await this.helperService.createTokenEntry(newUser.id, payload);
-        return ApiResponse.success(token, "User created successfully");
+        return ApiResponse.success({ token, appleid: newUser.applePushToken }, "User created successfully");
       }
 
       // Existing user
@@ -596,7 +597,7 @@ export class AuthService {
       const payload = { sub: user.id, email: user.email, role: user.role };
       const token = await this.helperService.createTokenEntry(user.id, payload);
       this.logger.log(`User logged in successfully: ${email}`);
-      return ApiResponse.success(token, "User logged in successfully");
+      return ApiResponse.success({ token, appleid: user.applePushToken }, "User logged in successfully");
     } catch (error) {
       this.logger.error("Google Auth failed", error instanceof Error ? error.stack : error);
       if (error instanceof BadRequestException) throw error;

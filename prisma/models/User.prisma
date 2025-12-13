@@ -20,9 +20,9 @@ model User {
   serviceProvider ServiceProvider?
   stripeAccountId String?
 
-  fcmToken String?
-
-  services Service[]
+  fcmToken       String?
+  applePushToken String?
+  services       Service[]
 
   sentMessages              Message[]      @relation("SentMessages")
   receivedMessages          Message[]      @relation("ReceivedMessages")
