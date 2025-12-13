@@ -610,12 +610,17 @@ export class AuthService {
   async appleLogin(appleLoginDto: AppleLoginDto) {
     try {
       const { appleUserId } = appleLoginDto;
-      const user = await this.prisma.user.findFirst({ where: { applePushToken: appleUserId } });
-
+      console.log(appleUserId);
+      const user = await this.prisma.user.findFirst({
+        where: {
+          applePushToken: appleUserId
+        }
+      });
       if (!user) {
         this.logger.warn(`Apple user not found: ${appleUserId}`);
         throw new NotFoundException("User not found. Please register first.");
       }
+
       const payload = { sub: user.id, email: user.email, role: user.role };
       const token = await this.helperService.createTokenEntry(user.id, payload);
       this.logger.log(`Apple user logged in successfully: ${appleUserId}`);
