@@ -67,7 +67,7 @@ export class DisputeService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to create dispute for user ${userId} with service ID ${createDisputeDto.serviceid}: ${message}`, message);
-      return ApiResponse.error(message);
+      return ApiResponse.error('Failed to create dispute');
     }
   }
 
@@ -77,7 +77,7 @@ export class DisputeService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to retrieve disputes: ${message}`, message);
-      return ApiResponse.error(message);
+      return ApiResponse.error('Failed to retrieve disputes');
     }
   }
 
@@ -90,7 +90,7 @@ export class DisputeService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to retrieve disputes for user ${userId}: ${message}`, message);
-      return ApiResponse.error(message);
+      return ApiResponse.error('Failed to retrieve user disputes');
     }
   }
 
@@ -127,7 +127,7 @@ export class DisputeService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to update dispute with ID ${id}: ${message}`, message);
-      return ApiResponse.error(message);
+      return ApiResponse.error('Failed to update dispute');
     }
   }
 
@@ -152,7 +152,7 @@ export class DisputeService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to delete dispute with ID ${id}: ${message}`, message);
-      return ApiResponse.error(message);
+      return ApiResponse.error('Failed to delete dispute');
     }
   }
   // resolve a dispute (admin functionality)
@@ -221,7 +221,7 @@ export class DisputeService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to resolve dispute with ID ${id}: ${message}`, message);
-      return ApiResponse.error(message);
+      return ApiResponse.error('Failed to resolve dispute');
     }
   }
 
@@ -260,7 +260,7 @@ export class DisputeService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to retrieve dispute with ID ${id}: ${message}`, message);
-      return ApiResponse.error(message);
+      return ApiResponse.error('Failed to retrieve dispute');
     }
   }
 }

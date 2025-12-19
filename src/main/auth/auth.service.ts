@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -112,7 +113,7 @@ export class AuthService {
         `Registration failed for email ${registerDto.email}: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      return ApiResponse.error(message);
+      return ApiResponse.error('Registration failed');
     }
   }
 
@@ -141,7 +142,11 @@ export class AuthService {
       }
       const data = await this.prisma.user.update({
         where: { email },
-        data: { otp: null, otpExpiresAt: null, isEmailVerified: true },
+        data: {
+          otp: null,
+          otpExpiresAt: null,
+          isEmailVerified: true
+        },
       });
       this.logger.log(`OTP verified and user created: ${email}`);
       return ApiResponse.success(data, "OTP verified successfully and user created");
@@ -150,7 +155,7 @@ export class AuthService {
         typeof error === "object" && error !== null && "message" in error
           ? String((error as { message?: unknown }).message)
           : "Unknown error";
-      return ApiResponse.error("OTP verification failed", errorMessage);
+      return ApiResponse.error("OTP verification failed");
     }
   }
 
@@ -173,99 +178,101 @@ export class AuthService {
         typeof error === "object" && error !== null && "message" in error
           ? String((error as { message?: unknown }).message)
           : "Unknown error";
-      return ApiResponse.error("Upload profile picture failed", errorMessage);
+      return ApiResponse.error("Upload profile picture failed");
     }
   }
 
   // user login
   async login(loginDto: LoginDto) {
-
     try {
-      if (loginDto.fcmToken) {
-        await this.prisma.user.update({
-          where: { email: loginDto.email },
-          data: { fcmToken: loginDto.fcmToken },
-        })
-      }
-      const userExists = await this.helperService.userExistsByEmail(loginDto.email);
-      if (!userExists) {
+      // 1️⃣ User exists check
+      const user = await this.prisma.user.findUnique({
+        where: { email: loginDto.email },
+      });
+
+      if (!user) {
         throw new NotFoundException("User not found");
       }
-      if (!userExists?.isEmailVerified) {
-        this.logger.warn(`Email not verified for user: ${loginDto.email}`);
+
+      // 2️⃣ Email verification check
+      if (!user.isEmailVerified) {
         throw new BadRequestException("Please verify your email first");
       }
-      if (userExists.provider === "GOOGLE") {
-        this.logger.warn(`Attempted login with email ${loginDto.email} using non-Google method`);
-        throw new BadRequestException("Please log in using Google authentication");
+
+      // 3️⃣ Provider validation (LOCAL vs GOOGLE / APPLE)
+      if (user.provider !== "LOCAL") {
+        throw new BadRequestException(
+          `This account was created using ${user.provider}. Please log in using the same method.`,
+        );
       }
-      if (userExists.provider === "APPLE") {
-        this.logger.warn(`Attempted login with email ${loginDto.email} using non-Apple method`);
-        throw new BadRequestException("Please log in using Apple authentication");
-      }
-      if (!userExists.password) {
+
+      // 4️⃣ Password existence check
+      if (!user.password) {
         throw new UnauthorizedException("Invalid credentials");
       }
-      if (loginDto.role === UserRole.ADMIN) {
-        // Admin login logic
-        const adminUser = await this.prisma.user.findUnique({
-          where: { email: loginDto.email },
-        });
-        if (!adminUser) {
-          this.logger.warn(`Admin user not found: ${loginDto.email}`);
-          throw new NotFoundException("Admin user not found");
-        }
 
-        const passwordMatch = await bcrypt.compare(loginDto.password, userExists.password);
-
-        if (!passwordMatch) {
-          throw new UnauthorizedException("Invalid credentials");
-        }
-        const payload = {
-          sub: adminUser?.id,
-          email: adminUser?.email,
-          role: adminUser?.role,
-        };
-        const token = await this.helperService.createTokenEntry(adminUser.id, payload);
-        return ApiResponse.success(token, "Admin logged in successfully");
-      }
-      this.logger.debug(
-        `User existence check for email ${loginDto.email}: ${userExists ? "found" : "not found"}`,
+      // 5️⃣ Password validation
+      const passwordMatch = await bcrypt.compare(
+        loginDto.password,
+        user.password,
       );
-
-
-
-
-      if (String(userExists.role) !== String(loginDto.role)) {
-        throw new UnauthorizedException("User role mismatch");
-      }
-      const passwordMatch = await bcrypt.compare(loginDto.password, userExists.password);
 
       if (!passwordMatch) {
         throw new UnauthorizedException("Invalid credentials");
       }
-      const payload = {
-        sub: userExists.id,
-        email: userExists.email,
-        role: userExists.role,
-      };
-      const serviceProvider = await this.prisma.serviceProvider.findFirst({
-        where: { userId: userExists.id },
-      });
 
-      const token = await this.helperService.createTokenEntry(userExists.id, payload);
-      if (String(userExists.role) === String(UserRole.SERVICE_PROVIDER)) {
+      // 6️⃣ Role validation (ALWAYS trust DB role, not client role)
+      if (loginDto.role && String(user.role) !== String(loginDto.role)) {
+        throw new UnauthorizedException("User role mismatch");
+      }
+
+      // 7️⃣ Generate JWT payload
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      };
+
+      const token = await this.helperService.createTokenEntry(user.id, payload);
+
+      // 8️⃣ Update FCM token ONLY after successful login
+      if (loginDto.fcmToken) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { fcmToken: loginDto.fcmToken },
+        });
+      }
+
+      // 9️⃣ Role-based response
+      if (user.role === UserRole.ADMIN) {
+        return ApiResponse.success(token, "Admin logged in successfully");
+      }
+
+      if (user.role === UserRole.SERVICE_PROVIDER) {
+        const serviceProvider = await this.prisma.serviceProvider.findFirst({
+          where: { userId: user.id },
+        });
+
         return ApiResponse.success(
           { token, serviceProvider },
           "Service provider logged in successfully",
         );
       }
-      return ApiResponse.success({ token, userExists }, "User logged in successfully");
+
+      return ApiResponse.success(
+        { token, user },
+        "User logged in successfully",
+      );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-      return ApiResponse.error("Login failed", errorMessage);
+      // 🔐 Preserve HTTP status codes
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException("Login failed");
     }
   }
+
 
   // get profile by id
   async getProfileById(id: string) {
@@ -286,7 +293,7 @@ export class AuthService {
       return ApiResponse.success(user, "User profile fetched successfully");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-      return ApiResponse.error("Get user profile failed", errorMessage);
+      return ApiResponse.error("Get user profile failed");
     }
   }
 
@@ -397,7 +404,7 @@ export class AuthService {
         `Error resetting password for email ${email}: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-      throw new UnauthorizedException(errorMessage);
+      throw new UnauthorizedException("Reset password failed");
     }
   }
 
@@ -470,7 +477,7 @@ export class AuthService {
         typeof error === "object" && error !== null && "message" in error
           ? String((error as { message?: unknown }).message)
           : "Unknown error";
-      return ApiResponse.error("Resend OTP failed", errorMessage);
+      return ApiResponse.error("Resend OTP failed");
     }
   }
 
@@ -572,6 +579,7 @@ export class AuthService {
         // If service provider, create related record
         if (role === (UserRole.SERVICE_PROVIDER as UserRole)) {
           try {
+
             await this.prisma.serviceProvider.create({
               data: { userId: newUser.id, isProfileCompleted: false, address: "" },
             });

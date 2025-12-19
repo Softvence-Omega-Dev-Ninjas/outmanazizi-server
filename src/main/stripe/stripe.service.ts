@@ -95,7 +95,7 @@ export class StripeService {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown Stripe error occurred';
 
-      return ApiResponse.error('Stripe Account Creation Failed', errorMessage);
+      return ApiResponse.error('Stripe Account Creation Failed');
     }
   }
 
@@ -178,7 +178,7 @@ export class StripeService {
     } catch (error) {
       this.logger.error('Failed to get Stripe info', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      return ApiResponse.error('Failed to get Stripe info', errorMessage);
+      return ApiResponse.error('Failed to get Stripe info');
     }
   }
   async deleteAccount(accountId: string): Promise<Stripe.DeletedAccount> {
@@ -223,7 +223,7 @@ export class StripeService {
     } catch (error) {
       this.logger.error('Failed to retrieve payout history', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to retrieve payout history: ${errorMessage}`);
+      throw new Error(`Failed to retrieve payout history: `);
     }
   }
 }

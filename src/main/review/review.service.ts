@@ -38,13 +38,6 @@ export class ReviewService {
           serviceId: createReviewDto.serviceId,
         },
       });
-      // await this.prisma.serviceProvider.update({
-      //   where: { fromReviewId: serviceProviderExists.id },
-      //   data: {
-      //     myCurrentRating: rating,
-      //     ratingGetFromUsers: numberOfReviews + 1,
-      //   },
-      // });
       if (toReviewId.role === 'SERVICE_PROVIDER') {
         const serviceProviderExists = await this.prisma.serviceProvider.findFirst({
           where: { userId: createReviewDto.toReviewId },
@@ -63,7 +56,7 @@ export class ReviewService {
       return ApiResponse.success(review, 'Review created successfully');
     } catch (error) {
       this.logger.error(`Error creating review: ${error instanceof Error ? error.message : 'An error occurred'}`);
-      return ApiResponse.error(error instanceof Error ? error.message : 'An error occurred');
+      return ApiResponse.error('Error creating review');
     }
   }
 
@@ -91,7 +84,7 @@ export class ReviewService {
       return ApiResponse.success(reviews, 'Reviews retrieved successfully');
     } catch (error) {
       this.logger.error(`Error retrieving reviews: ${error instanceof Error ? error.message : 'An error occurred'}`);
-      return ApiResponse.error(error instanceof Error ? error.message : 'An error occurred');
+      return ApiResponse.error('An error occurred');
     }
   }
 }

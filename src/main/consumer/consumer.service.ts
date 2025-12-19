@@ -36,7 +36,7 @@ export class ConsumerService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Failed to fetch bided providers for service: ${serviceId}`, error);
-      return ApiResponse.error('Failed to fetch bided providers', message);
+      return ApiResponse.error('Failed to fetch bided providers');
     }
   }
   // remove bid
@@ -173,7 +173,7 @@ export class ConsumerService {
     } catch (error) {
       this.logger.error(`Failed to fetch notifications for user: ${userid}`, error);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      return ApiResponse.error('Failed to fetch notifications', message);
+      return ApiResponse.error('Failed to fetch notifications');
     }
   }
   // get specific service provider information
@@ -208,7 +208,7 @@ export class ConsumerService {
     } catch (error) {
       this.logger.error(`Failed to fetch service provider info for ID: ${serviceProviderId}`, error);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      return ApiResponse.error('Failed to fetch service provider info', message);
+      return ApiResponse.error('Failed to fetch service provider info');
     }
   }
 }

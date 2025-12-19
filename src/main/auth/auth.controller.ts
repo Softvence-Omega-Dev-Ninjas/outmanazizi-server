@@ -152,6 +152,7 @@ export class AuthController {
   async appleAuth(@Body() googleAuthDto: GoogleAuthDto) {
     return await this.authService.appleAuth(googleAuthDto);
   }
+
   @Post('apple/login')
   @Public()
   @ApiBody({ type: AppleLoginDto })
