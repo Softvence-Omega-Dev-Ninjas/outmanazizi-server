@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -197,29 +197,105 @@ export class JobService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving service provider location jobs: ${message}`);
-      throw new BadRequestException(message);
+      throw new BadRequestException('Failed to retrieve location-based jobs');
     }
   }
 
 
-  async subcategoryJobs(id: string) {
-    this.logger.log(`Fetching jobs for subcategory: ${id}`);
+  async subcategoryJobs(subCategoryId: string, userId: string) {
+    this.logger.log(
+      `Fetching jobs for subcategory ${subCategoryId} and service provider ${userId}`,
+    );
+
     try {
-      const idExists = await this.prisma.subServices.findUnique({ where: { id } });
-      if (!idExists) {
-        this.logger.warn(`Subcategory not found: ${id}`);
+      const userExists = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!userExists) {
+        this.logger.warn(`User not found: ${userId}`);
+        throw new NotFoundException('User does not exist');
+      }
+      console.log(userExists);
+      // 1️⃣ Check service provider exists
+      const serviceProvider = await this.prisma.serviceProvider.findUnique({
+        where: { userId },
+      });
+
+      if (!serviceProvider) {
+        this.logger.warn(`Service provider not found: ${userId}`);
+        throw new NotFoundException('Service provider does not exist');
+      }
+
+      // 2️⃣ Validate subcategory
+      const subCategoryExists = await this.prisma.subServices.findUnique({
+        where: { id: subCategoryId },
+      });
+      if (!subCategoryExists) {
+        this.logger.warn(`Subcategory not found: ${subCategoryId}`);
         throw new NotFoundException('Subcategory does not exist');
       }
-      const jobs = await this.prisma.service.findMany({
-        where: { subServices: id },
-      });
-      return ApiResponse.success(jobs, 'Jobs retrieved successfully for the subcategory');
 
+      // 3️⃣ Validate service areas
+      const areas = await this.prisma.area.findMany({
+        where: {
+          id: {
+            in: serviceProvider.serviceArea,
+          },
+        },
+      });
+
+      if (!areas.length) {
+        throw new NotFoundException(
+          'No service areas found for the service provider',
+        );
+      }
+
+      // 4️⃣ Validate service categories
+      const categories = await this.prisma.services.findMany({
+        where: {
+          id: {
+            in: serviceProvider.serviceCategories,
+          },
+        },
+      });
+      if (!categories.length) {
+        throw new NotFoundException(
+          'No service categories found for the service provider',
+        );
+      }
+
+
+      const jobs = await this.prisma.service.findMany({
+        where: {
+          subServices: subCategoryId,
+          location: {
+            in: areas.map((area) => area.id),
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return ApiResponse.success(
+        jobs,
+        'Jobs retrieved successfully for the subcategory',
+      );
     } catch (error) {
-      this.logger.error(`Error retrieving jobs for subcategory ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException('Failed to retrieve jobs for subcategory');
+      this.logger.error(
+        `Error retrieving jobs for subcategory ${subCategoryId}: ${error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to retrieve jobs for subcategory',
+      );
     }
   }
+
 }
 
