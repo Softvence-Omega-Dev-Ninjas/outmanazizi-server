@@ -199,12 +199,7 @@ export class AuthService {
         throw new BadRequestException("Please verify your email first");
       }
 
-      // 3️⃣ Provider validation (LOCAL vs GOOGLE / APPLE)
-      if (user.provider !== "LOCAL") {
-        throw new BadRequestException(
-          `This account was created using ${user.provider}. Please log in using the same method.`,
-        );
-      }
+
 
       // 4️⃣ Password existence check
       if (!user.password) {

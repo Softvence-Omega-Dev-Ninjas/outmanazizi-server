@@ -13,6 +13,7 @@ export class JobService {
     this.logger.log(`Create job request received for user: ${userId}`);
     this.logger.debug(`Payload: ${JSON.stringify(createJobDto)}`);
     try {
+
       const { images, ...rest } = createJobDto;
 
       const areaExists = await this.prisma.area.findFirst({
@@ -37,7 +38,6 @@ export class JobService {
         this.logger.warn(`Sub-service not found: ${createJobDto.subServices} under service: ${createJobDto.title}`);
         throw new NotFoundException('Sub-service does not exist under the specified service');
       }
-      console.log({ createJobDto });
       const savedJob = await this.prisma.service.create({
         data: {
           userId,
@@ -51,7 +51,7 @@ export class JobService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Job creation failed: ${message}`);
-      throw new BadRequestException(message);
+      throw new BadRequestException('Job creation failed');
     }
   }
 
@@ -198,6 +198,27 @@ export class JobService {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving service provider location jobs: ${message}`);
       throw new BadRequestException(message);
+    }
+  }
+
+
+  async subcategoryJobs(id: string) {
+    this.logger.log(`Fetching jobs for subcategory: ${id}`);
+    try {
+      const idExists = await this.prisma.subServices.findUnique({ where: { id } });
+      if (!idExists) {
+        this.logger.warn(`Subcategory not found: ${id}`);
+        throw new NotFoundException('Subcategory does not exist');
+      }
+      const jobs = await this.prisma.service.findMany({
+        where: { subServices: id },
+      });
+      return ApiResponse.success(jobs, 'Jobs retrieved successfully for the subcategory');
+
+    } catch (error) {
+      this.logger.error(`Error retrieving jobs for subcategory ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      throw new BadRequestException('Failed to retrieve jobs for subcategory');
     }
   }
 }

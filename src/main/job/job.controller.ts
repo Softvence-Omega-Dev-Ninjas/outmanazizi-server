@@ -88,4 +88,12 @@ export class JobController {
   async locationJobs(@Req() req: Request) {
     return await this.jobService.locationJobs(req['userid'] as string);
   }
+
+  // subcategory jobs
+  @Get('subcategory/:id')
+  @UseGuards(AuthenticationGuard)
+  @ApiOperation({ summary: 'Get jobs by subcategory ID' })
+  async subcategoryJobs(@Param('id') id: string) {
+    return await this.jobService.subcategoryJobs(id);
+  }
 }
