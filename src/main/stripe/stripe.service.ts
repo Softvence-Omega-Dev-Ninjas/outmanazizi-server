@@ -90,7 +90,7 @@ export class StripeService {
       );
 
     } catch (error) {
-      this.logger.error('❌ Stripe account creation failed', error);
+      this.logger.error('❌ Stripe account creation failed');
 
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown Stripe error occurred';
@@ -113,7 +113,7 @@ export class StripeService {
     } catch (error) {
       this.logger.error('Failed to generate account link', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(errorMessage);
+      throw new BadRequestException(`Failed to generate account link: `);
     }
   }
   async retrieveAccount(accountId: string): Promise<Stripe.Account> {
@@ -136,7 +136,7 @@ export class StripeService {
     } catch (error) {
       this.logger.error('Failed to retrieve Stripe account', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(errorMessage);
+      throw new BadRequestException(`Failed to retrieve Stripe account: `);
     }
   }
 
@@ -190,7 +190,7 @@ export class StripeService {
     } catch (error) {
       this.logger.error('Failed to delete Stripe account', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Stripe Account Deletion Failed: ${errorMessage}`);
+      throw new Error(`Stripe Account Deletion Failed `);
     }
   }
   // payout history

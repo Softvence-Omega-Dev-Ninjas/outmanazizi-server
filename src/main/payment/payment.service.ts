@@ -52,7 +52,7 @@ export class PaymentsService {
     } catch (error) {
       this.logger.error(`Failed to create customer for userId: ${userId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new InternalServerErrorException(`Failed to create customer: ${message}`);
+      throw new InternalServerErrorException(`Failed to create customer:  `);
     }
   }
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
@@ -114,7 +114,7 @@ export class PaymentsService {
     } catch (error) {
       this.logger.error(`Failed to create payment intent for userId: ${userId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new InternalServerErrorException(`Failed to create payment intent: ${message}`);
+      throw new InternalServerErrorException(`Failed to create payment intent: `);
     }
   }
 
@@ -161,7 +161,7 @@ export class PaymentsService {
       }
       if (sellerAccount?.capabilities?.transfers !== 'active') {
         throw new Error('Seller account is not ready for transfers');
-      }   
+      }
 
       await this.stripe.transfers.create({
         amount: dto.amountCents,
@@ -178,14 +178,14 @@ export class PaymentsService {
         }
       });
       // console.log({ bidExists });
-       await this.prisma.notification.create({
+      await this.prisma.notification.create({
         data: {
           fromNotification: userId,
           toNotification: bidExists.serviceProvider.userId,
           message: `Payment of $${(dto.amountCents / 100).toFixed(2)} has been released to your account for order ${dto.orderId}.`,
           createdAt: new Date(),
         }
-      }); 
+      });
       this.eventEmitter.emit(
         'Notification',
         {
@@ -228,7 +228,7 @@ export class PaymentsService {
     } catch (error) {
       this.logger.error(`Failed to create transfer for amount: ${dto.amountCents}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new InternalServerErrorException(`Failed to create transfer: ${message}`);
+      throw new InternalServerErrorException(`Failed to create transfer:  `);
     }
   }
 
@@ -261,7 +261,7 @@ export class PaymentsService {
     } catch (error) {
       this.logger.error(`Failed to process refund for orderId: ${dto.orderId}`, error);
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new InternalServerErrorException(`Failed to process refund: ${message}`);
+      throw new InternalServerErrorException(`Failed to process refund:  `);
     }
   }
 }

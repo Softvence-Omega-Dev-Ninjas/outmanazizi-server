@@ -103,7 +103,7 @@ export class ServiceProviderService {
     } catch (error) {
       this.logger.error(`Error fetching current service provider for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException(message);
+      throw new BadRequestException('Failed to fetch current service provider');
     }
   }
   // patch document upload
@@ -128,7 +128,7 @@ export class ServiceProviderService {
     } catch (error) {
       this.logger.error(`Error uploading documents for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException('Document upload failed', message);
+      throw new BadRequestException('Document upload failed');
     }
   }
   async findAll() {
@@ -139,7 +139,7 @@ export class ServiceProviderService {
     } catch (error) {
       this.logger.error(`Error fetching service providers - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException('Failed to retrieve service providers', message);
+      throw new BadRequestException('Failed to retrieve service providers');
     }
   }
 
@@ -198,7 +198,7 @@ export class ServiceProviderService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving bids for service provider ${userid}: ${message}`);
-      throw new BadRequestException(message);
+      throw new BadRequestException('Failed to retrieve bids');
     }
   }
 
@@ -281,7 +281,7 @@ export class ServiceProviderService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving bids for service provider ${userid}: ${message}`);
-      throw new BadRequestException(message);
+      throw new BadRequestException('Failed to retrieve bids');
     }
   }
 
@@ -312,7 +312,7 @@ export class ServiceProviderService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving accepted bids for service provider ${userid}: ${message}`);
-      throw new BadRequestException(message);
+      throw new BadRequestException('Failed to retrieve bids');
     }
   }
   // specific consumer  info
@@ -348,7 +348,7 @@ export class ServiceProviderService {
     } catch (error) {
       this.logger.error(`Failed to fetch service provider info for ID: ${id}`, error);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException(message);
+      throw new BadRequestException('Failed to fetch consumer info');
     }
   }
 }

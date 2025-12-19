@@ -75,7 +75,7 @@ export class MessagesService {
     } catch (error) {
       this.logger.error(`Failed to get or create conversation between ${userId} and ${dto.otherUserId}`, error instanceof Error ? error.stack : '');
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new InternalServerErrorException('Failed to get or create conversation', message);
+      throw new InternalServerErrorException('Failed to get or create conversation');
     }
   }
 
@@ -186,7 +186,7 @@ export class MessagesService {
     } catch (error) {
       this.logger.error(`Failed to send message from ${userId} to ${dto.receiverId}`, error instanceof Error ? error.stack : '');
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new InternalServerErrorException('Failed to send message', message);
+      throw new InternalServerErrorException('Failed to send message');
     }
   }
 
@@ -250,7 +250,7 @@ export class MessagesService {
     } catch (error) {
       this.logger.error(`Failed to retrieve messages for user ${userId} in conversation with ${dto.otherUserId}`, error instanceof Error ? error.stack : '');
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new InternalServerErrorException('Failed to retrieve messages', message);
+      throw new InternalServerErrorException('Failed to retrieve messages');
     }
   }
 }

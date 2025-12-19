@@ -93,7 +93,7 @@ export class JobService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving jobs: ${message}`);
-      throw new BadRequestException(message);
+      throw new BadRequestException('Failed to retrieve jobs');
     }
   }
 
@@ -106,7 +106,7 @@ export class JobService {
     catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving job ${id}: ${message}`);
-      throw new BadRequestException(message);
+      throw new BadRequestException('Failed to retrieve job');
     }
   }
 
@@ -137,7 +137,7 @@ export class JobService {
     } catch (error) {
       this.logger.error(`Error updating job ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException('Update failed ', message);
+      throw new BadRequestException('Update failed ');
     }
   }
 
@@ -154,7 +154,7 @@ export class JobService {
     } catch (error) {
       this.logger.error(`Error requesting job deletion for job ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException('Delete request failed', message);
+      throw new BadRequestException('Delete request failed');
     }
   }
 

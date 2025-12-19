@@ -137,7 +137,7 @@ export class AdminService {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new UnauthorizedException(message);
+      throw new UnauthorizedException('Failed to fetch orders: ');
     }
   }
   async findOrderDetails(orderId: string) {
@@ -167,7 +167,7 @@ export class AdminService {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new UnauthorizedException(message);
+      throw new UnauthorizedException('Failed to fetch order details: ');
     }
   }
   async changeUserRole(userid: string, role: Role) {
@@ -209,7 +209,7 @@ export class AdminService {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new UnauthorizedException(message);
+      throw new UnauthorizedException('Failed to create platform fee: ');
     }
     // get platform fee
 
@@ -223,7 +223,7 @@ export class AdminService {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new UnauthorizedException(message);
+      throw new UnauthorizedException('Failed to fetch platform fee: ');
     }
   }
 
@@ -245,7 +245,7 @@ export class AdminService {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new UnauthorizedException(message);
+      throw new UnauthorizedException('Failed to update platform fee: ');
     }
   }
   // delete a platform fee
@@ -262,7 +262,7 @@ export class AdminService {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new UnauthorizedException(message);
+      throw new UnauthorizedException('Failed to delete platform fee: ');
     }
   }
 
