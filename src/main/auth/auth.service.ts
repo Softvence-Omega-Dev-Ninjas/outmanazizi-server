@@ -593,10 +593,10 @@ export class AuthService {
       }
 
       // Existing user
-      if (user.role !== role) {
-        this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${user.role}`);
-        throw new BadRequestException("User role mismatch. Please use the correct login method.");
-      }
+      // if (user.role !== role) {
+      //   this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${user.role}`);
+      //   throw new BadRequestException("User role mismatch. Please use the correct login method.");
+      // }
 
       const payload = { sub: user.id, email: user.email, role: user.role };
       const token = await this.helperService.createTokenEntry(user.id, payload);
