@@ -94,6 +94,13 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+  adminer:
+    image: adminer
+    restart: always
+    networks:
+      - web
+    ports:
+      - "8080:8080"
 
 volumes:
   pg:
