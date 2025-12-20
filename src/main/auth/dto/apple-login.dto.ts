@@ -2,9 +2,9 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty } from "class-validator";
 
 export class AppleLoginDto {
-  @ApiProperty({ example: 'user@example.com', description: 'The email address of the Apple user' })
+  @ApiProperty({ example: 'apple-user-id-123', description: 'The unique identifier for the Apple user' })
   @IsNotEmpty()
-  email: string;
+  appleUserId: string;
 
 
   @ApiProperty({ example: 'select your role ', description: 'role ' })
