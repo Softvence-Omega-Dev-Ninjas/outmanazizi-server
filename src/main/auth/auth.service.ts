@@ -611,27 +611,28 @@ export class AuthService {
     }
   }
   async appleLogin(appleLoginDto: AppleLoginDto) {
+    this.logger.log("Apple Login request received");
     try {
-      const { appleUserId } = appleLoginDto;
+
       const user = await this.prisma.user.findFirst({
         where: {
-          applePushToken: appleUserId
+          email: appleLoginDto.email
         }
       });
 
       if (!user) {
-        this.logger.warn(`Apple user not found: ${appleUserId}`);
+        this.logger.warn(`Apple user not found: ${appleLoginDto.email}`);
         throw new NotFoundException("User not found. Please register first.");
       }
 
 
       if (user.role !== appleLoginDto.role) {
-        this.logger.warn(`Role mismatch for Apple user ${appleUserId}: expected ${appleLoginDto.role}, found ${user.role}`);
+        this.logger.warn(`Role mismatch for Apple user ${appleLoginDto.email}: expected ${appleLoginDto.role}, found ${user.role}`);
         throw new BadRequestException("User role mismatch. Please use the correct login method.");
       }
       const payload = { sub: user.id, email: user.email, role: user.role };
       const token = await this.helperService.createTokenEntry(user.id, payload);
-      this.logger.log(`Apple user logged in successfully: ${appleUserId}`);
+      this.logger.log(`Apple user logged in successfully: ${appleLoginDto.email}`);
       return ApiResponse.success(token, "User logged in successfully");
     } catch (error) {
       this.logger.error("Apple Login failed", error instanceof Error ? error.stack : error);
