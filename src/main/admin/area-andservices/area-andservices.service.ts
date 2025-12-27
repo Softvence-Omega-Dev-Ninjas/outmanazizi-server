@@ -29,6 +29,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(areaAndServices, 'Area created successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to create area: ${message}`);
       throw new BadRequestException('Failed to create area: ');
     }
   }
@@ -52,6 +53,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(services, 'Service created successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to create service: ${message}`);
       throw new BadRequestException('Failed to create service: ');
     }
   }
@@ -74,6 +76,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(subServices, 'Sub-service created successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to create sub-service: ${message}`);
       throw new BadRequestException('Failed to create sub-service: ');
     }
   }
@@ -100,6 +103,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(deletedSubService, 'Sub-service deleted successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to delete sub-service: ${message}`);
       throw new UnauthorizedException('Failed to delete sub-service: ');
     }
   }
@@ -122,6 +126,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(updatedSubService, 'Sub-service updated successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to update sub-service: ${message}`);
       throw new UnauthorizedException('Failed to update sub-service: ');
     }
   }
@@ -144,6 +149,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(updatedLocation, 'Location updated successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to update location: ${message}`);
       throw new UnauthorizedException('Failed to update location: ');
     }
   }
@@ -186,6 +192,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(updatedService, 'Service updated successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to update service: ${message}`);
       throw new UnauthorizedException('Failed to update service: ');
     }
   }
@@ -201,6 +208,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(areaExists, 'Area details fetched successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to fetch area details: ${message}`);
       throw new BadRequestException('Failed to fetch area details: ');
     }
   }
@@ -217,6 +225,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(serviceExists, 'Service details fetched successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to fetch service details: ${message}`);
       throw new BadRequestException('Failed to fetch service details: ');
     }
   }
