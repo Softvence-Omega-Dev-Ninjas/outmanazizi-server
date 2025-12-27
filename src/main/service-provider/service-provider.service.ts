@@ -50,17 +50,7 @@ export class ServiceProviderService {
         this.logger.error(`One or more service areas are invalid for user: ${userid}`);
         throw new NotFoundException('One or more service areas are invalid');
       }
-      const serviceCategories: { id: string }[] = await this.prisma.services.findMany({
-        where: {
-          id: { in: createServiceProviderDto.serviceCategories },
-        },
-        select: { id: true },
-      });
 
-      if (serviceCategories.length !== createServiceProviderDto.serviceCategories.length) {
-        this.logger.error(`One or more service categories are invalid for user: ${userid}`);
-        throw new NotFoundException('One or more service categories are invalid');
-      }
 
       const newServiceProvider = await this.prisma.serviceProvider.update({
         where: { id: serviceProviderExists.id },
@@ -70,7 +60,7 @@ export class ServiceProviderService {
             set: serviceAreas.map((area) => area.id),
           },
           serviceCategories: {
-            set: serviceCategories.map((category) => category.id),
+            set: createServiceProviderDto.serviceCategories,
           },
         },
       });
@@ -103,6 +93,7 @@ export class ServiceProviderService {
     } catch (error) {
       this.logger.error(`Error fetching current service provider for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.log(message);
       throw new BadRequestException('Failed to fetch current service provider');
     }
   }
@@ -128,6 +119,7 @@ export class ServiceProviderService {
     } catch (error) {
       this.logger.error(`Error uploading documents for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.log(message);
       throw new BadRequestException('Document upload failed');
     }
   }
@@ -139,6 +131,7 @@ export class ServiceProviderService {
     } catch (error) {
       this.logger.error(`Error fetching service providers - ${error instanceof Error ? error.message : 'An error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.log(message);
       throw new BadRequestException('Failed to retrieve service providers');
     }
   }
@@ -348,6 +341,7 @@ export class ServiceProviderService {
     } catch (error) {
       this.logger.error(`Failed to fetch service provider info for ID: ${id}`, error);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.log(message);
       throw new BadRequestException('Failed to fetch consumer info');
     }
   }

@@ -83,10 +83,10 @@ export class JobController {
   }
 
   // @UseGuards(AuthenticationGuard, )
-  @Get('service-provider/location-jobs')
+  @Get('service-provider/location-jobs/:categoryType')
   @ApiOperation({ summary: 'Get jobs for service providers based on their location' })
-  async locationJobs(@Req() req: Request) {
-    return await this.jobService.locationJobs(req['userid'] as string);
+  async locationJobs(@Req() req: Request, @Param('categoryType') categoryType: string) {
+    return await this.jobService.locationJobs(req['userid'] as string, categoryType);
   }
 
   // subcategory jobs

@@ -48,7 +48,7 @@ export class AuthService {
         throw new BadRequestException("Please log in using Apple authentication");
       }
       if (userExists) {
-        throw new BadRequestException("You are already registered. Please log in.");
+        throw new Error("You are already registered. Please log in.");
       }
 
       const hashedPassword = await bcrypt.hash(registerDto.password, 12);

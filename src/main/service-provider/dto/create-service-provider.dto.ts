@@ -14,7 +14,7 @@ export class CreateServiceProviderDto {
   serviceArea: string[];
 
   @ApiProperty({
-    example: ['5b20bdb2-7db2-425d-9943-a03e9abbe96a'],
+    example: ['Plumbing', 'Electrical'],
     description: 'service categories',
   })
   @IsNotEmpty()

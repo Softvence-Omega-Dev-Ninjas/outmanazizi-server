@@ -23,21 +23,8 @@ export class JobService {
         this.logger.warn(`Area not found: ${createJobDto.location}`);
         throw new NotFoundException('Area does not exist');
       }
-      const serviceExists = await this.prisma.services.findFirst({
-        where: { id: createJobDto.title },
-        include: { subServices: true },
-      });
-      if (!serviceExists) {
-        this.logger.warn(`Service not found: ${createJobDto.title}`);
-        throw new NotFoundException('Service does not exist');
-      }
-      const subServiceExists = serviceExists?.subServices.find(
-        (sub) => sub.id === createJobDto.subServices,
-      );
-      if (!subServiceExists) {
-        this.logger.warn(`Sub-service not found: ${createJobDto.subServices} under service: ${createJobDto.title}`);
-        throw new NotFoundException('Sub-service does not exist under the specified service');
-      }
+
+
       const savedJob = await this.prisma.service.create({
         data: {
           userId,
@@ -46,6 +33,7 @@ export class JobService {
           serviceName: createJobDto.serviceName,
         },
       });
+
       this.logger.log(`Job created successfully: ${JSON.stringify(savedJob)}`);
       return ApiResponse.success(savedJob, 'Job created successfully');
     } catch (error) {
@@ -159,7 +147,7 @@ export class JobService {
   }
 
 
-  async locationJobs(userId: string) {
+  async locationJobs(userId: string, categoryType: string) {
     this.logger.log(`Fetching location-based jobs for service provider: ${userId}`);
     try {
       const serviceProviderExists = await this.prisma.serviceProvider.findUnique({
@@ -173,23 +161,17 @@ export class JobService {
       const areaExists = await this.prisma.area.findMany({
         where: { id: { in: serviceProviderExists.serviceArea } },
       });
-      const serviceExists = await this.prisma.services.findMany({
-        where: { id: { in: serviceProviderExists.serviceCategories } }
-      })
+
       if (areaExists.length === 0) {
         this.logger.warn(`No service areas found for service provider: ${userId}`);
         throw new NotFoundException('No service areas found for the service provider');
       }
-      if (serviceExists.length === 0) {
-        this.logger.warn(`No service categories found for service provider: ${userId}`);
-        throw new NotFoundException('No service categories found for the service provider');
-      }
 
       const relatedServices = await this.prisma.service.findMany({
         where: {
-          OR: [
-            ...areaExists.map(area => ({ location: area.id })),
-            ...serviceExists.map(service => ({ title: service.id })),
+          AND: [
+            { location: { in: areaExists.map(area => area.id) } },
+            { title: categoryType }
           ]
         },
       });
