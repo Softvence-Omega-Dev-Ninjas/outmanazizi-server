@@ -25,7 +25,7 @@ async function main() {
     },
     create: {
       email: superAdminEmail,
-      role: "SUPER_ADMIN",
+      role: "ADMIN",
       name: "Super Admin",
       phone: "0000000000",
       picture: "",
