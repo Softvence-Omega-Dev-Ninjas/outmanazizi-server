@@ -137,6 +137,7 @@ export class JobService {
     } catch (error) {
       this.logger.error(`Error updating job ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.log(message);
       throw new BadRequestException('Update failed ');
     }
   }
