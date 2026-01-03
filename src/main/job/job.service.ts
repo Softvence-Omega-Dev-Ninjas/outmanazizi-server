@@ -176,7 +176,7 @@ export class JobService {
   }
 
 
-  async locationJobs(userId: string, categoryType: string) {
+  async locationJobs(userId: string,) {
     this.logger.log(`Fetching location-based jobs for service provider: ${userId}`);
     try {
       const serviceProviderExists = await this.prisma.serviceProvider.findUnique({

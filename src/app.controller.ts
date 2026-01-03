@@ -8,6 +8,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 @Controller()
 export class AppController {
   @Get('/')
+  @Public()
   @ApiOperation({
     summary: 'Server says: ‘I got you, boss!’ 😁🟢 Please you check me',
     description:
