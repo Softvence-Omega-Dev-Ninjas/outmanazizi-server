@@ -22,6 +22,7 @@ export class ServiceProviderService {
   }
 
   async create(userid: string, createServiceProviderDto: CreateServiceProviderDto) {
+    console.log(createServiceProviderDto);
     this.logger.log(`Creating service provider profile for user: ${userid}`);
     try {
       // user exists check
@@ -50,18 +51,28 @@ export class ServiceProviderService {
         this.logger.error(`One or more service areas are invalid for user: ${userid}`);
         throw new NotFoundException('One or more service areas are invalid');
       }
-      const serviceCategories: { id: string }[] = await this.prisma.services.findMany({
-        where: {
-          id: { in: createServiceProviderDto.serviceCategories },
-        },
-        select: { id: true },
-      });
+      // const serviceCategories: { id: string }[] = await this.prisma.services.findMany({
+      //   where: {
+      //     id: { in: createServiceProviderDto.serviceCategories },
+      //   },
+      //   select: { id: true },
+      // });
 
+      // if (serviceCategories.length !== createServiceProviderDto.serviceCategories.length) {
+      //   this.logger.error(`One or more service categories are invalid for user: ${userid}`);
+      //   throw new NotFoundException('One or more service categories are invalid');
+      // }
+      const serviceCategories: { id: string; category: string }[] = await this.prisma.category.findMany({
+        where: {
+          category: { in: createServiceProviderDto.serviceCategories as any },
+        },
+        select: { id: true, category: true },
+      });
       if (serviceCategories.length !== createServiceProviderDto.serviceCategories.length) {
         this.logger.error(`One or more service categories are invalid for user: ${userid}`);
         throw new NotFoundException('One or more service categories are invalid');
       }
-
+      console.log({ serviceCategories });
       const newServiceProvider = await this.prisma.serviceProvider.update({
         where: { id: serviceProviderExists.id },
         data: {
@@ -70,7 +81,7 @@ export class ServiceProviderService {
             set: serviceAreas.map((area) => area.id),
           },
           serviceCategories: {
-            set: serviceCategories.map((category) => category.id),
+            set: serviceCategories.map((cat) => cat.category),
           },
         },
       });

@@ -10,6 +10,8 @@ import { UserRole } from '../auth/role.enum';
 import { AuthenticationGuard } from 'src/guards/auth.guard';
 import { Roles } from 'src/guards/roles.decorator';
 import { UpdateLocationDto } from './dto/update.location.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 
 @Controller('admin')
 @UseGuards(RolesGuard, AuthenticationGuard)
@@ -18,6 +20,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly areaAndservicesService: AreaAndservicesService,
+    private readonly prisma: PrismaService,
   ) { }
 
   // Make Service Provider verified
@@ -225,5 +228,23 @@ export class AdminController {
   async deletePlatformFee(@Param('id') id: string) {
     return await this.adminService.deletePlatformFee(id);
   }
+
+
+  @Get('All-categories-with-subcategories')
+  @Public()
+  @ApiOperation({ summary: 'Get dashboard metrics  ' })
+  async Cat() {
+    try {
+      const res = await this.prisma.category.findMany({
+      });
+      return ApiResponse.success(res, 'Categories with subcategories fetched successfully');
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+
+
+  }
+
 
 }

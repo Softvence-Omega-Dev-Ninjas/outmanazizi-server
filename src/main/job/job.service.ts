@@ -23,21 +23,31 @@ export class JobService {
         this.logger.warn(`Area not found: ${createJobDto.location}`);
         throw new NotFoundException('Area does not exist');
       }
-      const serviceExists = await this.prisma.services.findFirst({
-        where: { id: createJobDto.title },
-        include: { subServices: true },
+      // const serviceExists = await this.prisma.services.findFirst({
+      //   where: { id: createJobDto.title },
+      //   include: { subServices: true },
+      // });
+      // if (!serviceExists) {
+      //   this.logger.warn(`Service not found: ${createJobDto.title}`);
+      //   throw new NotFoundException('Service does not exist');
+      // }
+      // const subServiceExists = serviceExists?.subServices.find(
+      //   (sub) => sub.id === createJobDto.subServices,
+      // );
+      // if (!subServiceExists) {
+      //   this.logger.warn(`Sub-service not found: ${createJobDto.subServices} under service: ${createJobDto.title}`);
+      //   throw new NotFoundException('Sub-service does not exist under the specified service');
+      // }
+      const categoriesExists = await this.prisma.category.findMany({
+        where: { category: createJobDto.title as any },
       });
-      if (!serviceExists) {
-        this.logger.warn(`Service not found: ${createJobDto.title}`);
-        throw new NotFoundException('Service does not exist');
+      if (categoriesExists.length === 0) {
+        this.logger.warn(`Service categories not found: ${createJobDto.title}`);
+        throw new NotFoundException('Service categories do not exist');
       }
-      const subServiceExists = serviceExists?.subServices.find(
-        (sub) => sub.id === createJobDto.subServices,
-      );
-      if (!subServiceExists) {
-        this.logger.warn(`Sub-service not found: ${createJobDto.subServices} under service: ${createJobDto.title}`);
-        throw new NotFoundException('Sub-service does not exist under the specified service');
-      }
+
+      console.log(categoriesExists);
+
       const savedJob = await this.prisma.service.create({
         data: {
           userId,
@@ -51,6 +61,7 @@ export class JobService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Job creation failed: ${message}`);
+      console.log(message);
       throw new BadRequestException('Job creation failed');
     }
   }
@@ -166,34 +177,30 @@ export class JobService {
       const serviceProviderExists = await this.prisma.serviceProvider.findUnique({
         where: { userId },
       });
-      this.logger.debug(`Service provider details: ${JSON.stringify(serviceProviderExists)}`);
+
       if (!serviceProviderExists) {
         this.logger.warn(`Service provider not found: ${userId}`);
         throw new NotFoundException('Service provider does not exist');
       }
+      this.logger.debug(`Service provider details: ${JSON.stringify(serviceProviderExists)}`);
       const areaExists = await this.prisma.area.findMany({
         where: { id: { in: serviceProviderExists.serviceArea } },
       });
-      const serviceExists = await this.prisma.services.findMany({
-        where: { id: { in: serviceProviderExists.serviceCategories } }
-      })
+      console.log({ serviceProviderExists });
+
       if (areaExists.length === 0) {
         this.logger.warn(`No service areas found for service provider: ${userId}`);
         throw new NotFoundException('No service areas found for the service provider');
       }
-      if (serviceExists.length === 0) {
-        this.logger.warn(`No service categories found for service provider: ${userId}`);
-        throw new NotFoundException('No service categories found for the service provider');
-      }
 
       const relatedServices = await this.prisma.service.findMany({
         where: {
-          OR: [
-            ...areaExists.map(area => ({ location: area.id })),
-            ...serviceExists.map(service => ({ title: service.id })),
-          ]
+          location: {
+            in: areaExists.map(area => area.id)
+          }
         },
       });
+      console.log(relatedServices);
       return ApiResponse.success(relatedServices, 'Location-based jobs retrieved successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';

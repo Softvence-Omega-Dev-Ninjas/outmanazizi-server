@@ -8,22 +8,21 @@ export class CreateJobDto {
     description: 'Service name for the job',
     example: 'Plumbing in Gardern City',
   })
-  @IsNotEmpty()
   @IsString()
   serviceName: string;
   @ApiProperty({
     description: 'Title of the job',
-    example: 'e8c510cf-fe09-4d17-bafb-f8994820a4cd',
+    example: 'CLEANING',
   })
   @IsString()
   title: string;
+
   @ApiProperty({
     description: 'Sub-category of the job',
-    example: '66e7e8b0-9b51-430d-8f1d-2b930fb88648',
+    example: ['HOUSE_CLEANING', 'DEEP_CLEANING', 'OFFICE_CLEANING'],
   })
   @IsString()
   @IsNotEmpty()
-  @IsUUID()
   subServices: string;
 
   @ApiProperty({
