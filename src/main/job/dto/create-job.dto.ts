@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsNotEmpty, } from 'class-validator';
+import { IsString, IsBoolean, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateJobDto {
@@ -8,18 +8,18 @@ export class CreateJobDto {
     description: 'Service name for the job',
     example: 'Plumbing in Gardern City',
   })
-  @IsNotEmpty()
+  @IsString()
   serviceName: string;
   @ApiProperty({
     description: 'Title of the job',
-    example: 'Pluber',
+    example: 'CLEANING',
   })
   @IsString()
   title: string;
 
   @ApiProperty({
     description: 'Sub-category of the job',
-    example: 'Plumbing Helper',
+    example: ['HOUSE_CLEANING', 'DEEP_CLEANING', 'OFFICE_CLEANING'],
   })
   @IsString()
   @IsNotEmpty()
