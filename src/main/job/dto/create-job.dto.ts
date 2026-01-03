@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsString, IsBoolean, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateJobDto {

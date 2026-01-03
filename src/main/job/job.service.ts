@@ -8,6 +8,7 @@ import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 export class JobService {
   private readonly logger = new Logger(JobService.name);
   constructor(private readonly prisma: PrismaService) { }
+
   // Create a job
   async create(userId: string, createJobDto: CreateJobDto) {
     this.logger.log(`Create job request received for user: ${userId}`);
@@ -23,6 +24,7 @@ export class JobService {
         this.logger.warn(`Area not found: ${createJobDto.location}`);
         throw new NotFoundException('Area does not exist');
       }
+
       // const serviceExists = await this.prisma.services.findFirst({
       //   where: { id: createJobDto.title },
       //   include: { subServices: true },
@@ -38,6 +40,7 @@ export class JobService {
       //   this.logger.warn(`Sub-service not found: ${createJobDto.subServices} under service: ${createJobDto.title}`);
       //   throw new NotFoundException('Sub-service does not exist under the specified service');
       // }
+
       const categoriesExists = await this.prisma.category.findMany({
         where: { category: createJobDto.title as any },
       });
@@ -56,6 +59,7 @@ export class JobService {
           serviceName: createJobDto.serviceName,
         },
       });
+
       this.logger.log(`Job created successfully: ${JSON.stringify(savedJob)}`);
       return ApiResponse.success(savedJob, 'Job created successfully');
     } catch (error) {
@@ -166,6 +170,7 @@ export class JobService {
     } catch (error) {
       this.logger.error(`Error requesting job deletion for job ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.log(message);
       throw new BadRequestException('Delete request failed');
     }
   }
@@ -182,11 +187,12 @@ export class JobService {
         this.logger.warn(`Service provider not found: ${userId}`);
         throw new NotFoundException('Service provider does not exist');
       }
+
       this.logger.debug(`Service provider details: ${JSON.stringify(serviceProviderExists)}`);
       const areaExists = await this.prisma.area.findMany({
         where: { id: { in: serviceProviderExists.serviceArea } },
       });
-      console.log({ serviceProviderExists });
+
 
       if (areaExists.length === 0) {
         this.logger.warn(`No service areas found for service provider: ${userId}`);
@@ -200,7 +206,6 @@ export class JobService {
           }
         },
       });
-      console.log(relatedServices);
       return ApiResponse.success(relatedServices, 'Location-based jobs retrieved successfully');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -223,8 +228,8 @@ export class JobService {
         this.logger.warn(`User not found: ${userId}`);
         throw new NotFoundException('User does not exist');
       }
-      console.log(userExists);
-      // 1️⃣ Check service provider exists
+
+
       const serviceProvider = await this.prisma.serviceProvider.findUnique({
         where: { userId },
       });
@@ -234,7 +239,7 @@ export class JobService {
         throw new NotFoundException('Service provider does not exist');
       }
 
-      // 2️⃣ Validate subcategory
+
       const subCategoryExists = await this.prisma.subServices.findUnique({
         where: { id: subCategoryId },
       });
@@ -243,7 +248,7 @@ export class JobService {
         throw new NotFoundException('Subcategory does not exist');
       }
 
-      // 3️⃣ Validate service areas
+
       const areas = await this.prisma.area.findMany({
         where: {
           id: {
@@ -258,7 +263,7 @@ export class JobService {
         );
       }
 
-      // 4️⃣ Validate service categories
+
       const categories = await this.prisma.services.findMany({
         where: {
           id: {
