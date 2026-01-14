@@ -27,8 +27,6 @@ import { UploadImageDto } from './dto/uploadImage.dto';
 import { AppleAuthDto, GoogleAuthDto } from './dto/google.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { AppleLoginDto } from './dto/apple-login.dto';
-// import { AuthGuard } from '@nestjs/passport';
-// import { GoogleUser } from './strategy/google.strategy';
 
 @ApiTags('Authentication & User Management')
 @Controller('auth')

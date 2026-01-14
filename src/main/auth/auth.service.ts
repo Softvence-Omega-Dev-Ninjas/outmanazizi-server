@@ -496,9 +496,10 @@ export class AuthService {
       const { email, name, picture, role } = googleAuthDto;
 
       const user = await this.prisma.user.findUnique({ where: { email } });
-
+      if (user?.provider !== "GOOGLE") {
+        throw new BadRequestException("Please log in using email and password");
+      }
       if (!user) {
-        // Create new user
         const newUser = await this.prisma.user.create({
           data: {
             email,
@@ -641,12 +642,15 @@ export class AuthService {
         this.logger.warn(`Apple user not found: ${appleUserId}`);
         throw new NotFoundException("User not found. Please register first.");
       }
-
+      if (user?.provider !== 'APPLE') {
+        throw new BadRequestException("Please log in using the valid method");
+      }
 
       if (user.role !== appleLoginDto.role) {
         this.logger.warn(`Role mismatch for Apple user ${appleUserId}: expected ${appleLoginDto.role}, found ${user.role}`);
         throw new BadRequestException("User role mismatch. Please use the correct login method.");
       }
+
       const payload = { sub: user.id, email: user.email, role: user.role };
       const token = await this.helperService.createTokenEntry(user.id, payload);
       this.logger.log(`Apple user logged in successfully: ${appleUserId}`);
