@@ -43,7 +43,6 @@ export function contactSellerTemplate({
 
 
 export function otpEmailTemplate({
-
   otp,
 }: {
   otp: string;

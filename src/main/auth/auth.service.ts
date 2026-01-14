@@ -17,7 +17,7 @@ import { MailService } from "src/utils/mail/mail.service";
 import { UpdateUserDto } from "./dto/updateUser.dto";
 import { EmailAndOtpDto } from "./dto/emailAndOtp.dto";
 import { UserRole } from "./role.enum";
-import { GoogleAuthDto } from "./dto/google.dto";
+import { AppleAuthDto, GoogleAuthDto } from "./dto/google.dto";
 import { otpEmailTemplate } from "src/utils/mail/templates/contact-seller.template";
 import { AppleLoginDto } from "./dto/apple-login.dto";
 
@@ -95,6 +95,20 @@ export class AuthService {
         user = createdUser;
       }
 
+      if (registerDto.role === UserRole.ADMIN) {
+        user = await this.prisma.user.create({
+          data: {
+            email: registerDto.email,
+            name: registerDto.name,
+            phone: registerDto.phone,
+            password: hashedPassword,
+            role: registerDto.role,
+            otp,
+            otpExpiresAt,
+          },
+        });
+      }
+
       // 🔥 Send OTP before returning
       await this.mailService.sendMail(
         registerDto.email,
@@ -104,16 +118,18 @@ export class AuthService {
 
       this.logger.log(`OTP sent to email: ${registerDto.email}`);
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, otp: _, ...userWithoutSensitiveData } = user;
       return ApiResponse.success(
-        { ...user, otp },
+        userWithoutSensitiveData,
         "Registration successful. Please verify OTP sent to your email.",
       );
     } catch (error) {
       this.logger.error(
         `Registration failed for email ${registerDto.email}: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      return ApiResponse.error('Registration failed');
+      const message = error instanceof Error ? error.message : "Registration failed";
+      return ApiResponse.error(message);
     }
   }
 
@@ -151,10 +167,7 @@ export class AuthService {
       this.logger.log(`OTP verified and user created: ${email}`);
       return ApiResponse.success(data, "OTP verified successfully and user created");
     } catch (error) {
-      const errorMessage =
-        typeof error === "object" && error !== null && "message" in error
-          ? String((error as { message?: unknown }).message)
-          : "Unknown error";
+      this.logger.error("OTP verification failed:", error instanceof Error ? error.message : "Unknown error");
       return ApiResponse.error("OTP verification failed");
     }
   }
@@ -174,10 +187,7 @@ export class AuthService {
       });
       return ApiResponse.success(updatedUser, "Profile picture uploaded successfully");
     } catch (error) {
-      const errorMessage =
-        typeof error === "object" && error !== null && "message" in error
-          ? String((error as { message?: unknown }).message)
-          : "Unknown error";
+      this.logger.error("Upload profile picture failed:", error instanceof Error ? error.message : "Unknown error");
       return ApiResponse.error("Upload profile picture failed");
     }
   }
@@ -199,7 +209,13 @@ export class AuthService {
         throw new BadRequestException("Please verify your email first");
       }
 
-
+      // 3️⃣ Provider check
+      if (user.provider === "GOOGLE") {
+        throw new BadRequestException("Please log in using Google authentication");
+      }
+      if (user.provider === "APPLE") {
+        throw new BadRequestException("Please log in using Apple authentication");
+      }
 
       // 4️⃣ Password existence check
       if (!user.password) {
@@ -239,11 +255,11 @@ export class AuthService {
       }
 
       // 9️⃣ Role-based response
-      if (user.role === UserRole.ADMIN) {
+      if (String(user.role) === String(UserRole.ADMIN)) {
         return ApiResponse.success(token, "Admin logged in successfully");
       }
 
-      if (user.role === UserRole.SERVICE_PROVIDER) {
+      if (String(user.role) === String(UserRole.SERVICE_PROVIDER)) {
         const serviceProvider = await this.prisma.serviceProvider.findFirst({
           where: { userId: user.id },
         });
@@ -287,7 +303,7 @@ export class AuthService {
       }
       return ApiResponse.success(user, "User profile fetched successfully");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      this.logger.error("Get user profile failed:", error instanceof Error ? error.message : "Unknown error");
       return ApiResponse.error("Get user profile failed");
     }
   }
@@ -368,7 +384,7 @@ export class AuthService {
       );
       return ApiResponse.success(null, "Otp verified successfully, Please give me new passwords");
     } catch (error) {
-      console.error("Error verifying reset password:", error);
+      this.logger.error("Error verifying reset password:", error instanceof Error ? error.stack : error);
       throw new UnauthorizedException("Reset password verification failed");
     }
   }
@@ -385,7 +401,7 @@ export class AuthService {
         this.logger.warn(`User ${email} not found`);
         throw new NotFoundException("User not found");
       }
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
 
       this.logger.log(`Resetting password for user ${email}`);
       await this.prisma.user.update({
@@ -398,7 +414,6 @@ export class AuthService {
       this.logger.error(
         `Error resetting password for email ${email}: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       throw new UnauthorizedException("Reset password failed");
     }
   }
@@ -420,7 +435,7 @@ export class AuthService {
         throw new UnauthorizedException("Old password is incorrect");
       }
 
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
 
       await this.prisma.user.update({
         where: { email },
@@ -429,7 +444,7 @@ export class AuthService {
 
       return ApiResponse.success(null, "Password changed successfully");
     } catch (error) {
-      console.error("Error changing password:", error);
+      this.logger.error("Error changing password:", error instanceof Error ? error.stack : error);
       throw new UnauthorizedException("Change password failed");
     }
   }
@@ -446,7 +461,7 @@ export class AuthService {
       });
       return ApiResponse.success(user, "User updated successfully");
     } catch (error) {
-      console.error("Error updating user:", error);
+      this.logger.error("Error updating user:", error instanceof Error ? error.stack : error);
       throw new UnauthorizedException("Update user failed");
     }
   }
@@ -468,10 +483,7 @@ export class AuthService {
       await this.mailService.sendMail(email, "Resend OTP", otpEmailTemplate({ otp }));
       return ApiResponse.success(otp, "OTP resent to email successfully");
     } catch (error) {
-      const errorMessage =
-        typeof error === "object" && error !== null && "message" in error
-          ? String((error as { message?: unknown }).message)
-          : "Unknown error";
+      this.logger.error("Resend OTP failed:", error instanceof Error ? error.message : "Unknown error");
       return ApiResponse.error("Resend OTP failed");
     }
   }
@@ -505,7 +517,7 @@ export class AuthService {
         }
 
         // If service provider, create related record
-        if (role === (UserRole.SERVICE_PROVIDER as UserRole)) {
+        if (String(role) === String(UserRole.SERVICE_PROVIDER)) {
           try {
             await this.prisma.serviceProvider.create({
               data: { userId: newUser.id, isProfileCompleted: false, address: "" },
@@ -525,7 +537,7 @@ export class AuthService {
       }
 
       // Existing user
-      if (user.role !== role) {
+      if (String(user.role) !== String(role)) {
         this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${user.role}`);
         throw new BadRequestException("User role mismatch. Please use the correct login method.");
       }
@@ -542,17 +554,18 @@ export class AuthService {
       );
     }
   }
-  async appleAuth(googleAuthDto: GoogleAuthDto) {
+
+
+  async appleAuth(appleAuthDto: AppleAuthDto) {
     this.logger.log("Apple Auth request received");
-    this.logger.debug(`Payload: ${JSON.stringify(googleAuthDto)}`);
+    this.logger.debug(`Payload: ${JSON.stringify(appleAuthDto)}`);
 
     try {
-      const { email, name, picture, role } = googleAuthDto;
+      const { email, name, picture, role } = appleAuthDto;
 
       const user = await this.prisma.user.findUnique({ where: { email } });
 
       if (!user) {
-        // Create new user
         const newUser = await this.prisma.user.create({
           data: {
             email,
@@ -562,7 +575,7 @@ export class AuthService {
             phone: "",
             provider: "APPLE",
             isEmailVerified: true,
-            applePushToken: googleAuthDto.applePushToken,
+            applePushToken: appleAuthDto.applePushToken,
           },
         });
 
@@ -572,7 +585,7 @@ export class AuthService {
         }
 
         // If service provider, create related record
-        if (role === (UserRole.SERVICE_PROVIDER as UserRole)) {
+        if (String(role) === String(UserRole.SERVICE_PROVIDER)) {
           try {
 
             await this.prisma.serviceProvider.create({
@@ -593,23 +606,27 @@ export class AuthService {
       }
 
       // Existing user
-      // if (user.role !== role) {
-      //   this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${user.role}`);
-      //   throw new BadRequestException("User role mismatch. Please use the correct login method.");
-      // }
+      if (String(user.role) !== String(role)) {
+        this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${user.role}`);
+        throw new BadRequestException("User role mismatch. Please use the correct login method.");
+      }
 
       const payload = { sub: user.id, email: user.email, role: user.role };
       const token = await this.helperService.createTokenEntry(user.id, payload);
       this.logger.log(`User logged in successfully: ${email}`);
       return ApiResponse.success({ token, appleid: user.applePushToken }, "User logged in successfully");
     } catch (error) {
-      this.logger.error("Google Auth failed", error instanceof Error ? error.stack : error);
+      this.logger.error("Apple Auth failed", error instanceof Error ? error.stack : error);
       if (error instanceof BadRequestException) throw error;
+      if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException(
         error instanceof Error ? error.message : "An unknown error occurred",
       );
     }
   }
+
+
+
   async appleLogin(appleLoginDto: AppleLoginDto) {
     this.logger.log("Apple Login request received");
     try {

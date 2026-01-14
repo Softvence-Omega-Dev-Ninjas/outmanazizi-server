@@ -24,7 +24,7 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utils/common/file/fileUploads';
 import { UploadImageDto } from './dto/uploadImage.dto';
-import { GoogleAuthDto } from './dto/google.dto';
+import { AppleAuthDto, GoogleAuthDto } from './dto/google.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { AppleLoginDto } from './dto/apple-login.dto';
 // import { AuthGuard } from '@nestjs/passport';
@@ -84,7 +84,7 @@ export class AuthController {
   @Public()
   @ApiBody({ type: ResetPasswordEmailDto })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordEmailDto) {
-    return this.authService.forgotPassword(resetPasswordDto.email);
+    return await this.authService.forgotPassword(resetPasswordDto.email);
   }
 
   // reset password verify otp
@@ -92,8 +92,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify OTP for password reset' })
   @Public()
   @ApiBody({ type: EmailAndOtpDto })
-  async verifyResetPassword(@Body() EmailAndOtpDto: EmailAndOtpDto) {
-    return this.authService.verifyOtpForResetPassword(EmailAndOtpDto);
+  async verifyResetPassword(@Body() emailAndOtpDto: EmailAndOtpDto) {
+    return await this.authService.verifyOtpForResetPassword(emailAndOtpDto);
   }
 
   // reset password set new password
@@ -102,7 +102,7 @@ export class AuthController {
   @Public()
   @ApiBody({ type: PasswordResetDto })
   async setNewPassword(@Body() passwordResetDto: PasswordResetDto) {
-    return this.authService.resetPassword(passwordResetDto.email, passwordResetDto.password);
+    return await this.authService.resetPassword(passwordResetDto.email, passwordResetDto.password);
   }
   // Change password
   @Post('change-password')
@@ -110,7 +110,7 @@ export class AuthController {
   @UseGuards(AuthenticationGuard)
   @ApiBody({ type: ChangePasswordDto })
   async changePassword(@Body() changePasswordDto: ChangePasswordDto, @Req() req: Request) {
-    return this.authService.changePassword(
+    return await this.authService.changePassword(
       req['email'] as string,
       changePasswordDto.oldPassword,
       changePasswordDto.newPassword,
@@ -148,9 +148,9 @@ export class AuthController {
   }
   @Post('apple')
   @Public()
-  @ApiBody({ type: GoogleAuthDto })
-  async appleAuth(@Body() googleAuthDto: GoogleAuthDto) {
-    return await this.authService.appleAuth(googleAuthDto);
+  @ApiBody({ type: AppleAuthDto })
+  async appleAuth(@Body() appleAuthDto: AppleAuthDto) {
+    return await this.authService.appleAuth(appleAuthDto);
   }
 
   @Post('apple/login')
