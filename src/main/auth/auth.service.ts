@@ -637,6 +637,7 @@ export class AuthService {
     } catch (error) {
       this.logger.error("Apple Login failed", error instanceof Error ? error.stack : error);
       if (error instanceof NotFoundException) throw error;
+      if (error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException(
         error instanceof Error ? error.message : "An unknown error occurred",
       );
