@@ -168,7 +168,7 @@ export class AuthService {
       return ApiResponse.success(data, "OTP verified successfully and user created");
     } catch (error) {
       this.logger.error("OTP verification failed:", error instanceof Error ? error.message : "Unknown error");
-      return ApiResponse.error("OTP verification failed");
+      return ApiResponse.error("OTP verification failed", error instanceof Error ? error.message : undefined);
     }
   }
 
