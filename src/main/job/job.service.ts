@@ -109,7 +109,11 @@ export class JobService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving jobs: ${message}`);
-      throw new BadRequestException('Failed to retrieve jobs');
+       
+        if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 
@@ -122,7 +126,10 @@ export class JobService {
     catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving job ${id}: ${message}`);
-      throw new BadRequestException('Failed to retrieve job');
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 
@@ -212,7 +219,10 @@ export class JobService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving service provider location jobs: ${message}`);
-      throw new BadRequestException('Failed to retrieve location-based jobs');
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 

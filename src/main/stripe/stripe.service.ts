@@ -1,4 +1,4 @@
-import { HttpException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { HttpException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException,BadRequestException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -91,7 +91,10 @@ export class StripeService {
 
     } catch (error) {
       this.logger.error('Stripe account creation failed', error instanceof Error ? error.stack : error);
-      throw new InternalServerErrorException('Stripe Account Creation Failed');
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 
@@ -108,10 +111,9 @@ export class StripeService {
       return accountLink;
     } catch (error) {
       this.logger.error('Failed to generate account link', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException|| error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to generate account link');
     }
   }
   async retrieveAccount(accountId: string): Promise<Stripe.Account> {
@@ -133,7 +135,7 @@ export class StripeService {
 
     } catch (error) {
       this.logger.error('Failed to retrieve Stripe account', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof  HttpException|| error instanceof NotFoundException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to retrieve Stripe account');
@@ -177,7 +179,9 @@ export class StripeService {
 
     } catch (error) {
       this.logger.error('Failed to get Stripe info', error instanceof Error ? error.stack : error);
-      throw new InternalServerErrorException('Failed to get Stripe info');
+      if (error instanceof HttpException|| error instanceof NotFoundException) {
+        throw error;
+      } 
     }
   }
   async deleteAccount(accountId: string): Promise<Stripe.DeletedAccount> {
@@ -188,6 +192,9 @@ export class StripeService {
       return deletedAccount;
     } catch (error) {
       this.logger.error('Failed to delete Stripe account', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException || error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Stripe Account Deletion Failed');
     }
   }
@@ -220,7 +227,7 @@ export class StripeService {
       return { payoutsdata, availableBalance: balance.available[0].amount };
     } catch (error) {
       this.logger.error('Failed to retrieve payout history', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to retrieve payout history');

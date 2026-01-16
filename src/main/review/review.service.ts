@@ -87,7 +87,10 @@ export class ReviewService {
       return ApiResponse.success(reviews, 'Reviews retrieved successfully');
     } catch (error) {
       this.logger.error('Error retrieving reviews', error instanceof Error ? error.stack : error);
-      throw new InternalServerErrorException('Error retrieving reviews');
+        if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 }

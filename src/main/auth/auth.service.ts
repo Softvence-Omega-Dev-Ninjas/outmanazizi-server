@@ -309,7 +309,10 @@ export class AuthService {
       return ApiResponse.success(user, "User profile fetched successfully");
     } catch (error) {
       this.logger.error("Get user profile failed:", error instanceof Error ? error.message : "Unknown error");
-      return ApiResponse.error("Get user profile failed");
+        if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 
@@ -345,7 +348,10 @@ export class AuthService {
       this.logger.error(
         `Error in forgot password for email ${email}: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
-      throw new UnauthorizedException("Forgot password failed", error as UnauthorizedException);
+    if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 
@@ -390,7 +396,10 @@ export class AuthService {
       return ApiResponse.success(null, "Otp verified successfully, Please give me new passwords");
     } catch (error) {
       this.logger.error("Error verifying reset password:", error instanceof Error ? error.stack : error);
-      throw new UnauthorizedException("Reset password verification failed");
+        if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 
@@ -419,7 +428,10 @@ export class AuthService {
       this.logger.error(
         `Error resetting password for email ${email}: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
-      throw new UnauthorizedException("Reset password failed");
+    if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 
@@ -450,7 +462,10 @@ export class AuthService {
       return ApiResponse.success(null, "Password changed successfully");
     } catch (error) {
       this.logger.error("Error changing password:", error instanceof Error ? error.stack : error);
-      throw new UnauthorizedException("Change password failed");
+        if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
   // user update
@@ -467,7 +482,10 @@ export class AuthService {
       return ApiResponse.success(user, "User updated successfully");
     } catch (error) {
       this.logger.error("Error updating user:", error instanceof Error ? error.stack : error);
-      throw new UnauthorizedException("Update user failed");
+        if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     }
   }
 
@@ -489,8 +507,11 @@ export class AuthService {
       return ApiResponse.success(otp, "OTP resent to email successfully");
     } catch (error) {
       this.logger.error("Resend OTP failed:", error instanceof Error ? error.message : "Unknown error");
-      return ApiResponse.error("Resend OTP failed");
-    }
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
+    } 
   }
 
   async googleAuth(googleAuthDto: GoogleAuthDto) {
@@ -617,7 +638,13 @@ export class AuthService {
               create: { userId: newUser.id, isProfileCompleted: false, address: "" },
               update: { isProfileCompleted: false, address: "" },
             });
+            const serviceProvider =  await this.prisma.serviceProvider.findFirst({
+              where: { userId: newUser.id },
+            });
+            
+            const token = await this.helperService.createTokenEntry(newUser.id, { sub: newUser.id, email: newUser.email, role: newUser.role });
             this.logger.log(`ServiceProvider record created for user: ${email}`);
+            return ApiResponse.success({ token, isverifiedFromAdmin: serviceProvider?.isVerifiedFromAdmin, isPorofileCompleted: serviceProvider?.isProfileCompleted }, "User created successfully");
           } catch (err) {
             this.logger.error(`ServiceProvider creation failed for user: ${email}`, err);
           }
@@ -674,11 +701,23 @@ export class AuthService {
         this.logger.warn(`Role mismatch for Apple user ${appleUserId}: expected ${appleLoginDto.role}, found ${user.role}`);
         throw new BadRequestException("User role mismatch. Please use the correct login method.");
       }
-
+       if (String(user.role) === String(UserRole.SERVICE_PROVIDER)) {
+        const serviceProvider = await this.prisma.user.findFirst({
+          where: { id: user.id },
+          select: { serviceProvider: true },
+        });
+        const payload = { sub: user.id, email: user.email, role: user.role };
+        const token = await this.helperService.createTokenEntry(user.id, payload);
+        this.logger.log(`Apple user logged in successfully: ${appleUserId}`);
+        return ApiResponse.success(
+          { token, isverifiedFromAdmin: serviceProvider?.serviceProvider?.isVerifiedFromAdmin,  isPorofileCompleted: serviceProvider?.serviceProvider?.isProfileCompleted },
+          "User logged in successfully",
+        );
+      }
       const payload = { sub: user.id, email: user.email, role: user.role };
       const token = await this.helperService.createTokenEntry(user.id, payload);
       this.logger.log(`Apple user logged in successfully: ${appleUserId}`);
-      return ApiResponse.success(token, "User logged in successfully");
+      return ApiResponse.success({token}, "User logged in successfully");
     } catch (error) {
       this.logger.error("Apple Login failed", error instanceof Error ? error.stack : error);
       if (error instanceof NotFoundException) throw error;
