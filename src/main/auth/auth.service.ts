@@ -20,7 +20,7 @@ import { UserRole } from "./role.enum";
 import { AppleAuthDto, GoogleAuthDto } from "./dto/google.dto";
 import { otpEmailTemplate } from "src/utils/mail/templates/contact-seller.template";
 import { AppleLoginDto } from "./dto/apple-login.dto";
-
+import { ServiceProviderStatus } from "src/main/auth/role.enum";
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -263,7 +263,12 @@ export class AuthService {
         const serviceProvider = await this.prisma.serviceProvider.findFirst({
           where: { userId: user.id },
         });
-
+        if (serviceProvider?.status === ServiceProviderStatus.PENDING) {
+          throw new UnauthorizedException("Your profile is under review. Please wait for admin approval.");
+        }
+        if(serviceProvider?.status === ServiceProviderStatus.REJECTED){
+          throw new UnauthorizedException("Your profile verification has been rejected. Please contact support for more information.");
+        }
         return ApiResponse.success(
           { token, serviceProvider },
           "Service provider logged in successfully",

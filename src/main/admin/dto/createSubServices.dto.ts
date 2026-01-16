@@ -17,11 +17,4 @@ export class CreateSubServicesDto {
 }
 
 
-export class RejectMessageDto {
  
-
-  @ApiProperty({ example: 'Rejection message', description: 'Rejection message for the service provider' })
-  @IsNotEmpty()
-  @IsString()
-  message: string;
-}

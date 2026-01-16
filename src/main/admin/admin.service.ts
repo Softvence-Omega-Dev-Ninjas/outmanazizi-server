@@ -1,8 +1,9 @@
-import { HttpException, Injectable, InternalServerErrorException, Logger, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, InternalServerErrorException, Logger, UnauthorizedException, } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { Role } from '@prisma/client';
 import { MailService } from "src/utils/mail/mail.service";
+import { ServiceProviderStatus } from 'src/main/auth/role.enum';
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
@@ -15,10 +16,10 @@ export class AdminService {
       include: { serviceProvider: true },
     });
     if (!userExits) {
-      return { message: 'User does not exists' };
+      throw new UnauthorizedException('User does not exists');
     }
     if (userExits.role !== 'SERVICE_PROVIDER') {
-      return { message: 'User is not a service provider' };
+      throw new UnauthorizedException('User is not a service provider');
     }
     if (userExits.isDeleted) {
       throw new UnauthorizedException('User account is already deleted');
@@ -46,54 +47,56 @@ export class AdminService {
     return ApiResponse.success(verifiedUser, 'User is verified successfully');
   }
 
-  async serviceProviderVerificationForReject(userid: string, message: string) {
+ 
+
+
+  // change user status 
+  async changeUserStatus(userid: string, status: ServiceProviderStatus, message?: string) {
     try {
       const userExits = await this.prisma.user.findUnique({
       where: { id: userid },
-      include: { serviceProvider: true },
     });
     if (!userExits) {
-      throw new NotFoundException('User does not exists');
-    }
-    if (userExits.role !== 'SERVICE_PROVIDER') {
-      return { message: 'User is not a service provider' };
+      throw new UnauthorizedException('User does not exists');
     }
     if (userExits.isDeleted) {
       throw new UnauthorizedException('User account is already deleted');
     }
-    if (userExits.isBlocked) {
-      throw new UnauthorizedException('User account is already blocked');
-    }
-    if (userExits.isActive === false) {
-      throw new UnauthorizedException('User account is  not active');
-    }
-
-    if (!userExits.serviceProvider) {
-      throw new UnauthorizedException('Service provider details not found for this user');
-    }
-
-    const verifiedUser = await this.prisma.user.update({
-      where: { id: userid },
+    const updatedUser = await this.prisma.serviceProvider.update({
+      where: { userId: userid },
       data: {
-        serviceProvider: {
-          update: { isVerifiedFromAdmin: false },
-        },
-
+       status 
       },
     });
-   await this.mailService.sendMail(
+    if (status === ServiceProviderStatus.APPROVED) {
+        await this.prisma.user.update({
+        where: { id: userid },
+        data: {
+          serviceProvider: {
+            update: { isVerifiedFromAdmin: true },
+          },
+        },
+      });
+     await this.mailService.sendMail(
+        userExits.email,
+        'Service Provider Verification Approved',
+        `Dear ${userExits.name},\n\nCongratulations! Your service provider verification has been approved. You can now access all the features and benefits of being a verified service provider on our platform.\n\nBest regards,\nSupport Team`,
+      );
+    }
+    if (status === ServiceProviderStatus.REJECTED) {
+         await this.mailService.sendMail(
         userExits.email,
         'Service Provider Verification Rejected',
         `Dear ${userExits.name},\n\nWe regret to inform you that your service provider verification has been rejected for the following reason:\n\n${message}\n\nPlease review the requirements and feel free to reapply once you have addressed the issues mentioned above.\n\nBest regards,\nSupport Team`,
       );
- 
-    return ApiResponse.success(verifiedUser, 'User is verified successfully');
+    }
+    return ApiResponse.success(updatedUser, 'User status is changed successfully');
     } catch (error) {
-      this.logger.error('Failed to reject service provider verification', error);
+      this.logger.error('Failed to change user status', error);
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to reject service provider verification');
+      throw new InternalServerErrorException('Failed to change user status');
     }
   }
 

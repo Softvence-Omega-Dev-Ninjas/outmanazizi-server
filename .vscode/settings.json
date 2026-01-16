@@ -3,5 +3,6 @@
     "googleusercontent",
     "kjfbppa",
     "softvence"
-  ]
+  ],
+  "markdown.validate.enabled": false
 }
