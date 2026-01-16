@@ -19,8 +19,7 @@ import { EmailAndOtpDto } from "./dto/emailAndOtp.dto";
 import { UserRole } from "./role.enum";
 import { AppleAuthDto, GoogleAuthDto } from "./dto/google.dto";
 import { otpEmailTemplate } from "src/utils/mail/templates/contact-seller.template";
-import { AppleLoginDto } from "./dto/apple-login.dto";
-import { ServiceProviderStatus } from "src/main/auth/role.enum";
+import { AppleLoginDto } from "./dto/apple-login.dto"; 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -277,7 +276,7 @@ export class AuthService {
       );
     } catch (error) {
       // 🔐 Preserve HTTP status codes
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof UnauthorizedException || error instanceof BadRequestException) {
         throw error;
       }
 
