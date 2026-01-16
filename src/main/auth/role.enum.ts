@@ -4,3 +4,11 @@ export enum UserRole {
   CONSUMER = 'CONSUMER',
   SUPER_ADMIN = 'SUPER_ADMIN',
 }
+
+
+
+export enum ServiceProviderStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}

@@ -72,7 +72,10 @@ export class ConsumerService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Failed to remove bid for service ${serviceId} by user ${userid}`, error);
-      throw new BadRequestException('Failed to remove bid: ');
+       if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to remove bid');
     }
   }
   async acceptBid(userid: string, serviceId: string, createConsumerDto: AcceptBid) {
@@ -120,8 +123,10 @@ export class ConsumerService {
       };
     } catch (error) {
       this.logger.error(`Failed to accept bid for service ${serviceId} by user ${userid}`, error);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException('Failed to accept bid: ');
+       if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to accept bid');
     }
   }
   async serviceComplete(userid: string, serviceId: string) {
@@ -155,8 +160,10 @@ export class ConsumerService {
       return { message: 'Service completed successfully', updatedService };
     } catch (error) {
       this.logger.error(`Failed to complete service ${serviceId} by consumer ${userid}`, error);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      throw new BadRequestException('Failed to complete service: ');
+        if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to complete service');
     }
   }
   // my notifications
@@ -171,6 +178,9 @@ export class ConsumerService {
       return ApiResponse.success(notifications, 'Notifications fetched successfully');
     } catch (error) {
       this.logger.error(`Failed to fetch notifications for user: ${userid}`, error);
+        if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to fetch notifications');
     }
   }

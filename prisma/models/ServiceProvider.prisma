@@ -1,19 +1,26 @@
 model ServiceProvider {
-  id                  String        @id @default(uuid())
-  userId              String        @unique
-  user                User          @relation(fields: [userId], references: [id])
+  id                  String                @id @default(uuid())
+  userId              String                @unique
+  user                User                  @relation(fields: [userId], references: [id])
   address             String
   serviceArea         String[]
   serviceCategories   String[]
   documents           String?
-  isProfileCompleted  Boolean       @default(false)
-  isVerifiedFromAdmin Boolean       @default(false)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  isProfileCompleted  Boolean               @default(false)
+  isVerifiedFromAdmin Boolean               @default(false)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
   bids                Bid[]
-  myCurrentRating     Float?        @default(0)
-  ratingGetFromUsers  Int           @default(0)
+  myCurrentRating     Float?                @default(0)
+  ratingGetFromUsers  Int                   @default(0)
   noteServices        NoteService[]
   services            Service[]
   order               Order[]
+  status              ServiceProviderStatus @default(PENDING)
+}
+
+enum ServiceProviderStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
