@@ -496,7 +496,7 @@ export class AuthService {
       const { email, name, picture, role } = googleAuthDto;
 
       const user = await this.prisma.user.findUnique({ where: { email } });
-
+      
       if (!user) {
         const newUser = await this.prisma.user.create({
           data: {
@@ -518,21 +518,26 @@ export class AuthService {
         // If service provider, create related record
         if (String(role) === String(UserRole.SERVICE_PROVIDER)) {
           try {
-            await this.prisma.serviceProvider.create({
-              data: { userId: newUser.id, isProfileCompleted: false, address: "" },
+        const data = await this.prisma.serviceProvider.upsert({
+              where: { userId: newUser.id },
+              create: { userId: newUser.id, isProfileCompleted: false, address: "" },
+              update: { isProfileCompleted: false, address: "" },
             });
+          const token = await this.helperService.createTokenEntry(newUser.id, { sub: newUser.id, email: newUser.email, role: newUser.role });
+          this.logger.log(`ServiceProvider record created for user: ${email}`);
+          return ApiResponse.success({ token, isverifiedFromAdmin: data.isVerifiedFromAdmin, isPorofileCompleted: data.isProfileCompleted }, "User created successfully");
+          
             this.logger.log(`ServiceProvider record created for user: ${email}`);
           } catch (err) {
             this.logger.error(`ServiceProvider creation failed for user: ${email}`, err);
-            // Optional: Rollback user creation or continue depending on business logic
           }
         }
 
         this.logger.log(`New user created successfully: ${email}`);
-
+      
         const payload = { sub: newUser.id, email: newUser.email, role: newUser.role };
         const token = await this.helperService.createTokenEntry(newUser.id, payload);
-        return ApiResponse.success(token, "User created successfully");
+        return ApiResponse.success({token, isverifiedFromAdmin:true, isPorofileCompleted: true}, "User created successfully");
       }
       if (user?.provider !== "GOOGLE") {
         throw new BadRequestException("Please log in using email and password");
@@ -542,11 +547,25 @@ export class AuthService {
         this.logger.warn(`Role mismatch for user ${email}: expected ${role}, found ${user.role}`);
         throw new BadRequestException("User role mismatch. Please use the correct login method.");
       }
+      if (googleAuthDto.role === UserRole.SERVICE_PROVIDER) {
+        const serviceProvider = await this.prisma.user.findFirst({
+          where: { id: user.id },
+          select: { serviceProvider: true },
+        });
+        const payload = { sub: user.id, email: user.email, role: user.role };
 
+        const token = await this.helperService.createTokenEntry(user.id, payload);
+        this.logger.log(`User logged in successfully: ${email}`);
+        return ApiResponse.success(
+          { token, isverifiedFromAdmin: serviceProvider?.serviceProvider?.isVerifiedFromAdmin,  isPorofileCompleted: serviceProvider?.serviceProvider?.isProfileCompleted },
+          "User logged in successfully",
+        );
+
+      }
       const payload = { sub: user.id, email: user.email, role: user.role };
       const token = await this.helperService.createTokenEntry(user.id, payload);
       this.logger.log(`User logged in successfully: ${email}`);
-      return ApiResponse.success(token, "User logged in successfully");
+      return ApiResponse.success({token, isverifiedFromAdmin:true, isPorofileCompleted: true}, "User logged in successfully");
     } catch (error) {
       this.logger.error("Google Auth failed", error instanceof Error ? error.stack : error);
       if (error instanceof BadRequestException) throw error;
@@ -588,14 +607,14 @@ export class AuthService {
         // If service provider, create related record
         if (String(role) === String(UserRole.SERVICE_PROVIDER)) {
           try {
-
-            await this.prisma.serviceProvider.create({
-              data: { userId: newUser.id, isProfileCompleted: false, address: "" },
+            await this.prisma.serviceProvider.upsert({
+              where: { userId: newUser.id },
+              create: { userId: newUser.id, isProfileCompleted: false, address: "" },
+              update: { isProfileCompleted: false, address: "" },
             });
             this.logger.log(`ServiceProvider record created for user: ${email}`);
           } catch (err) {
             this.logger.error(`ServiceProvider creation failed for user: ${email}`, err);
-            // Optional: Rollback user creation or continue depending on business logic
           }
         }
 
