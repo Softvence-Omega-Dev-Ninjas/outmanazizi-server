@@ -1,6 +1,6 @@
-import { Controller, Get, Patch, Param, Delete, Body, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Delete, Body, Post, UseGuards} from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation,ApiBody } from '@nestjs/swagger';
 import { Public } from 'src/guards/public.decorator';
 import { AreaAndservicesService } from './area-andservices/area-andservices.service';
 import { CreateAreaDto, CreateServicesDto } from './dto/areaAndServices.dto';
@@ -12,6 +12,7 @@ import { Roles } from 'src/guards/roles.decorator';
 import { UpdateLocationDto } from './dto/update.location.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
+import { RejectMessageDto } from './dto/createSubServices.dto';
 
 @Controller('admin')
 @UseGuards(RolesGuard, AuthenticationGuard)
@@ -31,7 +32,14 @@ export class AdminController {
   async create(@Param('userid') userid: string) {
     return await this.adminService.serviceProviderVerification(userid);
   }
-
+  @Patch('reject-service-provider/:userid')
+  @UseGuards(RolesGuard, AuthenticationGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Make Service Provider verified' })
+  @ApiBody({ type: RejectMessageDto })
+  async serviceProviderVerificationForReject(@Param('userid') userid: string, @Body('message') message: string) {
+    return await this.adminService.serviceProviderVerificationForReject(userid, message);
+  }
   @Get()
   @Public()
   @ApiOperation({ summary: 'All User Proper Details' })

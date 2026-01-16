@@ -4,9 +4,9 @@ import { AdminController } from './admin.controller';
 import { HelperModule } from 'src/utils/helper/helper.module';
 import { AreaAndservicesService } from './area-andservices/area-andservices.service';
 import { JwtModule } from '@nestjs/jwt';
-
+import { MailModule } from 'src/utils/mail/mail.module';
 @Module({
-  imports: [HelperModule, JwtModule],
+  imports: [HelperModule, JwtModule, MailModule],
   controllers: [AdminController],
   providers: [AdminService, AreaAndservicesService],
 })
