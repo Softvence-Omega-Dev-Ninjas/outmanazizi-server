@@ -211,10 +211,10 @@ export class AuthService {
 
       // 3️⃣ Provider check
       if (user.provider === "GOOGLE") {
-        throw new BadRequestException("Please log in using Google authentication");
+        throw new BadRequestException("This account was created using Google. Please log in with Google to continue.");
       }
       if (user.provider === "APPLE") {
-        throw new BadRequestException("Please log in using Apple authentication");
+        throw new BadRequestException("This account was created using Apple. Please log in with Apple to continue.");
       }
 
       // 4️⃣ Password existence check
@@ -263,12 +263,8 @@ export class AuthService {
         const serviceProvider = await this.prisma.serviceProvider.findFirst({
           where: { userId: user.id },
         });
-        if (serviceProvider?.status === ServiceProviderStatus.PENDING) {
-          throw new UnauthorizedException("Your profile is under review. Please wait for admin approval.");
-        }
-        if(serviceProvider?.status === ServiceProviderStatus.REJECTED){
-          throw new UnauthorizedException("Your profile verification has been rejected. Please contact support for more information.");
-        }
+       
+       
         return ApiResponse.success(
           { token, serviceProvider },
           "Service provider logged in successfully",
