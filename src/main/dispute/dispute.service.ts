@@ -66,7 +66,7 @@ export class DisputeService {
       return ApiResponse.success(result, 'Dispute created successfully');
     } catch (error) {
       this.logger.error('Failed to create dispute', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to create dispute');
@@ -127,7 +127,7 @@ export class DisputeService {
 
     } catch (error) {
       this.logger.error(`Failed to update dispute with ID ${id}`, error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to update dispute');
@@ -154,7 +154,7 @@ export class DisputeService {
       return ApiResponse.success(res, 'Dispute deleted successfully');
     } catch (error) {
       this.logger.error(`Failed to delete dispute with ID ${id}`, error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to delete dispute');
@@ -225,7 +225,7 @@ export class DisputeService {
       return ApiResponse.success(resolvedDispute, 'Dispute resolved successfully');
     } catch (error) {
       this.logger.error(`Failed to resolve dispute with ID ${id}`, error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to resolve dispute');
@@ -266,7 +266,7 @@ export class DisputeService {
       return ApiResponse.success(dispute, 'Dispute retrieved successfully');
     } catch (error) {
       this.logger.error(`Failed to retrieve dispute with ID ${id}`, error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to retrieve dispute');

@@ -5,7 +5,7 @@ import {
   Logger,
   HttpException,
   InternalServerErrorException,
-  NotFoundException,
+  NotFoundException,BadRequestException
 } from '@nestjs/common';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDto, CreateTransferDto } from './dto/create-payment.dto';
@@ -52,7 +52,7 @@ export class PaymentsService {
       return ApiResponse.success(res, 'Customer information updated successfully');
     } catch (error) {
       this.logger.error(`Failed to create customer for userId: ${userId}`, error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to create customer');
@@ -116,7 +116,7 @@ export class PaymentsService {
       return ApiResponse.success(oder, 'Payment intent created successfully');
     } catch (error) {
       this.logger.error(`Failed to create payment intent for userId: ${userId}`, error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to create payment intent');
@@ -165,7 +165,7 @@ export class PaymentsService {
         throw new NotFoundException('Seller account not found');
       }
       if (sellerAccount?.capabilities?.transfers !== 'active') {
-        throw new Error('Seller account is not ready for transfers');
+        throw new NotFoundException('Seller account is not ready for transfers');
       }
 
       await this.stripe.transfers.create({
@@ -232,7 +232,7 @@ export class PaymentsService {
       return ApiResponse.success(orderUpdate, 'Transfer created successfully');
     } catch (error) {
       this.logger.error(`Failed to create transfer for amount: ${dto.amountCents}`, error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to create transfer');
@@ -267,7 +267,7 @@ export class PaymentsService {
       return refund;
     } catch (error) {
       this.logger.error(`Failed to process refund for orderId: ${dto.orderId}`, error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to process refund');

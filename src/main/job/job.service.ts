@@ -64,7 +64,7 @@ export class JobService {
       return ApiResponse.success(savedJob, 'Job created successfully');
     } catch (error) {
       this.logger.error('Job creation failed', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Job creation failed');
@@ -110,7 +110,7 @@ export class JobService {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving jobs: ${message}`);
        
-        if (error instanceof BadRequestException) throw error;
+        if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException(
         error instanceof Error ? error.message : "An unknown error occurred",
       );
@@ -126,7 +126,7 @@ export class JobService {
     catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving job ${id}: ${message}`);
-      if (error instanceof BadRequestException) throw error;
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException(
         error instanceof Error ? error.message : "An unknown error occurred",
       );
@@ -159,7 +159,7 @@ export class JobService {
       return ApiResponse.success(updatedJob, 'Job updated successfully');
     } catch (error) {
       this.logger.error(`Error updating job ${id}`, error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Update failed');
@@ -170,6 +170,11 @@ export class JobService {
   async remove(id: string) {
     this.logger.log(`Delete job request received for job: ${id}`);
     try {
+      const existingJob = await this.prisma.service.findUnique({ where: { id } });
+      if (!existingJob) {
+        this.logger.warn(`Job not found: ${id}`);
+        throw new NotFoundException('Job does not exist');
+      }
       const deletedJob = await this.prisma.service.update({
         where: { id },
         data: { isDeleteRequestToAdmin: true },
@@ -178,7 +183,7 @@ export class JobService {
       return ApiResponse.success(deletedJob, 'Job removal requested to admin successfully');
     } catch (error) {
       this.logger.error(`Error requesting job deletion for job ${id}`, error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Delete request failed');
@@ -219,7 +224,7 @@ export class JobService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving service provider location jobs: ${message}`);
-      if (error instanceof BadRequestException) throw error;
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException(
         error instanceof Error ? error.message : "An unknown error occurred",
       );
@@ -312,7 +317,7 @@ export class JobService {
         }`,
       );
 
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
 

@@ -56,7 +56,7 @@ export class ReviewService {
       return ApiResponse.success(review, 'Review created successfully');
     } catch (error) {
       this.logger.error('Error creating review', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException  || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Error creating review');
@@ -87,9 +87,9 @@ export class ReviewService {
       return ApiResponse.success(reviews, 'Reviews retrieved successfully');
     } catch (error) {
       this.logger.error('Error retrieving reviews', error instanceof Error ? error.stack : error);
-        if (error instanceof BadRequestException) throw error;
+ 
       throw new InternalServerErrorException(
-        error instanceof Error ? error.message : "An unknown error occurred",
+        "An unknown error occurred",
       );
     }
   }

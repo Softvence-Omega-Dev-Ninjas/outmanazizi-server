@@ -75,7 +75,7 @@ export class MessagesService {
       return conversation;
     } catch (error) {
       this.logger.error('Failed to get or create conversation', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException || error instanceof HttpException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to get or create conversation');
@@ -188,7 +188,7 @@ export class MessagesService {
       return message;
     } catch (error) {
       this.logger.error('Failed to send message', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to send message');
@@ -254,7 +254,7 @@ export class MessagesService {
       };
     } catch (error) {
       this.logger.error('Failed to retrieve messages', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to retrieve messages');

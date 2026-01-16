@@ -113,7 +113,7 @@ export class ServiceProviderService {
       );
     } catch (error) {
       this.logger.error('Error fetching current service provider', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to fetch current service provider');
@@ -140,7 +140,7 @@ export class ServiceProviderService {
 
     } catch (error) {
       this.logger.error('Error uploading documents', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Document upload failed');
@@ -153,6 +153,9 @@ export class ServiceProviderService {
       return ApiResponse.success(result, 'Service providers retrieved successfully');
     } catch (error) {
       this.logger.error('Error fetching service providers', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to retrieve service providers');
     }
   }
@@ -210,6 +213,9 @@ export class ServiceProviderService {
       });
       return ApiResponse.success(bids, 'Bids retrieved successfully');
     } catch (error) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving bids for service provider ${userid}: ${message}`);
       throw new BadRequestException('Failed to retrieve bids');
@@ -276,7 +282,7 @@ export class ServiceProviderService {
       );
     } catch (error) {
       this.logger.error('Error marking service as complete', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Error marking service as complete');
@@ -297,6 +303,9 @@ export class ServiceProviderService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Error retrieving bids for service provider ${userid}: ${message}`);
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException('Failed to retrieve bids');
     }
   }
@@ -327,7 +336,7 @@ export class ServiceProviderService {
       return ApiResponse.success(bids, 'Accepted bids retrieved successfully');
     } catch (error) {
       this.logger.error('Error retrieving accepted bids', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to retrieve bids');
@@ -365,7 +374,7 @@ export class ServiceProviderService {
       return ApiResponse.success(consumer, 'Consumer info fetched successfully');
     } catch (error) {
       this.logger.error('Failed to fetch service provider info', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to fetch consumer info');

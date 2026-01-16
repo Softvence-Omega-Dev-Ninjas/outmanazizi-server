@@ -207,7 +207,7 @@ export class AreaAndservicesService {
       return ApiResponse.success(updatedService, 'Service updated successfully');
     } catch (error) {
       this.logger.error('Failed to update service', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to update service');
@@ -220,12 +220,12 @@ export class AreaAndservicesService {
         where: { id: areaId },
       });
       if (!areaExists) {
-        throw new BadRequestException('Area does not exists');
+        throw new UnauthorizedException('Area does not exists');
       }
       return ApiResponse.success(areaExists, 'Area details fetched successfully');
     } catch (error) {
       this.logger.error('Failed to fetch area details', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to fetch area details');
@@ -239,12 +239,12 @@ export class AreaAndservicesService {
         include: { subServices: true },
       });
       if (!serviceExists) {
-        throw new BadRequestException('Service does not exists');
+        throw new UnauthorizedException('Service does not exists');
       }
       return ApiResponse.success(serviceExists, 'Service details fetched successfully');
     } catch (error) {
       this.logger.error('Failed to fetch service details', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to fetch service details');

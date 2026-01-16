@@ -11,7 +11,8 @@ export class AdminService {
     private readonly mailService: MailService) { }
 
   async serviceProviderVerification(userid: string) {
-    const userExits = await this.prisma.user.findUnique({
+  try {
+      const userExits = await this.prisma.user.findUnique({
       where: { id: userid },
       include: { serviceProvider: true },
     });
@@ -45,6 +46,11 @@ export class AdminService {
       },
     });
     return ApiResponse.success(verifiedUser, 'User is verified successfully');
+  } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+  }
   }
 
  
@@ -93,7 +99,7 @@ export class AdminService {
     return ApiResponse.success(updatedUser, 'User status is changed successfully');
     } catch (error) {
       this.logger.error('Failed to change user status', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to change user status');
@@ -132,7 +138,7 @@ export class AdminService {
     return ApiResponse.success(blockedUser, 'User is blocked successfully');
   } catch (error) {
       this.logger.error('Failed to block/unblock user', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to block/unblock user');
@@ -159,7 +165,7 @@ export class AdminService {
     );
     } catch (error) {
       this.logger.error('Failed to delete user account', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to delete user account');
@@ -189,7 +195,7 @@ export class AdminService {
     );
     } catch (error) {
       this.logger.error('Failed to delete service', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to delete service');
@@ -251,7 +257,7 @@ export class AdminService {
       );
     } catch (error) {
       this.logger.error('Failed to fetch order details', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to fetch order details');
@@ -277,7 +283,7 @@ export class AdminService {
     );
     } catch (error) {
       this.logger.error('Failed to change user role', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to change user role');
@@ -304,7 +310,7 @@ export class AdminService {
       );
     } catch (error) {
       this.logger.error('Failed to create platform fee', error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to create platform fee');
@@ -329,6 +335,17 @@ export class AdminService {
   // update a platform fee 
   async updatePlatformFee(id: string, fee: number) {
     try {
+
+      const platformFee = await this.prisma.platformFee.findUnique({
+        where: {
+          id: id
+        }
+      })
+
+      if (!platformFee) {
+        throw new UnauthorizedException('Platform fee does not exist');
+      }
+      
       const existingFee = await this.prisma.platformFee.update({
         where: {
           id: id
@@ -337,18 +354,32 @@ export class AdminService {
           amount: fee
         }
       })
+
+
       return ApiResponse.success(
         existingFee,
         'Platform fee updated successfully',
       );
     } catch (error) {
       this.logger.error('Failed to update platform fee', error);
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to update platform fee');
     }
   }
   // delete a platform fee
   async deletePlatformFee(id: string) {
     try {
+      const platformFee = await this.prisma.platformFee.findUnique({
+        where: {
+          id: id
+        }
+      })
+
+      if (!platformFee) {
+        throw new UnauthorizedException('Platform fee does not exist');
+      }
       const deletedFee = await this.prisma.platformFee.delete({
         where: {
           id: id
@@ -360,6 +391,9 @@ export class AdminService {
       );
     } catch (error) {
       this.logger.error('Failed to delete platform fee', error);
+      if (error instanceof HttpException || error instanceof UnauthorizedException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to delete platform fee');
     }
   }

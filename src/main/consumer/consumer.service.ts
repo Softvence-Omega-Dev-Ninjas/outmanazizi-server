@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { AcceptBid } from './dto/create-consumer.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
@@ -29,7 +29,6 @@ export class ConsumerService {
             },
           },
         },
-        // orderBy: { serviceProvider: { myCurrentRating: 'desc' } },
       });
       this.logger.log(`Fetched ${bidedProviders.length} bided providers for service: ${serviceId}`);
       return ApiResponse.success(bidedProviders, 'Bided providers fetched successfully');
@@ -54,7 +53,7 @@ export class ConsumerService {
       });
       if (!bidToRemove) {
         this.logger.error(`Bid not found for user ${userid}, service ${serviceId}, provider ${serviceProviderId}`);
-        throw new BadRequestException('Bid not found');
+        throw new NotFoundException('Bid not found');
       }
       await this.prisma.bid.delete({
         where: { id: bidToRemove.id },
@@ -70,9 +69,8 @@ export class ConsumerService {
       this.logger.log(`Bid for service ${serviceId} removed by user ${userid}`);
       return { message: 'Bid removed successfully' };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Failed to remove bid for service ${serviceId} by user ${userid}`, error);
-       if (error instanceof HttpException) {
+       if (error instanceof HttpException || error instanceof NotFoundException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to remove bid');
@@ -123,7 +121,7 @@ export class ConsumerService {
       };
     } catch (error) {
       this.logger.error(`Failed to accept bid for service ${serviceId} by user ${userid}`, error);
-       if (error instanceof HttpException) {
+       if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to accept bid');
@@ -160,7 +158,7 @@ export class ConsumerService {
       return { message: 'Service completed successfully', updatedService };
     } catch (error) {
       this.logger.error(`Failed to complete service ${serviceId} by consumer ${userid}`, error);
-        if (error instanceof HttpException) {
+        if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to complete service');
@@ -209,13 +207,13 @@ export class ConsumerService {
       });
       if (!serviceProvider) {
         this.logger.error(`Service provider not found for ID: ${serviceProviderId}`);
-        throw new BadRequestException('Service provider not found');
+        throw new NotFoundException('Service provider not found');
       }
       this.logger.log(`Fetched service provider info for ID: ${serviceProviderId}`);
       return ApiResponse.success(serviceProvider, 'Service provider info fetched successfully');
     } catch (error) {
       this.logger.error(`Failed to fetch service provider info for ID: ${serviceProviderId}`, error);
-      if (error instanceof HttpException) {
+      if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to fetch service provider info');
