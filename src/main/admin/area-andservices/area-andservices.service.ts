@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAreaDto, CreateServicesDto } from '../dto/areaAndServices.dto';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
@@ -28,9 +28,11 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(areaAndServices, 'Area created successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to create area: ${message}`);
-      throw new BadRequestException('Failed to create area: ');
+      this.logger.error('Failed to create area', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create area');
     }
   }
 
@@ -52,9 +54,11 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(services, 'Service created successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to create service: ${message}`);
-      throw new BadRequestException('Failed to create service: ');
+      this.logger.error('Failed to create service', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create service');
     }
   }
 
@@ -75,9 +79,11 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(subServices, 'Sub-service created successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to create sub-service: ${message}`);
-      throw new BadRequestException('Failed to create sub-service: ');
+      this.logger.error('Failed to create sub-service', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create sub-service');
     }
   }
 
@@ -102,9 +108,11 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(deletedSubService, 'Sub-service deleted successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to delete sub-service: ${message}`);
-      throw new UnauthorizedException('Failed to delete sub-service: ');
+      this.logger.error('Failed to delete sub-service', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete sub-service');
     }
   }
   // update sub service
@@ -125,9 +133,11 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(updatedSubService, 'Sub-service updated successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to update sub-service: ${message}`);
-      throw new UnauthorizedException('Failed to update sub-service: ');
+      this.logger.error('Failed to update sub-service', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update sub-service');
     }
   }
   // update location
@@ -148,9 +158,11 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(updatedLocation, 'Location updated successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to update location: ${message}`);
-      throw new UnauthorizedException('Failed to update location: ');
+      this.logger.error('Failed to update location', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update location');
     }
   }
 
@@ -168,8 +180,11 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(deletedLocation, 'Location deleted successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new UnauthorizedException(message);
+      this.logger.error('Failed to delete location', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete location');
     }
   }
 
@@ -191,9 +206,11 @@ export class AreaAndservicesService {
       });
       return ApiResponse.success(updatedService, 'Service updated successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to update service: ${message}`);
-      throw new UnauthorizedException('Failed to update service: ');
+      this.logger.error('Failed to update service', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update service');
     }
   }
   // area details by area id
@@ -207,9 +224,11 @@ export class AreaAndservicesService {
       }
       return ApiResponse.success(areaExists, 'Area details fetched successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to fetch area details: ${message}`);
-      throw new BadRequestException('Failed to fetch area details: ');
+      this.logger.error('Failed to fetch area details', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch area details');
     }
   }
   // service details by service id
@@ -224,9 +243,11 @@ export class AreaAndservicesService {
       }
       return ApiResponse.success(serviceExists, 'Service details fetched successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to fetch service details: ${message}`);
-      throw new BadRequestException('Failed to fetch service details: ');
+      this.logger.error('Failed to fetch service details', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch service details');
     }
   }
 }

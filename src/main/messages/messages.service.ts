@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  HttpException,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
@@ -73,8 +74,10 @@ export class MessagesService {
       this.logger.log(`Conversation retrieved/created between ${userId} and ${dto.otherUserId}`);
       return conversation;
     } catch (error) {
-      this.logger.error(`Failed to get or create conversation between ${userId} and ${dto.otherUserId}`, error instanceof Error ? error.stack : '');
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error('Failed to get or create conversation', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to get or create conversation');
     }
   }
@@ -184,8 +187,10 @@ export class MessagesService {
 
       return message;
     } catch (error) {
-      this.logger.error(`Failed to send message from ${userId} to ${dto.receiverId}`, error instanceof Error ? error.stack : '');
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error('Failed to send message', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to send message');
     }
   }
@@ -248,8 +253,10 @@ export class MessagesService {
         conversationId: conversation.id,
       };
     } catch (error) {
-      this.logger.error(`Failed to retrieve messages for user ${userId} in conversation with ${dto.otherUserId}`, error instanceof Error ? error.stack : '');
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      this.logger.error('Failed to retrieve messages', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to retrieve messages');
     }
   }

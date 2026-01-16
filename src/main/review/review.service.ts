@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
@@ -55,8 +55,11 @@ export class ReviewService {
       this.logger.log(`Review created successfully: ${JSON.stringify(review)}`);
       return ApiResponse.success(review, 'Review created successfully');
     } catch (error) {
-      this.logger.error(`Error creating review: ${error instanceof Error ? error.message : 'An error occurred'}`);
-      return ApiResponse.error('Error creating review');
+      this.logger.error('Error creating review', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error creating review');
     }
   }
 
@@ -83,8 +86,8 @@ export class ReviewService {
       });
       return ApiResponse.success(reviews, 'Reviews retrieved successfully');
     } catch (error) {
-      this.logger.error(`Error retrieving reviews: ${error instanceof Error ? error.message : 'An error occurred'}`);
-      return ApiResponse.error('An error occurred');
+      this.logger.error('Error retrieving reviews', error instanceof Error ? error.stack : error);
+      throw new InternalServerErrorException('Error retrieving reviews');
     }
   }
 }

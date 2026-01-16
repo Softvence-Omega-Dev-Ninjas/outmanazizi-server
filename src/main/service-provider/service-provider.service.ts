@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
@@ -22,7 +22,7 @@ export class ServiceProviderService {
   }
 
   async create(userid: string, createServiceProviderDto: CreateServiceProviderDto) {
-    console.log(createServiceProviderDto);
+    this.logger.debug(`Service provider DTO: ${JSON.stringify(createServiceProviderDto)}`);
     this.logger.log(`Creating service provider profile for user: ${userid}`);
     try {
       // user exists check
@@ -72,7 +72,7 @@ export class ServiceProviderService {
         this.logger.error(`One or more service categories are invalid for user: ${userid}`);
         throw new NotFoundException('One or more service categories are invalid');
       }
-      console.log({ serviceCategories });
+      this.logger.debug(`Service categories found: ${JSON.stringify(serviceCategories)}`);
       const newServiceProvider = await this.prisma.serviceProvider.update({
         where: { id: serviceProviderExists.id },
         data: {
@@ -91,11 +91,11 @@ export class ServiceProviderService {
         'Service provider profile created successfully',
       );
     } catch (error) {
-      this.logger.error(`Error creating service provider profile for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
+      this.logger.error('Error creating service provider profile', error instanceof Error ? error.stack : error);
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException('Failed to create service provider profile');
+      throw new InternalServerErrorException('Failed to create service provider profile');
     }
   }
   async currentServiceProvider(userid: string) {
@@ -112,10 +112,11 @@ export class ServiceProviderService {
         'Current service provider retrieved successfully',
       );
     } catch (error) {
-      this.logger.error(`Error fetching current service provider for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.log(message);
-      throw new BadRequestException('Failed to fetch current service provider');
+      this.logger.error('Error fetching current service provider', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch current service provider');
     }
   }
   // patch document upload
@@ -138,10 +139,11 @@ export class ServiceProviderService {
       return ApiResponse.success(updatedServiceProvider, 'Documents uploaded  successfully');
 
     } catch (error) {
-      this.logger.error(`Error uploading documents for user: ${userid} - ${error instanceof Error ? error.message : 'An error occurred'}`);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.log(message);
-      throw new BadRequestException('Document upload failed');
+      this.logger.error('Error uploading documents', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Document upload failed');
     }
   }
   async findAll() {
@@ -150,10 +152,8 @@ export class ServiceProviderService {
       const result = await this.prisma.serviceProvider.findMany({});
       return ApiResponse.success(result, 'Service providers retrieved successfully');
     } catch (error) {
-      this.logger.error(`Error fetching service providers - ${error instanceof Error ? error.message : 'An error occurred'}`);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.log(message);
-      throw new BadRequestException('Failed to retrieve service providers');
+      this.logger.error('Error fetching service providers', error instanceof Error ? error.stack : error);
+      throw new InternalServerErrorException('Failed to retrieve service providers');
     }
   }
 
@@ -275,8 +275,10 @@ export class ServiceProviderService {
         'Service marked as completed from service provider, and waiting for consumer confirmation',
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      this.logger.error(`Error marking service ${serviceId} as complete: ${message}`);
+      this.logger.error('Error marking service as complete', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Error marking service as complete');
     }
   }
@@ -324,9 +326,11 @@ export class ServiceProviderService {
       this.logger.log(`Accepted bids retrieved successfully for service provider: ${userid}`);
       return ApiResponse.success(bids, 'Accepted bids retrieved successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      this.logger.error(`Error retrieving accepted bids for service provider ${userid}: ${message}`);
-      throw new BadRequestException('Failed to retrieve bids');
+      this.logger.error('Error retrieving accepted bids', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to retrieve bids');
     }
   }
   // specific consumer  info
@@ -360,10 +364,11 @@ export class ServiceProviderService {
       this.logger.log(`Fetched service provider info for ID: ${id}`);
       return ApiResponse.success(consumer, 'Consumer info fetched successfully');
     } catch (error) {
-      this.logger.error(`Failed to fetch service provider info for ID: ${id}`, error);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.log(message);
-      throw new BadRequestException('Failed to fetch consumer info');
+      this.logger.error('Failed to fetch service provider info', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch consumer info');
     }
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { AcceptBid } from './dto/create-consumer.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
@@ -34,9 +34,8 @@ export class ConsumerService {
       this.logger.log(`Fetched ${bidedProviders.length} bided providers for service: ${serviceId}`);
       return ApiResponse.success(bidedProviders, 'Bided providers fetched successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
       this.logger.error(`Failed to fetch bided providers for service: ${serviceId}`, error);
-      return ApiResponse.error('Failed to fetch bided providers');
+      throw new InternalServerErrorException('Failed to fetch bided providers');
     }
   }
   // remove bid
@@ -172,8 +171,7 @@ export class ConsumerService {
       return ApiResponse.success(notifications, 'Notifications fetched successfully');
     } catch (error) {
       this.logger.error(`Failed to fetch notifications for user: ${userid}`, error);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      return ApiResponse.error('Failed to fetch notifications');
+      throw new InternalServerErrorException('Failed to fetch notifications');
     }
   }
   // get specific service provider information
@@ -207,8 +205,10 @@ export class ConsumerService {
       return ApiResponse.success(serviceProvider, 'Service provider info fetched successfully');
     } catch (error) {
       this.logger.error(`Failed to fetch service provider info for ID: ${serviceProviderId}`, error);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      return ApiResponse.error('Failed to fetch service provider info');
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch service provider info');
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException,NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, InternalServerErrorException, Logger, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { Role } from '@prisma/client';
@@ -89,8 +89,11 @@ export class AdminService {
  
     return ApiResponse.success(verifiedUser, 'User is verified successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error( 'Failed to reject service provider verification', message);
+      this.logger.error('Failed to reject service provider verification', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to reject service provider verification');
     }
   }
 
@@ -125,8 +128,11 @@ export class AdminService {
     });
     return ApiResponse.success(blockedUser, 'User is blocked successfully');
   } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to block/unblock user', message);
+      this.logger.error('Failed to block/unblock user', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to block/unblock user');
   }
   }
   // account deletion by admin
@@ -149,8 +155,11 @@ export class AdminService {
       'User account is deleted successfully',
     );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to delete user account', message);
+      this.logger.error('Failed to delete user account', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete user account');
     }
   }
 
@@ -176,8 +185,11 @@ export class AdminService {
       'Service is deleted successfully',
     );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to delete service', message);
+      this.logger.error('Failed to delete service', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete service');
     }
   }
   // find all serviceProvider
@@ -191,8 +203,8 @@ export class AdminService {
       'All service providers fetched successfully',
     );
   } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to fetch service providers', message);
+      this.logger.error('Failed to fetch service providers', error);
+      throw new InternalServerErrorException('Failed to fetch service providers');
   }
   }
   async findAllOrders() {
@@ -205,8 +217,8 @@ export class AdminService {
         'All orders fetched successfully',
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to fetch orders', message);
+      this.logger.error('Failed to fetch orders', error);
+      throw new InternalServerErrorException('Failed to fetch orders');
     }
   }
   async findOrderDetails(orderId: string) {
@@ -235,8 +247,11 @@ export class AdminService {
         'Order details fetched successfully',
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to fetch order details', message);
+      this.logger.error('Failed to fetch order details', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch order details');
     }
   }
   async changeUserRole(userid: string, role: Role) {
@@ -258,8 +273,11 @@ export class AdminService {
       'User role is updated successfully',
     );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to change user role', message);
+      this.logger.error('Failed to change user role', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to change user role');
     }
   }
 
@@ -282,8 +300,11 @@ export class AdminService {
         'Platform fee created successfully',
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to create platform fee', message);
+      this.logger.error('Failed to create platform fee', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create platform fee');
     }
     // get platform fee
 
@@ -296,8 +317,8 @@ export class AdminService {
         'Platform fee fetched successfully',
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to fetch platform fee', message);
+      this.logger.error('Failed to fetch platform fee', error);
+      throw new InternalServerErrorException('Failed to fetch platform fee');
     }
   }
 
@@ -318,8 +339,8 @@ export class AdminService {
         'Platform fee updated successfully',
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to update platform fee', message);
+      this.logger.error('Failed to update platform fee', error);
+      throw new InternalServerErrorException('Failed to update platform fee');
     }
   }
   // delete a platform fee
@@ -335,8 +356,8 @@ export class AdminService {
         'Platform fee deleted successfully',
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return ApiResponse.error('Failed to delete platform fee', message);
+      this.logger.error('Failed to delete platform fee', error);
+      throw new InternalServerErrorException('Failed to delete platform fee');
     }
   }
 

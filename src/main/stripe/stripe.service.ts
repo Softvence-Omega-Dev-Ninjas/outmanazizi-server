@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { HttpException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { ApiResponse } from 'src/utils/common/apiresponse/apiresponse';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -25,7 +25,7 @@ export class StripeService {
       // 1️⃣ Check if user exists
       if (!user) {
         this.logger.warn(`❌ User not found: ${userId}`);
-        return ApiResponse.error('User Not Found', 'The specified user does not exist');
+        throw new NotFoundException('User not found');
       }
 
       const refreshUrl = 'https://outmanazizi.com/stripe/refresh'; //process.env.STRIPE_REFRESH_URL;
@@ -90,12 +90,8 @@ export class StripeService {
       );
 
     } catch (error) {
-      this.logger.error('❌ Stripe account creation failed');
-
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown Stripe error occurred';
-
-      return ApiResponse.error('Stripe Account Creation Failed');
+      this.logger.error('Stripe account creation failed', error instanceof Error ? error.stack : error);
+      throw new InternalServerErrorException('Stripe Account Creation Failed');
     }
   }
 
@@ -111,9 +107,11 @@ export class StripeService {
       const accountLink = await this.stripe.accounts.createLoginLink(accountId);
       return accountLink;
     } catch (error) {
-      this.logger.error('Failed to generate account link', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Failed to generate account link: `);
+      this.logger.error('Failed to generate account link', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to generate account link');
     }
   }
   async retrieveAccount(accountId: string): Promise<Stripe.Account> {
@@ -134,9 +132,11 @@ export class StripeService {
 
 
     } catch (error) {
-      this.logger.error('Failed to retrieve Stripe account', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Failed to retrieve Stripe account: `);
+      this.logger.error('Failed to retrieve Stripe account', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to retrieve Stripe account');
     }
   }
 
@@ -176,9 +176,8 @@ export class StripeService {
       };
 
     } catch (error) {
-      this.logger.error('Failed to get Stripe info', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      return ApiResponse.error('Failed to get Stripe info');
+      this.logger.error('Failed to get Stripe info', error instanceof Error ? error.stack : error);
+      throw new InternalServerErrorException('Failed to get Stripe info');
     }
   }
   async deleteAccount(accountId: string): Promise<Stripe.DeletedAccount> {
@@ -188,9 +187,8 @@ export class StripeService {
       this.logger.log(`Stripe account deleted successfully for account ID: ${accountId}`);
       return deletedAccount;
     } catch (error) {
-      this.logger.error('Failed to delete Stripe account', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Stripe Account Deletion Failed `);
+      this.logger.error('Failed to delete Stripe account', error instanceof Error ? error.stack : error);
+      throw new InternalServerErrorException('Stripe Account Deletion Failed');
     }
   }
   // payout history
@@ -221,9 +219,11 @@ export class StripeService {
       this.logger.log(`Payout history retrieved successfully for account ID: ${userId}`);
       return { payoutsdata, availableBalance: balance.available[0].amount };
     } catch (error) {
-      this.logger.error('Failed to retrieve payout history', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to retrieve payout history: `);
+      this.logger.error('Failed to retrieve payout history', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to retrieve payout history');
     }
   }
 }

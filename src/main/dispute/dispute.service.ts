@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { UpdateDisputeDto } from './dto/update-dispute.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -51,7 +51,7 @@ export class DisputeService {
       });
       if (disputeExists) {
         this.logger.warn(` You have already raised a dispute for service ID ${createDisputeDto.serviceid} against user ID ${jobExists.assignedServiceProvider?.userId}`);
-        return ApiResponse.error(' You have already raised a dispute for this service against the specified user');
+        throw new BadRequestException('You have already raised a dispute for this service against the specified user');
       }
       const result = await this.prisma.dispute.create({
         data: {
@@ -65,19 +65,21 @@ export class DisputeService {
       });
       return ApiResponse.success(result, 'Dispute created successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to create dispute for user ${userId} with service ID ${createDisputeDto.serviceid}: ${message}`, message);
-      return ApiResponse.error('Failed to create dispute');
+      this.logger.error('Failed to create dispute', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create dispute');
     }
   }
 
   async findAll() {
     try {
-      return ApiResponse.success(await this.prisma.dispute.findMany(), 'Disputes retrieved successfully');
+      const disputes = await this.prisma.dispute.findMany();
+      return ApiResponse.success(disputes, 'Disputes retrieved successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to retrieve disputes: ${message}`, message);
-      return ApiResponse.error('Failed to retrieve disputes');
+      this.logger.error('Failed to retrieve disputes', error instanceof Error ? error.stack : error);
+      throw new InternalServerErrorException('Failed to retrieve disputes');
     }
   }
 
@@ -88,9 +90,8 @@ export class DisputeService {
       });
       return ApiResponse.success(res, 'User disputes retrieved successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to retrieve disputes for user ${userId}: ${message}`, message);
-      return ApiResponse.error('Failed to retrieve user disputes');
+      this.logger.error(`Failed to retrieve disputes for user ${userId}`, error instanceof Error ? error.stack : error);
+      throw new InternalServerErrorException('Failed to retrieve user disputes');
     }
   }
 
@@ -125,9 +126,11 @@ export class DisputeService {
       return ApiResponse.success(updatedDispute, 'Dispute updated successfully');
 
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to update dispute with ID ${id}: ${message}`, message);
-      return ApiResponse.error('Failed to update dispute');
+      this.logger.error(`Failed to update dispute with ID ${id}`, error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update dispute');
     }
   }
 
@@ -150,9 +153,11 @@ export class DisputeService {
       });
       return ApiResponse.success(res, 'Dispute deleted successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to delete dispute with ID ${id}: ${message}`, message);
-      return ApiResponse.error('Failed to delete dispute');
+      this.logger.error(`Failed to delete dispute with ID ${id}`, error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete dispute');
     }
   }
   // resolve a dispute (admin functionality)
@@ -219,9 +224,11 @@ export class DisputeService {
 
       return ApiResponse.success(resolvedDispute, 'Dispute resolved successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to resolve dispute with ID ${id}: ${message}`, message);
-      return ApiResponse.error('Failed to resolve dispute');
+      this.logger.error(`Failed to resolve dispute with ID ${id}`, error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to resolve dispute');
     }
   }
 
@@ -258,9 +265,11 @@ export class DisputeService {
       }
       return ApiResponse.success(dispute, 'Dispute retrieved successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to retrieve dispute with ID ${id}: ${message}`, message);
-      return ApiResponse.error('Failed to retrieve dispute');
+      this.logger.error(`Failed to retrieve dispute with ID ${id}`, error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to retrieve dispute');
     }
   }
 }

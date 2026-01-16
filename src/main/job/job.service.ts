@@ -49,7 +49,7 @@ export class JobService {
         throw new NotFoundException('Service categories do not exist');
       }
 
-      console.log(categoriesExists);
+      this.logger.debug(`Categories exist: ${JSON.stringify(categoriesExists)}`);
 
       const savedJob = await this.prisma.service.create({
         data: {
@@ -63,10 +63,11 @@ export class JobService {
       this.logger.log(`Job created successfully: ${JSON.stringify(savedJob)}`);
       return ApiResponse.success(savedJob, 'Job created successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      this.logger.error(`Job creation failed: ${message}`);
-      console.log(message);
-      throw new BadRequestException('Job creation failed');
+      this.logger.error('Job creation failed', error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Job creation failed');
     }
   }
 
@@ -150,10 +151,11 @@ export class JobService {
       });
       return ApiResponse.success(updatedJob, 'Job updated successfully');
     } catch (error) {
-      this.logger.error(`Error updating job ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.log(message);
-      throw new BadRequestException('Update failed ');
+      this.logger.error(`Error updating job ${id}`, error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Update failed');
     }
   }
 
@@ -168,10 +170,11 @@ export class JobService {
       this.logger.log(`Job removal requested to admin successfully for job: ${id}`);
       return ApiResponse.success(deletedJob, 'Job removal requested to admin successfully');
     } catch (error) {
-      this.logger.error(`Error requesting job deletion for job ${id}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.log(message);
-      throw new BadRequestException('Delete request failed');
+      this.logger.error(`Error requesting job deletion for job ${id}`, error instanceof Error ? error.stack : error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Delete request failed');
     }
   }
 

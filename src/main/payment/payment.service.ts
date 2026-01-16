@@ -3,6 +3,7 @@ import {
   Injectable,
   Inject,
   Logger,
+  HttpException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
@@ -51,8 +52,10 @@ export class PaymentsService {
       return ApiResponse.success(res, 'Customer information updated successfully');
     } catch (error) {
       this.logger.error(`Failed to create customer for userId: ${userId}`, error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new InternalServerErrorException(`Failed to create customer:  `);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create customer');
     }
   }
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
@@ -113,8 +116,10 @@ export class PaymentsService {
       return ApiResponse.success(oder, 'Payment intent created successfully');
     } catch (error) {
       this.logger.error(`Failed to create payment intent for userId: ${userId}`, error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new InternalServerErrorException(`Failed to create payment intent: `);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create payment intent');
     }
   }
 
@@ -227,8 +232,10 @@ export class PaymentsService {
       return ApiResponse.success(orderUpdate, 'Transfer created successfully');
     } catch (error) {
       this.logger.error(`Failed to create transfer for amount: ${dto.amountCents}`, error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new InternalServerErrorException(`Failed to create transfer:  `);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create transfer');
     }
   }
 
@@ -260,8 +267,10 @@ export class PaymentsService {
       return refund;
     } catch (error) {
       this.logger.error(`Failed to process refund for orderId: ${dto.orderId}`, error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new InternalServerErrorException(`Failed to process refund:  `);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to process refund');
     }
   }
 }
