@@ -269,8 +269,7 @@ export class PaymentsService {
       this.logger.error(`Failed to process refund for orderId: ${dto.orderId}`, error);
       if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
-      }
-      throw new InternalServerErrorException('Failed to process refund');
+      } 
     }
   }
 }
