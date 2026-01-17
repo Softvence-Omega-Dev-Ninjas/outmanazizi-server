@@ -154,6 +154,28 @@ export class ConsumerService {
         where: { id: serviceId },
         data: { isCompleteFromConsumer: true },
       });
+
+      // Find the accepted bid for this service
+      const acceptedBid = await this.prisma.bid.findFirst({
+        where: {
+          serviceId: serviceId,
+          status: 'ACCEPTED',
+        },
+      });
+
+      // Update order status to COMPLETED if bid exists
+      if (acceptedBid) {
+        await this.prisma.order.updateMany({
+          where: {
+            bidId: acceptedBid.id,
+          },
+          data: {
+            status: 'COMPLETED',
+          },
+        });
+        this.logger.log(`Order for bid ${acceptedBid.id} marked as completed`);
+      }
+
       this.logger.log(`Service ${serviceId} marked as complete by consumer ${userid}`);
       return { message: 'Service completed successfully', updatedService };
     } catch (error) {

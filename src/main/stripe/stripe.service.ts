@@ -102,16 +102,32 @@ export class StripeService {
     this.logger.log(`Generating account link for Stripe account ID: ${accountId}`);
     try {
       try {
-        await this.stripe.accounts.retrieve(accountId);
+      const data =   await this.stripe.accounts.retrieve(accountId);
+
+  if (data.type === 'standard') {
+  throw new BadRequestException(
+    'Dashboard access is managed directly by Stripe for standard accounts.',
+  );
+}
+
+// ❌ Onboarding incomplete
+if (!data.details_submitted) {
+  throw new BadRequestException(
+    'Please complete Stripe onboarding before accessing the dashboard.',
+  );
+}
       } catch (error) {
         this.logger.error(`Stripe account not found for account ID: ${accountId}`, error);
         throw new NotFoundException(`Stripe account not found for account ID: ${accountId}`);
       }
+
       const accountLink = await this.stripe.accounts.createLoginLink(accountId);
+      
+      console.log({accountLink});
       return accountLink;
     } catch (error) {
       this.logger.error('Failed to generate account link', error instanceof Error ? error.stack : error);
-      if (error instanceof HttpException|| error instanceof NotFoundException) {
+      if (error instanceof HttpException|| error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
     }
