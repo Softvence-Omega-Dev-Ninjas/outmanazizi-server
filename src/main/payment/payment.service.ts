@@ -270,6 +270,8 @@ export class PaymentsService {
       if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       } 
+      throw new Error(error  instanceof Error ? error.message : 'Failed to process refund');
+      
     }
   }
 }
