@@ -253,9 +253,21 @@ export class PaymentsService {
         this.logger.warn(`Payment intent not succeeded for order: ${dto.orderId}`);
         throw new NotFoundException('Payment intent not succeeded, cannot process refund');
       }
+      
+      // Validate refund amount doesn't exceed charge amount
+      const refundAmount = parseInt(dto.amount, 10);
+      const chargeAmount = captureIntent.amount;
+      
+      if (refundAmount > chargeAmount) {
+        this.logger.warn(`Refund amount (${refundAmount}) exceeds charge amount (${chargeAmount}) for order: ${dto.orderId}`);
+        throw new BadRequestException(
+          `Refund amount ($${(refundAmount / 100).toFixed(2)}) cannot exceed the charge amount ($${(chargeAmount / 100).toFixed(2)})`
+        );
+      }
+      
       const refund = await this.stripe.refunds.create({
         payment_intent: orderExists.paymentIntentId,
-        amount: parseInt(dto.amount, 10),
+        amount: refundAmount,
       });
       if (refund.status === 'succeeded') {
         await this.prisma.order.update({
@@ -263,6 +275,14 @@ export class PaymentsService {
           data: { status: 'CANCELLED' },
         });
       }
+      await this.prisma.notification.create({
+        data: {
+          fromNotification: 'SYSTEM',
+          toNotification: orderExists.consumerId,
+          message: `A refund of $${(refundAmount / 100).toFixed(2)} has been processed for your order ${dto.orderId}.`,
+          createdAt: new Date(),
+        }
+      });
       this.logger.log(`Refund processed successfully for pi: ${orderExists.paymentIntentId}`);
       return refund;
     } catch (error) {
