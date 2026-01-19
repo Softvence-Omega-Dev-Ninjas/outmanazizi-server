@@ -295,6 +295,9 @@ export class ServiceProviderService {
         },
       );
 
+ 
+
+
       // fetch consumer FCM tokens and send push notification if available
       const consumerTokensResult = await this.prisma.user.findUnique({
         where: { id: service.userId },

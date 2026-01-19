@@ -58,6 +58,7 @@ export class PaymentsService {
       throw new InternalServerErrorException('Failed to create customer');
     }
   }
+  
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
     this.logger.log(`Creating payment intent for userId: ${userId}`);
     try {

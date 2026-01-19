@@ -220,9 +220,29 @@ export class AdminService {
     try {
       const orders = await this.prisma.order.findMany({
         orderBy: { createdAt: 'desc' },
+        include: {
+          bid: {
+            include: {
+              service: {
+                select: {
+                  isCompletedFromServiceProvider: true,
+                  isCompleteFromConsumer: true,
+                },
+              },
+            },
+          },
+        },
       });
+      
+      // Map the orders to include completion status dynamically
+      const ordersWithCompletionStatus = orders.map(order => ({
+        ...order,
+        isCompletedFromProvider: order.bid.service.isCompletedFromServiceProvider,
+        isCompletedFromConsumer: order.bid.service.isCompleteFromConsumer,
+      }));
+      
       return ApiResponse.success(
-        orders,
+        ordersWithCompletionStatus,
         'All orders fetched successfully',
       );
     } catch (error) {
