@@ -235,7 +235,7 @@ export class ServiceProviderService {
       },
     });
     this.logger.log(`Bid placed successfully by service provider ${userid} for service request ${serviceRequestId}`);
-    return ApiResponse.success(bidUpdate, 'Bid placed successfully');
+    return ApiResponse.success(bidUpdate, 'New Bid price saved successfully');
   }
 
 
