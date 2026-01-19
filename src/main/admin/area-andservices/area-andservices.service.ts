@@ -21,6 +21,8 @@ export class AreaAndservicesService {
         throw new BadRequestException('Area  already exists');
       }
 
+      
+
       const areaAndServices = await this.prisma.area.create({
         data: {
           area: body.area,
