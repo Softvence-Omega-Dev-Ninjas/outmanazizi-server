@@ -88,7 +88,7 @@ export class ServiceProviderController {
     return await this.serviceProviderService.makeBid(req['userid'] as string, id, body);
   }
 
-  @Post('makes-bid-for-new-amount/:id')
+  @Patch('makes-bid-for-new-amount/:id')
   @UseGuards(AuthenticationGuard)
   async makeBidForUpadteAmmount(
     @Param('id') id: string,
