@@ -164,17 +164,17 @@ export class ConsumerService {
       });
 
       // Update order status to COMPLETED if bid exists
-      if (acceptedBid) {
-        await this.prisma.order.updateMany({
-          where: {
-            bidId: acceptedBid.id,
-          },
-          data: {
-            status: 'COMPLETED',
-          },
-        });
-        this.logger.log(`Order for bid ${acceptedBid.id} marked as completed`);
-      }
+      // if (acceptedBid) {
+      //   await this.prisma.order.updateMany({
+      //     where: {
+      //       bidId: acceptedBid.id,
+      //     },
+      //     data: {
+      //       status: 'COMPLETED',
+      //     },
+      //   });
+      //   this.logger.log(`Order for bid ${acceptedBid.id} marked as completed`);
+      // }
 
       this.logger.log(`Service ${serviceId} marked as complete by consumer ${userid}`);
       return { message: 'Service completed successfully', updatedService };
