@@ -67,6 +67,13 @@ export class PaymentsService {
       });
       const bidExists = await this.prisma.bid.findUnique({
         where: { id: dto.bidId },
+        include: {
+          serviceProvider: {
+            include: {
+              user: true,
+            },
+          },
+        },
       })
       const persentExists = await this.prisma.platformFee.findFirst({
         where: { amount: dto.applicationFeePersent },
@@ -97,7 +104,7 @@ export class PaymentsService {
       
       const oder = await this.prisma.order.create({
         data: {
-          serviceProviderId: bidExists.serviceProviderId,
+          serviceProviderId: bidExists.serviceProvider.id,
           consumerId: userId,
           bidId: dto.bidId,
           paymentIntentId: paymentIntent.id,
@@ -108,7 +115,7 @@ export class PaymentsService {
       await this.prisma.notification.create({
         data: {
           fromNotification: userId,
-          toNotification: bidExists.serviceProviderId,
+          toNotification: bidExists.serviceProvider.userId,
           message: `A new order has been created for your bid ${dto.bidId}.`,
           createdAt: new Date(),
         }
