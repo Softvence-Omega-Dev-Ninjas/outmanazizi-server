@@ -199,6 +199,47 @@ export class ServiceProviderService {
     return ApiResponse.success(bid, 'Bid placed successfully');
   }
 
+
+  async makeBidForUpadteAmmount(userid: string, serviceRequestId: string, body: ServiceProviderBidDto) {
+    this.logger.log(`Service provider ${userid} is making a bid for service request ${serviceRequestId}`);
+    const bidExists = await this.prisma.bid.findFirst({
+      where: {
+        serviceId: serviceRequestId,
+        serviceProvider: {
+          userId: userid,
+        },
+      },
+    });
+    if (!bidExists) {
+      this.logger.error(`You have not placed a bid for service provider ${userid} on service request ${serviceRequestId}`);
+      throw new NotFoundException('You have not placed a bid');
+    }
+    const validSerivceProvider = await this.helperService.validServiceProvider(userid);
+    if (!validSerivceProvider) {
+      this.logger.error(`Invalid service provider: ${userid}`);
+      throw new NotFoundException('Invalid service provider id');
+    }
+    const serviceRequest = await this.prisma.service.findUnique({
+      where: { id: serviceRequestId },
+    });
+    if (!serviceRequest) {
+      this.logger.error(`Service request not found: ${serviceRequestId}`);
+      throw new NotFoundException('Service request not found');
+    }
+ 
+
+    const bidUpdate = await this.prisma.bid.update({
+      where: { id: bidExists.id },
+      data: {
+        price: body.price
+      },
+    });
+    this.logger.log(`Bid placed successfully by service provider ${userid} for service request ${serviceRequestId}`);
+    return ApiResponse.success(bidUpdate, 'Bid placed successfully');
+  }
+
+
+
   async myBids(userid: string) {
     try {
       const validSerivceProvider = await this.helperService.validServiceProvider(userid);
