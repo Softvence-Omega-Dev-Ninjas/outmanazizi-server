@@ -156,12 +156,12 @@ export class ConsumerService {
       });
 
       // Find the accepted bid for this service
-      const acceptedBid = await this.prisma.bid.findFirst({
-        where: {
-          serviceId: serviceId,
-          status: 'ACCEPTED',
-        },
-      });
+      // const acceptedBid = await this.prisma.bid.findFirst({
+      //   where: {
+      //     serviceId: serviceId,
+      //     status: 'ACCEPTED',
+      //   },
+      // });
 
       // Update order status to COMPLETED if bid exists
       // if (acceptedBid) {
