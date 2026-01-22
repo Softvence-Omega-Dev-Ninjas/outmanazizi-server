@@ -283,14 +283,21 @@ export class PaymentsService {
           data: { status: 'CANCELLED' },
         });
       }
-      await this.prisma.notification.create({
-        data: {
-          fromNotification: 'SYSTEM',
-          toNotification: orderExists.consumerId,
-          message: `A refund of $${(refundAmount / 100).toFixed(2)} has been processed for your order ${dto.orderId}.`,
-          createdAt: new Date(),
-        }
+      // Get the service provider's user ID to send the refund notification
+      const serviceProvider = await this.prisma.serviceProvider.findUnique({
+        where: { id: orderExists.serviceProviderId },
       });
+      
+      if (serviceProvider) {
+        await this.prisma.notification.create({
+          data: {
+            fromNotification: serviceProvider.userId,
+            toNotification: orderExists.consumerId,
+            message: `A refund of $${(refundAmount / 100).toFixed(2)} has been processed for your order ${dto.orderId}.`,
+            createdAt: new Date(),
+          }
+        });
+      }
       this.logger.log(`Refund processed successfully for pi: ${orderExists.paymentIntentId}`);
       return refund;
     } catch (error) {
