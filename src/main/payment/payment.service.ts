@@ -190,6 +190,17 @@ export class PaymentsService {
           status: 'COMPLETED'
         }
       });
+
+
+        await this.prisma.service.update({
+          where:{
+            id: bidExists.serviceId
+          },data:{
+            isCompletedFromAdmin:true
+          }
+        })
+this.logger.log(`Service status updated for order: ${dto.orderId}`);
+
       // console.log({ bidExists });
       await this.prisma.notification.create({
         data: {
@@ -306,7 +317,6 @@ export class PaymentsService {
         throw error;
       } 
       throw new Error(error  instanceof Error ? error.message : 'Failed to process refund');
-      
     }
   }
 }
