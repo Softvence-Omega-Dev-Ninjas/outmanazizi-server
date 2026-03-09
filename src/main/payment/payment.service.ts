@@ -199,7 +199,7 @@ export class PaymentsService {
             isCompletedFromAdmin:true
           }
         })
-this.logger.log(`Service status updated for order: ${dto.orderId}`);
+      this.logger.log(`Service status updated for service: ${bidExists.serviceId}`);
 
       // console.log({ bidExists });
       await this.prisma.notification.create({
