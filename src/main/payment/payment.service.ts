@@ -92,7 +92,7 @@ export class PaymentsService {
 
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: dto.amount,
-        currency: 'usd',
+        currency: 'mad', 
         metadata: { userId },
         payment_method_types: ['card'],
         customer: userExistsByUserid.customerIdFromStripe,
@@ -178,7 +178,7 @@ export class PaymentsService {
 
       await this.stripe.transfers.create({
         amount: dto.amountCents,
-        currency: 'usd',
+        currency: 'mad', 
         destination: stripeAccountId,
       });
 
