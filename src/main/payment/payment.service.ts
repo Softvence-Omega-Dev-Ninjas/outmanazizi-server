@@ -23,6 +23,14 @@ export interface CustomerResponse {
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
+
+  private getErrorTrace(error: unknown): string {
+    if (error instanceof Error) {
+      return error.stack ?? error.message;
+    }
+    return String(error);
+  }
+
   constructor(
     @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
     private readonly prisma: PrismaService,
@@ -31,7 +39,8 @@ export class PaymentsService {
   ) { }
 
   async makeCustomer(userId: string, makeCustomerDto: MakeCustomerDto) {
-    this.logger.log(`Making customer for userId: ${userId}`);
+    this.logger.log(`makeCustomer:start userId=${userId}`);
+    this.logger.debug(`makeCustomer:payload userId=${userId} hasCustomerId=${Boolean(makeCustomerDto.customerIdFromStripe)} hasPaymentMethodId=${Boolean(makeCustomerDto.paymentMethodIdFromStripe)}`);
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -48,10 +57,10 @@ export class PaymentsService {
           paymentMethodIdFromStripe: makeCustomerDto.paymentMethodIdFromStripe,
         },
       });
-      this.logger.log(`Customer information updated successfully for userId: ${userId}`);
+      this.logger.log(`makeCustomer:success userId=${userId}`);
       return ApiResponse.success(res, 'Customer information updated successfully');
     } catch (error) {
-      this.logger.error(`Failed to create customer for userId: ${userId}`, error);
+      this.logger.error(`makeCustomer:failed userId=${userId}`, this.getErrorTrace(error));
       if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
@@ -60,7 +69,8 @@ export class PaymentsService {
   }
   
   async createPaymentIntent(dto: CreatePaymentIntentDto, userId: string) {
-    this.logger.log(`Creating payment intent for userId: ${userId}`);
+    this.logger.log(`createPaymentIntent:start userId=${userId} bidId=${dto.bidId} amount=${dto.amount}`);
+    this.logger.debug(`createPaymentIntent:payload userId=${userId} applicationFeePersent=${dto.applicationFeePersent}`);
     try {
       const userExistsByUserid = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -78,6 +88,7 @@ export class PaymentsService {
       const persentExists = await this.prisma.platformFee.findFirst({
         where: { amount: dto.applicationFeePersent },
       })
+      this.logger.debug(`createPaymentIntent:lookup userFound=${Boolean(userExistsByUserid)} bidFound=${Boolean(bidExists)} platformFeeFound=${Boolean(persentExists)}`);
       if (!persentExists) {
         throw new NotFoundException('Application fee percent not found');
       }
@@ -100,6 +111,8 @@ export class PaymentsService {
         confirm: true, 
       });
 
+      this.logger.log(`createPaymentIntent:stripePaymentIntentCreated userId=${userId} paymentIntentId=${paymentIntent.id}`);
+
 
       
       const oder = await this.prisma.order.create({
@@ -120,10 +133,11 @@ export class PaymentsService {
           createdAt: new Date(),
         }
       })
-      this.logger.log(`Payment intent created successfully for userId: ${userId}`);
+      this.logger.debug(`createPaymentIntent:dbWriteComplete orderId=${oder.id} notificationTo=${bidExists.serviceProvider.userId}`);
+      this.logger.log(`createPaymentIntent:success userId=${userId} orderId=${oder.id} paymentIntentId=${paymentIntent.id}`);
       return ApiResponse.success(oder, 'Payment intent created successfully');
     } catch (error) {
-      this.logger.error(`Failed to create payment intent for userId: ${userId}`, error);
+      this.logger.error(`createPaymentIntent:failed userId=${userId} bidId=${dto.bidId}`, this.getErrorTrace(error));
       if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
@@ -132,7 +146,7 @@ export class PaymentsService {
   }
 
   async createTransfer(userId: string, dto: CreateTransferDto) {
-    this.logger.log(`Creating transfer for userId: ${userId}`);
+    this.logger.log(`createTransfer:start userId=${userId} orderId=${dto.orderId} amountCents=${dto.amountCents}`);
     try {
       const userExist = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -158,6 +172,7 @@ export class PaymentsService {
           },
         },
       });
+      this.logger.debug(`createTransfer:lookup userFound=${Boolean(userExist)} orderFound=${Boolean(orderExists)} bidFound=${Boolean(bidExists)}`);
       if (!bidExists) {
         this.logger.warn(`Bid not found for order: ${dto.orderId}`);
         throw new NotFoundException('Bid not found for the given order');
@@ -168,6 +183,7 @@ export class PaymentsService {
         throw new NotFoundException('Service provider Stripe account ID not found');
       }
       const sellerAccount = await this.stripe.accounts.retrieve(stripeAccountId);
+      this.logger.debug(`createTransfer:sellerAccountRetrieved accountId=${stripeAccountId} transfersCapability=${sellerAccount?.capabilities?.transfers}`);
       if (!sellerAccount) {
         this.logger.warn(`Seller account not found: ${stripeAccountId}`);
         throw new NotFoundException('Seller account not found');
@@ -176,11 +192,13 @@ export class PaymentsService {
         throw new NotFoundException('Seller account is not ready for transfers');
       }
 
-      await this.stripe.transfers.create({
+      const transfer = await this.stripe.transfers.create({
         amount: dto.amountCents,
         currency: 'mad', 
         destination: stripeAccountId,
       });
+
+      this.logger.log(`createTransfer:stripeTransferCreated orderId=${dto.orderId} transferId=${transfer.id} destination=${stripeAccountId}`);
 
       const orderUpdate = await this.prisma.order.update({
         where: {
@@ -201,7 +219,6 @@ export class PaymentsService {
         })
       this.logger.log(`Service status updated for service: ${bidExists.serviceId}`);
 
-      // console.log({ bidExists });
       await this.prisma.notification.create({
         data: {
           fromNotification: userId,
@@ -219,6 +236,7 @@ export class PaymentsService {
           jobId: orderExists.id,
         },
       );
+      this.logger.debug(`createTransfer:notificationEventEmitted orderId=${orderExists.id} toServiceProvider=${bidExists.serviceProviderId}`);
       const consumerTokensResult = await this.prisma.user.findUnique({
         where: { id: orderExists.consumerId },
         select: { fcmToken: true },
@@ -231,6 +249,7 @@ export class PaymentsService {
         : fcmTokens
           ? [fcmTokens]
           : [];
+      this.logger.debug(`createTransfer:fcmTokensResolved consumerId=${orderExists.consumerId} tokenCount=${fcmTokenArray.length}`);
 
       if (fcmTokenArray.length > 0) {
         try {
@@ -250,7 +269,7 @@ export class PaymentsService {
       this.logger.log(`Transfer created successfully for amount: ${dto.amountCents}`);
       return ApiResponse.success(orderUpdate, 'Transfer created successfully');
     } catch (error) {
-      this.logger.error(`Failed to create transfer for amount: ${dto.amountCents}`, error);
+      this.logger.error(`createTransfer:failed userId=${userId} orderId=${dto.orderId}`, this.getErrorTrace(error));
       if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
@@ -259,6 +278,7 @@ export class PaymentsService {
   }
 
   async refundCharge(dto: RefundDto) {
+    this.logger.log(`refundCharge:start orderId=${dto.orderId} amount=${dto.amount}`);
     try {
       const orderExists = await this.prisma.order.findUnique({
         where: { id: dto.orderId },
@@ -268,6 +288,7 @@ export class PaymentsService {
         throw new NotFoundException('Order not found');
       }
       const captureIntent = await this.stripe.paymentIntents.retrieve(orderExists.paymentIntentId);
+      this.logger.debug(`refundCharge:paymentIntentRetrieved orderId=${dto.orderId} paymentIntentId=${orderExists.paymentIntentId} status=${captureIntent.status}`);
       if (captureIntent.status !== 'succeeded') {
         this.logger.warn(`Payment intent not succeeded for order: ${dto.orderId}`);
         throw new NotFoundException('Payment intent not succeeded, cannot process refund');
@@ -276,6 +297,7 @@ export class PaymentsService {
       // Validate refund amount doesn't exceed charge amount
       const refundAmount = parseInt(dto.amount, 10);
       const chargeAmount = captureIntent.amount;
+      this.logger.debug(`refundCharge:amountValidation orderId=${dto.orderId} refundAmount=${refundAmount} chargeAmount=${chargeAmount}`);
       
       if (refundAmount > chargeAmount) {
         this.logger.warn(`Refund amount (${refundAmount}) exceeds charge amount (${chargeAmount}) for order: ${dto.orderId}`);
@@ -288,6 +310,7 @@ export class PaymentsService {
         payment_intent: orderExists.paymentIntentId,
         amount: refundAmount,
       });
+      this.logger.log(`refundCharge:stripeRefundCreated orderId=${dto.orderId} refundId=${refund.id} status=${refund.status}`);
       if (refund.status === 'succeeded') {
         await this.prisma.order.update({
           where: { id: dto.orderId },
@@ -309,10 +332,10 @@ export class PaymentsService {
           }
         });
       }
-      this.logger.log(`Refund processed successfully for pi: ${orderExists.paymentIntentId}`);
+      this.logger.log(`refundCharge:success orderId=${dto.orderId} paymentIntentId=${orderExists.paymentIntentId}`);
       return refund;
     } catch (error) {
-      this.logger.error(`Failed to process refund for orderId: ${dto.orderId}`, error);
+      this.logger.error(`refundCharge:failed orderId=${dto.orderId}`, this.getErrorTrace(error));
       if (error instanceof HttpException || error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       } 

@@ -8,6 +8,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
+
+  private getErrorTrace(error: unknown): string {
+    if (error instanceof Error) {
+      return error.stack ?? error.message;
+    }
+    return String(error);
+  }
+
   constructor(
     @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
     private readonly prisma: PrismaService
@@ -15,7 +23,8 @@ export class StripeService {
   ) { }
 
   async createExpressAccount(userId: string) {
-    this.logger.log(`🚀 Starting Stripe Express onboarding for user: ${userId}`);
+    this.logger.log(`createExpressAccount:start userId=${userId}`);
+    this.logger.debug(`createExpressAccount:lookup userId=${userId}`);
 
     try {
       const user = await this.prisma.user.findUnique({
@@ -24,7 +33,7 @@ export class StripeService {
 
       // 1️⃣ Check if user exists
       if (!user) {
-        this.logger.warn(`❌ User not found: ${userId}`);
+        this.logger.warn(`createExpressAccount:userNotFound userId=${userId}`);
         throw new NotFoundException('User not found');
       }
 
@@ -37,7 +46,7 @@ export class StripeService {
 
       // 2️⃣ If Stripe account already exists → Generate onboarding link again
       if (user.stripeAccountId) {
-        this.logger.log(`ℹ️ Existing Stripe account detected. Generating new onboarding link…`);
+        this.logger.log(`createExpressAccount:existingAccount userId=${userId} stripeAccountId=${user.stripeAccountId}`);
 
         const link = await this.stripe.accountLinks.create({
           account: user.stripeAccountId,
@@ -45,6 +54,7 @@ export class StripeService {
           return_url: returnUrl,
           type: 'account_onboarding',
         });
+        this.logger.debug(`createExpressAccount:existingAccountLinkGenerated stripeAccountId=${user.stripeAccountId}`);
 
         return ApiResponse.success(
           { url: link.url },
@@ -53,7 +63,7 @@ export class StripeService {
       }
 
       // 3️⃣ Create new Stripe Express account
-      this.logger.log(`🆕 Creating new Stripe Express account for user: ${userId}`);
+      this.logger.log(`createExpressAccount:creatingStripeAccount userId=${userId}`);
 
       const account = await this.stripe.accounts.create({
         type: 'express',
@@ -65,6 +75,7 @@ export class StripeService {
         },
         metadata: { userId },
       });
+      this.logger.debug(`createExpressAccount:stripeAccountCreateResponse accountId=${account.id} country=${account.country}`);
 
       // Save Stripe account ID to DB
       await this.prisma.user.update({
@@ -72,7 +83,7 @@ export class StripeService {
         data: { stripeAccountId: account.id },
       });
 
-      this.logger.log(`✅ Stripe account created and saved for user: ${userId}`);
+      this.logger.log(`createExpressAccount:stripeAccountCreated userId=${userId} stripeAccountId=${account.id}`);
 
       // 4️⃣ Generate onboarding link for new account
       const onboardingLink = await this.stripe.accountLinks.create({
@@ -82,7 +93,7 @@ export class StripeService {
         type: 'account_onboarding',
       });
 
-      this.logger.log(`🔗 Onboarding link generated: ${onboardingLink.url}`);
+      this.logger.log(`createExpressAccount:onboardingLinkGenerated userId=${userId} stripeAccountId=${account.id}`);
 
       return ApiResponse.success(
         { url: onboardingLink.url },
@@ -90,7 +101,7 @@ export class StripeService {
       );
 
     } catch (error) {
-      this.logger.error('Stripe account creation failed', error instanceof Error ? error.stack : error);
+      this.logger.error(`createExpressAccount:failed userId=${userId}`, this.getErrorTrace(error));
       if (error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException(
         error instanceof Error ? error.message : "An unknown error occurred",
@@ -99,10 +110,11 @@ export class StripeService {
   }
 
   async generateAccountLink(accountId: string) {
-    this.logger.log(`Generating account link for Stripe account ID: ${accountId}`);
+    this.logger.log(`generateAccountLink:start accountId=${accountId}`);
     try {
       try {
       const data =   await this.stripe.accounts.retrieve(accountId);
+      this.logger.debug(`generateAccountLink:accountRetrieved accountId=${accountId} type=${data.type} detailsSubmitted=${data.details_submitted}`);
 
   if (data.type === 'standard') {
   throw new BadRequestException(
@@ -117,23 +129,23 @@ if (!data.details_submitted) {
   );
 }
       } catch (error) {
-        this.logger.error(`Stripe account not found for account ID: ${accountId}`, error);
+        this.logger.error(`generateAccountLink:accountLookupFailed accountId=${accountId}`, this.getErrorTrace(error));
         throw new NotFoundException(`Stripe account not found for account ID: ${accountId}`);
       }
 
       const accountLink = await this.stripe.accounts.createLoginLink(accountId);
-      
-      console.log({accountLink});
+      this.logger.debug(`generateAccountLink:loginLinkCreated accountId=${accountId}`);
+      this.logger.log(`generateAccountLink:success accountId=${accountId}`);
       return accountLink;
     } catch (error) {
-      this.logger.error('Failed to generate account link', error instanceof Error ? error.stack : error);
+      this.logger.error(`generateAccountLink:failed accountId=${accountId}`, this.getErrorTrace(error));
       if (error instanceof HttpException|| error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
     }
   }
   async retrieveAccount(accountId: string): Promise<Stripe.Account> {
-    this.logger.log(`Retrieving Stripe account for account ID: ${accountId}`);
+    this.logger.log(`retrieveAccount:start accountId=${accountId}`);
     try {
 
       try {
@@ -142,15 +154,16 @@ if (!data.details_submitted) {
           this.logger.warn(`Stripe account not found: ${accountId}`);
           throw new NotFoundException('Stripe account not found');
         }
+        this.logger.debug(`retrieveAccount:success accountId=${accountId} detailsSubmitted=${account.details_submitted}`);
         return account;
       } catch (error) {
-        this.logger.error(`Stripe account not found for account ID: ${accountId}`, error);
+        this.logger.error(`retrieveAccount:accountLookupFailed accountId=${accountId}`, this.getErrorTrace(error));
         throw new NotFoundException(`Stripe account not found for account ID: ${accountId}`);
       }
 
 
     } catch (error) {
-      this.logger.error('Failed to retrieve Stripe account', error instanceof Error ? error.stack : error);
+      this.logger.error(`retrieveAccount:failed accountId=${accountId}`, this.getErrorTrace(error));
       if (error instanceof  HttpException|| error instanceof NotFoundException) {
         throw error;
       }
@@ -159,7 +172,7 @@ if (!data.details_submitted) {
   }
 
   async getStripeInfo(userId: string) {
-    this.logger.log(`Getting Stripe info for user: ${userId}`);
+    this.logger.log(`getStripeInfo:start userId=${userId}`);
     try {
       const [account, balance, payments, transfers, accountsList, refundList] = await Promise.all([
         this.stripe.accounts.retrieve(),
@@ -169,6 +182,7 @@ if (!data.details_submitted) {
         this.stripe.accounts.list({ limit: 100 }),
         this.stripe.refunds.list({ limit: 100 }),
       ]);
+      this.logger.debug(`getStripeInfo:stripeSummary userId=${userId} paymentCount=${payments.data.length} transferCount=${transfers.data.length} accountCount=${accountsList.data.length} refundCount=${refundList.data.length}`);
       return {
         account: { id: account.id, email: account.email },
         balance: { available: balance.available[0].amount, pending: balance.pending[0].amount },
@@ -194,20 +208,21 @@ if (!data.details_submitted) {
       };
 
     } catch (error) {
-      this.logger.error('Failed to get Stripe info', error instanceof Error ? error.stack : error);
+      this.logger.error(`getStripeInfo:failed userId=${userId}`, this.getErrorTrace(error));
       if (error instanceof HttpException|| error instanceof NotFoundException) {
         throw error;
       } 
     }
   }
   async deleteAccount(accountId: string): Promise<Stripe.DeletedAccount> {
-    this.logger.log(`Deleting Stripe account for account ID: ${accountId}`);
+    this.logger.log(`deleteAccount:start accountId=${accountId}`);
     try {
       const deletedAccount = await this.stripe.accounts.del(accountId);
-      this.logger.log(`Stripe account deleted successfully for account ID: ${accountId}`);
+      this.logger.debug(`deleteAccount:stripeDeleteResponse accountId=${accountId} deleted=${deletedAccount.deleted}`);
+      this.logger.log(`deleteAccount:success accountId=${accountId}`);
       return deletedAccount;
     } catch (error) {
-      this.logger.error('Failed to delete Stripe account', error instanceof Error ? error.stack : error);
+      this.logger.error(`deleteAccount:failed accountId=${accountId}`, this.getErrorTrace(error));
       if (error instanceof HttpException || error instanceof NotFoundException) {
         throw error;
       }
@@ -216,12 +231,13 @@ if (!data.details_submitted) {
   }
   // payout history
   async getPayoutHistory(userId: string): Promise<{ payoutsdata: { id: string; amount: number; arrival_date: number | null }[]; availableBalance: number }> {
-    this.logger.log(`Retrieving payout history for Stripe account ID: ${userId}`);
+    this.logger.log(`getPayoutHistory:start userId=${userId}`);
 
     try {
       const serviceProvider = await this.prisma.user.findUnique({
         where: { id: userId },
       });
+      this.logger.debug(`getPayoutHistory:userLookup userId=${userId} hasStripeAccount=${Boolean(serviceProvider?.stripeAccountId)}`);
       if (!serviceProvider || !serviceProvider.stripeAccountId) {
         this.logger.warn(`Service provider or Stripe account not found for user ID: ${userId}`);
         throw new NotFoundException('Service provider or Stripe account not found');
@@ -238,11 +254,12 @@ if (!data.details_submitted) {
       const balance = await this.stripe.balance.retrieve({
         stripeAccount: serviceProvider.stripeAccountId
       });
+      this.logger.debug(`getPayoutHistory:balanceRetrieved userId=${userId} availableEntries=${balance.available.length}`);
 
-      this.logger.log(`Payout history retrieved successfully for account ID: ${userId}`);
+      this.logger.log(`getPayoutHistory:success userId=${userId} payoutsCount=${payoutsdata.length}`);
       return { payoutsdata, availableBalance: balance.available[0].amount };
     } catch (error) {
-      this.logger.error('Failed to retrieve payout history', error instanceof Error ? error.stack : error);
+      this.logger.error(`getPayoutHistory:failed userId=${userId}`, this.getErrorTrace(error));
       if (error instanceof HttpException || error instanceof NotFoundException) {
         throw error;
       }
