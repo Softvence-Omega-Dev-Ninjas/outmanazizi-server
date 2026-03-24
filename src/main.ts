@@ -1,13 +1,16 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { ValidationPipe } from "@nestjs/common";
+import { Logger, ValidationPipe } from "@nestjs/common";
 import { AllExceptionsFilter } from "./utils/common/all-exception/all-exception-filter";
 import { join } from "path";
 import express from "express";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ["log", "error", "warn", "debug", "verbose"],
+  });
+  const logger = new Logger("Bootstrap");
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({
     origin: ["https://m3alem.group", "www.m3alem.group"],
@@ -62,7 +65,7 @@ async function bootstrap() {
 
 
   await app.listen(process.env.PORT ?? 3000);
-    console.log(`API documentation available at http://localhost:${
+  logger.log(`API documentation available at http://localhost:${
     process.env.PORT ?? 3000
   }/api`);
 }
